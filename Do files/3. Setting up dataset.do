@@ -1,0 +1,488 @@
+**SCHOOL DATASET		
+*------------------------------------------------------------------------------------------------------------------------*
+*------------------------------------------------------------------------------------------------------------------------*
+
+
+*1* 
+*Socioeconomic characteristics at school level																													
+*------------------------------------------------------------------------------------------------------------------------*
+	
+	
+	*2007 & 2009
+	*--------------------------------------------------------------------------------------------------------------------*
+	*use 	   "$provabrasil/Socioeconomic Characteristics at student level.dta", clear
+	*keep 	    if coduf == 35 & network == 3 & !missing(codschool)
+	*save 	   "$inter/Socioeconomic Characteristics at student level.dta", replace
+	 use 	   "$inter/Socioeconomic Characteristics at student level.dta", clear
+
+	collapse   (mean) $socioeco_variables, by(grade year codschool)
+	
+	foreach var of varlist $socioeco_variables100 {
+		replace `var' = `var'*100 
+		format  `var' %4.2fc
+	}
+		
+	format parentsincentive_* nrepetition_ ndropout_ %4.2fc
+
+	reshape 	wide  $socioeco_variables, i(year codschool) j(grade)
+	tempfile    socio_economic
+	save       `socio_economic'
+
+	
+*2* 
+*Flow Indicators																											
+*------------------------------------------------------------------------------------------------------------------------*
+	*use 	   "$rendimento/Flow Indicators at school level.dta", clear
+	*keep 	    if uf == "SP" & network == 3 & !missing(codschool)
+	*save 	   "$inter/Flow Indicators at school level.dta", replace
+	 use 	   "$inter/Flow Indicators at school level.dta", clear
+	drop 		*EM*
+	tempfile    flow_index
+	save       `flow_index'
+	
+	
+*3* 
+*School Infrastructure																									
+*------------------------------------------------------------------------------------------------------------------------*
+	*use 	   "$censoescolar/School Infrastructure at school level.dta", clear
+	*keep 	    if uf == "SP" & network == 3 & !missing(codschool)
+	*save 	   "$inter/School Infrastructure at school level.dta", replace
+	use 	   "$inter/School Infrastructure at school level.dta", clear
+	keep 		$matching_schools year codschool coduf uf codmunic codmunic2 operation network location cfim_letivo cinicio_letivo mes_fim_letivo dia_fim_letivo CICLOS
+	tempfile    school_infra
+	save       `school_infra'
+	
+	
+*4* 
+*Enrollments																								
+*------------------------------------------------------------------------------------------------------------------------*
+   *use 	   "$censoescolar/Enrollments at school level.dta", clear
+   *keep 		if uf == "SP"
+   *collapse 	(sum)$matriculas (mean)school_*, by(year codschool codmunic network)
+   *save	   "$inter/Enrollments at school level.dta", replace
+	use 	   "$inter/Enrollments at school level.dta", clear
+	foreach var of varlist enrollment*{
+		replace `var' = . if `var' == 0
+	}
+	keep 	    if network == 3 & !missing(codschool)
+	keep 		year codschool enrollment5grade 
+	tempfile    enrollments
+	save       `enrollments'	
+	
+	
+*5* 
+*Class-hours																								
+*------------------------------------------------------------------------------------------------------------------------*
+   *use 	   "$censoescolar/Class-Hours at school level.dta", clear
+   *keep 	    if uf == "SP" & network == 3 & !missing(codschool)
+   *save 	   "$inter/Class-Hours at school level.dta", replace
+	use 	   "$inter/Class-Hours at school level.dta", clear
+	keep 		classhour5grade year codschool
+	tempfile    class_hours
+	save       `class_hours'	
+	
+	
+*6* 
+*Size of the classrooms																						
+*------------------------------------------------------------------------------------------------------------------------*
+    *use 	   "$censoescolar/Class-Size at school level.dta", clear
+    *keep 	    if uf == "SP" & network == 3 & !missing(codschool)
+    *save 	   "$inter/Class-Size at school level.dta", replace
+	use 	   "$inter/Class-Size at school level.dta", clear
+	keep 		tclass5grade year codschool
+	tempfile    class_size
+	save       `class_size'	
+	
+	
+*7*
+*Expenditure per student																						
+*------------------------------------------------------------------------------------------------------------------------*
+   *use 	   "$fnde/FNDE Indicators.dta", clear
+   *keep 	    if network == 3 & coduf == 35
+   *save 	   "$inter/FNDE Indicators.dta", replace
+	use 	   "$inter/FNDE Indicators.dta", clear
+	keep 	    year codmunic2 ind_49 r_ind_49 //r_ind_49 gasto por aluno do EF em R$ de 2018
+	tempfile    expenditure
+	save       `expenditure'	
+	
+
+*8* 
+*IDEB school level
+*------------------------------------------------------------------------------------------------------------------------*
+   *use 		"$ideb/IDEB at schoool level.dta", clear
+   *keep 	 	if uf == "SP" & network == 3 & !missing(codschool)
+   *save		"$inter/IDEB at schoool level.dta", replace
+	use 		"$inter/IDEB at schoool level.dta", clear
+	keep 		if year == 2005 | year == 2007 | year == 2009 | year == 2011 | year == 2013
+	rename 		(spEF1 spEF2) (sp5 sp9)
+	drop 		flowindexEF* target* 
+	tempfile    ideb
+	save       `ideb'
+	
+	*
+	*--------------------------------------------------------------------------------------------------------------------*
+	duplicates drop codschool, force
+	keep 	 codschool
+	tempfile data
+	save 	`data'
+
+	
+*9* 
+*Performance + school infrastructure + socioeconomic characteristics + GeoCodes + pib per capita + expenditure per student	
+*------------------------------------------------------------------------------------------------------------------------*
+		use 	`flow_index', clear
+		drop approval*
+		merge   1:1 codschool year using `school_infra'	 			, nogen
+		merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade)
+		merge   1:1 codschool year using `class_hours'	 			, nogen keepusing(classhour5grade)
+		merge   1:1 codschool year using `class_size'	 			, nogen keepusing(tclass5grade)
+		merge 	1:1 codschool year using `ideb'						, nogen
+		merge 	1:1 codschool year using `socio_economic'			, nogen 
+		merge   m:1 codmunic2 year using `expenditure'   			, nogen 
+		merge   m:1 codmunic  year using "$inter/GDP per capita.dta", nogen keep(1 3)
+		merge 	m:1 codschool 	   using `data'						, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
+		sort 	codschool year 
+		xtset   codschool year  
+		
+*------------------------------------------------------------------------------------------------------------------------*
+		foreach var of varlist *grade {
+			local newname  = substr("`var'",1, length("`var'")-5)
+			rename `var'  `newname'
+		}
+		
+		foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {                                    	
+			gen padr_`var' = .
+			gen def_`var'  = .
+		}
+			
+		forvalues year = 2005(2)2013 {
+			foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {           		//variables standartization
+				sum    `var' 									  if year == `year', detail
+				replace padr_`var' = (`var' - `r(mean)')/ `r(sd)' if year == `year',
+			}
+		}
+		
+		sort	codschool year
+			
+		foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {
+			replace	def_`var' = `var'[_n-2] if codschool[_n] == codschool[_n-2] & year[_n] == year[_n-2] + 2 & year >= 2009
+			replace	def_`var' = `var'[_n-1] if codschool[_n] == codschool[_n-1] & year[_n] == year[_n-1] + 2 & year == 2007
+		}
+		
+		format  padr_* def_* %4.2fc	
+		
+		
+*GEOCODES
+*------------------------------------------------------------------------------------------------------------------------*
+		merge m:1 codmunic using "$geocodes/mun_brasil.dta", nogen keep(1 3)
+		keep if SIGLA == "SP"
+		
+		
+*Treated municipalities
+*------------------------------------------------------------------------------------------------------------------------*
+		replace treated = .
+		foreach munic in $treated_municipalities {
+			replace treated = 1 if codmunic == `munic'
+		}
+		replace treated   = 0 if treated == .
+		gen 	t_treated = (year >= 2009  & treated == 1)
+		gen 	post      = (year >= 2009) 
+		gen 	T2007 	  =  year == 2007  & treated == 1
+		gen 	T2009 	  =  year == 2009  & treated == 1
+		foreach var of varlist t_treated post T2007 T2009 {
+			replace `var' = . if year > 2009
+		}
+		gen    postT 	   = post*treated
+		rename id _ID
+		save "$final/Performance & Socioeconomic Variables of SP schools.dta", replace
+
+
+*Municipios proximos uns aos outros
+*------------------------------------------------------------------------------------------------------------------------*
+	
+	*Control geocodes
+	* ------------------------------------------------------------------------------------------------------------------ *
+		use 	"$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+		duplicates drop _ID, force
+		keep 	if treated == 0
+		keep 	_ID x_stub y_stub
+		rename  (_ID x_stub y_stub ) (control_id control_long control_lat)
+		tempfile control_geo_codes
+		save    `control_geo_codes'
+	
+	*Treated communes and their distance to comparison communes
+	* ------------------------------------------------------------------------------------------------------------------ *
+		foreach distance in 20 50 100 {
+			use 	"$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+			duplicates drop _ID, force
+			keep 	if treated == 1
+			rename  (_ID x_stub y_stub ) (treat_id treat_long treat_lat)
+			
+			geonear treat_id treat_lat treat_long using `control_geo_codes', n(control_id control_lat control_long) within(`distance') long near(0) 
+		
+			codebook treat_id
+			codebook control_id
+				
+			mkmat	 treat_id  , matrix(T)
+			mkmat 	 control_id, matrix(C)
+				
+			matrix  _ID = T \ C
+			clear
+			svmat   _ID
+			duplicates drop _ID1, force	
+			rename  _ID1 _ID 
+			gen 	 distance`distance' = 1
+			tempfile data_`distance'
+			save    `data_`distance''
+		}
+
+			
+	*Identifying cities close to each other according to the distance define above
+	* ------------------------------------------------------------------------------------------------------------------ *
+	use 	"$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+		foreach distance in 20 50 100 {
+			merge m:1 _ID using `data_`distance'', nogen
+		}
+		gen distance0 = 1
+		
+	* ------------------------------------------------------------------------------------------------------------------ *
+	gen 	pop_2007 = pop if year == 2007
+	bys 	codmunic: egen max = max(pop_2007)
+	drop 	pop_2007
+	rename  max pop_2007
+	
+	*gen 	mat_pop = enrollmentEF/pop //matriculas a cada 1000 habitantes
+	*format  mat_pop %4.2fc
+	
+	
+	* ------------------------------------------------------------------------------------------------------------------ *
+	foreach grade in 5 9 {
+		egen port_basic_more_`grade' = rowtotal(port_basic_`grade' port_adequ_`grade'), missing
+		egen math_basic_more_`grade' = rowtotal(math_basic_`grade' math_adequ_`grade'), missing
+	}
+	
+	
+	* ------------------------------------------------------------------------------------------------------------------ *
+	drop    region municipality SIGLA NOME_MUNIC NOME_MESO NOME_MICRO
+	sort 	codschool year 
+	order   codschool year network location treated t_treated coduf uf codmunic codmunic2 n_munic pop pib_pcap ind_49 r_ind_49  operation cinicio_letivo cfim_letivo dia_fim_letivo mes_fim_letivo CICLOS math5 port5 repetition5 dropout5 approval5  math9 port9 repetition9 dropout9 approval9  padr_math5 padr_port5 def_math5 def_port5 padr_math9 padr_port9  def_math9 def_port9 _ID x_stub-distance0 
+	rename (y_stub-MICRORREGI) (y_stub regiao meso_regiao micro_regiao)
+
+	*Labels
+	* ------------------------------------------------------------------------------------------------------------------ *
+	foreach grade in 5 9 {
+		label var  tv_`grade'				"TV"
+		label var  stereo_`grade' 			"Equipamento de som"
+		label var  dvd_`grade' 				"DVD"
+		label var  refri_`grade' 			"Geladeira"
+		label var  car_`grade' 				"Carro"
+		label var  computer_`grade' 		"Computador"
+		label var  livesmother_`grade' 		"Mora com a mãe"
+		label var  motherwrites_`grade' 	"Mão escreve"
+		label var  motherreads_`grade' 		"Mãe lê"
+		label var  livesfather_`grade' 		"Mora com o pai"
+		label var  fatherwrites_`grade' 	"Pai escreve"
+		label var  fatherreads_`grade' 		"Pai lê"
+		label var  parentsincentive_`grade' "Incentivo dos pais"
+		label var  washingmachine_`grade' 	"Máquinha de lavar"
+		label var  mother_edu_`grade' 		"Mãe com ensino médio completo"
+		label var  studentwork_`grade'  	"Trabalho"
+		label var  preschool_`grade' 		"Pré-escola"
+		label var  repetition_`grade' 		"Já repetiu"
+		label var  dropout_`grade' 			"Já abandonou"
+		label var  maid_`grade'				"Empregada doméstica"		
+		label var  nrepetition_`grade'		"Número de reprovações"
+		label var  ndropout_`grade' 		"Número de abandono" 
+		label var  privateschool_`grade'    "Já estudou em escola particular"
+		label var  SIncentive1_`grade'      "Comparecimento à reunião de pais"
+		label var  SIncentive2_`grade'      "Incentivo a estudar"
+		label var  SIncentive3_`grade'      "Incentivo a fazer o dever de casa"
+		label var  SIncentive4_`grade'      "Incentivo a ler"
+		label var  SIncentive5_`grade'      "Incentivo a ir às aulas"
+		label var  SIncentive6_`grade'      "Conversa sobre acontecimentos na escola "
+		label var  female_`grade'			"Meninas"
+		label var  white_`grade'			"Brancos"	
+		label var  timetv1_`grade'			"Uma hora ou menos de TV por dia"
+		label var  timetv2_`grade'			"Duas horas de TV por dia"
+		label var  timetv3_`grade'			"Três horas de TV por dia"
+		label var  timetv4_`grade'			"Quatro horas ou mais de TV por dia"
+		label var  cleanhouse1_`grade'		"Não ajuda nos afazeres domésticos"
+		label var  cleanhouse2_`grade'		"Uma hora com afazeres domésticos"
+		label var  cleanhouse3_`grade'		"Duas horas com afazeres domésticos"
+		label var  cleanhouse4_`grade'		"Três horas com afazeres domésticos"
+		label var  cleanhouse5_`grade'		"Quatro horas com afazeres domésticos"
+		label var  portlesson1_`grade'		"Não faz o dever de português"
+		label var  portlesson2_`grade'		"Sempre ou quase sempre faz o dever de português"
+		label var  portlesson3_`grade'		"De vez em quando faz o dever de português"
+		label var  mathlesson1_`grade'		"Não faz o dever de matemática"
+		label var  mathlesson2_`grade'		"Sempre ou quase sempre faz o dever de matemática"
+		label var  mathlesson3_`grade'		"De vez em quando faz o dever de matemática"
+	}
+	
+	foreach x in 5 9 {
+		label var math`x'        			"Matemática, `x'o ano"
+		label var port`x' 		 			"Português, `x'o ano"
+		label var padr_math`x' 	 			"Matemática padronizada, `x'o ano"
+		label var padr_port`x'	 			"Português padronizada, `x'o ano"
+		*label var padr_repetition`x' 	 	"Reprovação padronizada, `x'o ano"
+		*label var padr_dropout`x'	 		"Abandono padronizada, `x'o ano"
+		*label var padr_approval`x'	 		"Aprovação padronizada, `x'o ano"
+		label var def_math`x'	 			"Matemática em t-2, `x'o ano"
+		label var def_port`x'	 			"Português em t-2, `x'o ano"
+		*label var def_repetition`x'	 		"Reprovação em t-1, `x'o ano"
+		*label var def_dropout`x'	 		"Abandono em t-1, `x'o ano"
+		*label var def_approval`x'	 		"Aprovação em t-1, `x'o ano"		
+	}
+	
+	foreach x in EF1 EF2 {
+		label var ideb`x'   	  	 		"IDEB `x'"
+		label var padr_ideb`x'    	 		"IDEB padronizado `x'"
+		label var def_ideb`x'     	 		"IDEB t-2 `x'"
+	}
+	
+	foreach x in EF EF1 EF2  {
+		label var repetition`x' 	 		"Reprovação no `x'"
+		label var dropout`x' 		 		"Abandono no `x'"
+	}
+	
+	
+	forvalues x = 1/9 {
+		label var approval`x'	 			"Aprovação no `x'o ano"
+		label var repetition`x' 			"Reprovação no  `x'o ano"
+		label var dropout`x'	 			"Abandono no `x'o ano"
+	}
+
+		label var distance20 			    "1 se municípios do T e C distam no max 20km"
+		label var distance50 				"1 se municípios do T e C distam no max 50km"
+		label var distance100 				"1 se municípios do T e C distam no max 100km"
+		label var distance0					"1 para todos os municípios"
+		label var r_ind_49 					"Investimento educacional por aluno do EF, em R$ de 2018"
+		label var meso_regiao 				"Mesoregião"
+		label var micro_regiao 				"Microregião"
+		label var codschool					"Código INEP da Escola"
+		label var year 						"Ano"
+		label var network 					"=3, escolas municipais"
+		label var location					"1 se urbana e 2 se rural"
+		label var treated 					"1 para municípios que adiaram o retorno às aulas"
+		label var t_treated 				"0 para 2007, 0 para C em 2009 e 1 para T em 2009"
+		label var coduf 					"Código da UF"
+		label var uf 						"Sigla da UF"
+		label var codmunic					"Código do município"
+		label var codmunic2 				"Código do município, 6 digitos"
+		label var pop 						"População"
+		label var n_munic					"Nome do município"
+		label var operation 				"1 escolas em atividade em t, 2 escolas fora de atividade, 3 escolas extintas e 4 escolas extintas no ano anterior"
+		label var cinicio_letivo 			"Início do ano letivo"
+		label var cfim_letivo 				"Fim do ano letivo"
+		label var dia_fim_letivo 			"Dia em que terminou o ano letivo"
+		label var mes_fim_letivo			"Mês em que terminou o ano letivo"
+		
+		drop regiao  n_munic CICLOS operation def_idebEF1 padr_idebEF1 padr_idebEF2 def_idebEF2 school location
+		
+		sort codschool year
+		xtset 	codschool year 	
+	save "$final/Performance & Socioeconomic Variables of SP schools.dta", replace
+	
+/*
+	
+**MUNICIPAL DATASET		
+*------------------------------------------------------------------------------------------------------------------------*
+*------------------------------------------------------------------------------------------------------------------------*
+		
+	*IDEB municipal defasado
+	*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+	use 	"$ideb/IDEB at municipal level.dta", clear
+	keep 	if network == 3 & coduf == 35
+	sort 	codmunic year
+	keep    codmunic year network math* port* n_munic 
+	
+	foreach var of varlist math* port* {                                    	
+		gen padr_`var' = .
+	}
+			
+	forvalues year = 2005(2)2017 {
+		foreach var of varlist math* port*   {           		//variables standartization
+			sum    `var' 									  if year == `year', detail
+			replace padr_`var' = (`var' - `r(mean)')/ `r(sd)' if year == `year',
+		}
+	}	
+	
+	foreach var of varlist math* port* padr_* {                                    	
+		gen def_`var' = .
+	}	
+	
+	sort codmunic year
+	foreach var of varlist math* port* padr_* {
+		replace	def_`var' = `var'[_n-1] if codmunic[_n] == codmunic[_n-1] & year[_n] == year[_n-1] + 2
+	}
+	
+	format padr_* def_* %4.2fc
+	
+	tempfile ideb
+	save    `ideb'
+
+	*Indicadores de fluxo escolar
+	*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+	use 	"$rendimento/Flow Indicators at municipal level.dta", clear
+	keep 	if network == 3 & coduf == 35
+	keep 	codmunic year network dropout5grade repetition5grade dropout9grade repetition9grade 
+	tempfile flow
+	save    `flow'
+		
+	*Características socioeconômicas e infraestrutura escolar nos municípios
+	*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+		
+		*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+		preserve
+			collapse (mean) $matching_students5  [aw = enrollment5],  by(codmunic year network)			//caracteristicas dos alunos do 5o ano
+			tempfile 1
+			save `1' 
+		restore
+		*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+		preserve
+			collapse (mean) $matching_students9  [aw = enrollment9],  by(codmunic year network)			//caracteristicas dos alunos do 9o ano
+			tempfile 2
+			save `2'
+		restore
+ 		*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+		preserve
+			collapse (sum) enrollment* 							   ,  by(codmunic year network)		
+			tempfile 3
+			save `3'
+		restore		
+		*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+			collapse (mean) $matching_schools	 [aw = enrollmentEF], by(codmunic year network)			//infraestrutura escolar
+		
+		*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+		merge 1:1 codmunic  year using `1', 							nogen
+		merge 1:1 codmunic  year using `2', 							nogen
+		merge 1:1 codmunic  year using `3', 							nogen
+		merge 1:1 codmunic  year using `ideb', 							nogen 
+		merge 1:1 codmunic  year using `flow', 							nogen 
+		merge 1:1 codmunic  year using "$inter/GDP per capita.dta",  	nogen keep(1 3)
+		
+		drop 	  codmunic2
+		gen 	  codmunic2 = substr(string(codmunic), 1,6)
+		destring  codmunic2, replace
+		merge 1:1 codmunic2 year using "$inter/H1N1.dta", 		        nogen keep(1 3)
+				
+		gen 	 mat_pop = enrollmentEF/pop
+		
+		format mat_pop hosp_h1n1 ComputerLab SportCourt ScienceLab Library InternetAccess %4.2fc
+		
+		replace treated = .
+		foreach munic in $treated_municipalities {
+			replace treated = 1 if codmunic == `munic'
+		}
+		replace treated   = 0 if treated == .
+
+		sort codmunic year 
+		
+		replace n_munic = n_munic[_n-1] if codmunic[_n] == codmunic[_n-1]
+		
+		drop hosp
+		
+		order year network codmunic codmunic2 n_munic pib_pcap pop treated hosp_h1n1 mat_pop enrollment*
+		save "$final/Performance & Socioeconomic Variables of SP municipalities.dta", replace
+
