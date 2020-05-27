@@ -110,6 +110,8 @@ set seed 1
 							eststo: reg `subject'5 T2007 		  i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
 							mat_res, model(1) sub(`sub') var(T2007)		
 							
+						*2009 versus 2005/v2007
+						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 							eststo: reg `subject'5 T2007 T2009 	  i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
 					
 						*2009 versus 2007
