@@ -2,7 +2,10 @@
 												*ESTIMATIVA DO EFEITO DO ADIAMENTO DO RETORNO ÀS AULAS EM DECORRÊNCIA DO H1N1*
 																  **ESCOLAS MUNICIPAIS DE SÃO PAULO**
 
-
+global final   "C:\Users\wb495845\OneDrive - WBG\Desktop"
+global results "C:\Users\wb495845\OneDrive - WBG\Desktop"
+global inter   "C:\Users\wb495845\OneDrive - WBG\Desktop"
+																  
 *Author: Vivian Amorim
 *vivianamorim5@gmail.com
 
@@ -15,6 +18,7 @@ set seed 1
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	estimates clear
 	matrix 	results = (0,0,0,0,0,0)
+	matrix  ri      = (0,0,0)
 	
 	cap program drop mat_res
 	program define   mat_res
@@ -35,7 +39,7 @@ set seed 1
 *Regressions
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		foreach subject in math_insuf_ port_insuf_ sp port math {
+		foreach subject in port math {
 		
 			if "`subject'" == "port" | "`subject'" == "padr_port" {
 				local sub = 1
@@ -105,23 +109,30 @@ set seed 1
 					*----------------------------------------------------------------------------------------------------------------------------------------------------------------*
 					local weight enrollment5
 
+					
 						*2007 versus 2005
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 							eststo: reg `subject'5 T2007 		  i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
 							mat_res, model(1) sub(`sub') var(T2007)		
+							*ritest treated _b[T2007], seed(1) reps(1000) cluster(codmunic): reg `subject'5 T2007 i.treated i.codmunic i.year $controls2005 if year >= 2005 & year <= 2007, cluster(codmunic)
+							*matrix ri = ri\[1, `sub', el(r(p),1,1)] 		//erro padrão com RI
 							
-						*2009 versus 2005/v2007
+						*2009 versus 2005/2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 							eststo: reg `subject'5 T2007 T2009 	  i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
+					
 					
 						*2009 versus 2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 						keep if e(sample) == 1
 							eststo: reg `subject'5 	     T2009	  i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
 							mat_res, model(2) sub(`sub') var(T2009)	
-							
-							
-							*Efeito por quantil
+							*ritest treated _b[T2009], seed(1) reps(1000) cluster(codmunic): reg `subject'5 T2009 i.treated i.codmunic i.year $controls2007 if year >= 2007 & year <= 2009, cluster(codmunic)
+							*matrix ri = ri\[2, `sub', el(r(p),1,1)] 	
+								
+								
+							/*
+							*Efeito por quintil
 							*--------------------------------------------------------------------------------------------------------------------------------------------------------*
 							if "`subject'" == "port" | "`subject'" == "math" {
 								foreach quantile in 20 40 50 60 80 {
@@ -130,12 +141,14 @@ set seed 1
 									matrix results = results \ (3, `sub', A[1, colsof(A)-2], A[5,colsof(A)-2], A[6,colsof(A)-2], `quantile')	 		 	 
 								}
 							}
+							*/
 							
-							
+						
 						*Parallel trends
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 						collapse (mean)`subject'5 [aw = `weight'], by(year treated)
 						format 	 	   `subject'5 %4.1fc
+						save 		   "$inter/trend_`subject'.dta", replace
 						
 						tw 	///
 						(line `subject'5 year if treated == 0, lwidth(0.5) color(ebblue) lp(shortdash) connect(direct) recast(connected) 	 ///  
@@ -150,8 +163,9 @@ set seed 1
 						legend(order(1 "Não adiaram o retorno às aulas" 2 "Adiaram") size(small) region(lwidth(none))) 						 ///
 						ysize(6) xsize(7) 																									 ///
 						note("Fonte: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
+						*/
 		}
-	*estout * using "$results/Regressions.csv", delimiter(";") label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N r2) mlabels() replace
+	estout * using "$results/Regressions.csv", delimiter(";") label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N r2) mlabels() replace
 
 
 *Results			
@@ -171,6 +185,10 @@ set seed 1
 	label var upper  "Upper bound"
 	format beta lower upper %4.2fc
 	save "$final/Regression Results.dta", replace
+	
+	
+	clear 
+	svmat ri
 	
 
 	
