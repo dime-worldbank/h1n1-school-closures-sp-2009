@@ -39,7 +39,7 @@ set seed 1
 *Regressions
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		foreach subject in port math {
+		foreach subject in port_insuf_  {
 		
 			if "`subject'" == "port" | "`subject'" == "padr_port" {
 				local sub = 1
@@ -142,7 +142,7 @@ set seed 1
 								}
 							}
 							*/
-							
+							}
 						
 						*Parallel trends
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -186,10 +186,6 @@ set seed 1
 	format beta lower upper %4.2fc
 	save "$final/Regression Results.dta", replace
 	
-	
-	clear 
-	svmat ri
-	
 
 	
 *Gráficos
@@ -225,9 +221,13 @@ set seed 1
 	*Português, Matemática e Nota Padronizada, separadamente
 	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 		use "$final/Regression Results.dta", clear
-		drop if spec == 3			
+		set scheme economist
+		drop if quantile == 0 & spec == 3
+		replace spec = 4 if spec == 3 & quantile == 40
+		replace spec = 5 if spec == 3 & quantile == 60
+		replace spec = 6 if spec == 3 & quantile == 80
 					
-		foreach sub in 1 2 3 {	
+		foreach sub in 1 2 {	
 		
 				*scale
 				*--------------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -240,15 +240,15 @@ set seed 1
 					
 				*Title & cor
 				*--------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-					if `sub' == 1  local title = "Português"
-					if `sub' == 2  local title = "Matemática"
+					if `sub' == 1  local title = "Portuguese"
+					if `sub' == 2  local title = "Math"
 					if `sub' == 3  local title = "Português e Matemática"
 			
 					if `sub' == 1 | `sub' == 2 {
 						local min    = -8
 						local max    =  4
 						local pulo   =  2
-						local ytitle = "escala SAEB"
+						local ytitle = "Test score"
 					}
 					if `sub' == 3 {
 						local min  = -0.3
@@ -265,18 +265,37 @@ set seed 1
 					}	
 					
 					set scheme economist 
-					twoway bar beta spec if sub == `sub' & (spec == 1), ml(beta) barw(0.4) color(cranberry) || bar beta spec if sub == `sub' & (spec == 2), barw(0.4) color(emidblue) || rcap lower upper spec if sub == `sub', lcolor(navy)	///
+					twoway bar beta spec if sub == `sub' & (spec == 1), ml(beta) barw(0.4) color(cranberry) || bar beta spec if sub == `sub' & (spec > 1), barw(0.4) color(emidblue) || rcap lower upper spec if sub == `sub', lcolor(navy)	///
 					yline(0, lpattern(shortdash) lcolor(cranberry)) 																							///
 					xtitle("", size(medsmall)) 											  																		///
 					ytitle("{&gamma}, `ytitle'", size(medsmall)) ylabel(`min'(`pulo')`max', labsize(small) gmax angle(horizontal) format (%4.1fc))  			///					
-				    xlabel(1 `" "2007" "versus 2005" "' 2 `" "2009" "versus 2007" "', labsize(medsmall) ) 														///
+				    xlabel(1 `" "2007" "versus 2005" "' 2 `" "2009" "versus 2007" "' 3 `" "20{sup:th}" "percentile" "' 4 `" "40{sup:th}" "percentile" "' 5 `" "60{sup:th}" "percentile" "' 6 `"  "80{sup:th}" "percentile" "', labsize(medsmall) ) 														///
 					xscale(r(0.5 2.5))																															///
-					title("`title', 5{sup:o} ano", size(medsmall) color(black)) 																				///
-					legend(order(1 "Placebo" 2 "Adiamento das aulas" 3 "95% CI" ) region(lstyle(none) fcolor(none)) size(medsmall)) saving("$figures/Dif-in-Dif_`title'_5ano", replace)	  																									///
-					ysize(4) xsize(4)  																													
+					title("`title', 5{sup:th} grade", size(large) color(black)) 																				///
+					graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 									///
+					plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 											///						
+					legend(order(1 "Placebo" 2 "Extended winter break" 3 "95% CI" ) region(lstyle(none) fcolor(none)) size(medsmall)) 	  																									///
+					ysize(4) xsize(5)  																													
 					graph export "$figures/Dif-in-Dif_`title'5ano.pdf", as(pdf) replace
 			}
 
+					use "$final/Regression Results.dta", clear
+					keep if spec == 2 & (sub == 4 | sub == 5)
+					replace spec = 1 if sub == 4
+					
+					twoway bar beta spec if sub == 4, ml(beta) barw(0.4) color(emidblue) || bar beta spec if sub == 5 , barw(0.4) color(erose) || rcap lower upper spec , lcolor(navy)	///
+					yline(0, lpattern(shortdash) lcolor(cranberry)) 																							///
+					xtitle("", size(medsmall)) 											  																		///
+					ytitle("{&gamma}, %", size(medsmall)) ylabel(-2(2)8, labsize(small) gmax angle(horizontal) format (%4.1fc))  			///					
+				    xlabel(1 `" "Math" "' 2 `" "Portuguese" "', labsize(medsmall) ) 														///
+					xscale(r(0.5 2.5))																															///
+					title("5{sup:th} grade, 95 CI", size(large) color(black)) 																				///
+					graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
+					plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
+					legend(off)	  																									///
+					ysize(4) xsize(4)  																													
+					graph export "$figures/Dif-in-Dif_Insuficiente_5ano.pdf", as(pdf) replace
+	
 					
 					
 					

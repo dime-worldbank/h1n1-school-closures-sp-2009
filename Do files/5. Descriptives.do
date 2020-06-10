@@ -31,7 +31,7 @@ graph set window fontface arial
 						xtitle("")  																																				///
 						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
 						plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-						legend(order(1 "Extended summer break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
+						legend(order(1 "Extended winter break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
 						ysize(5) xsize(5) 																										 									///
 						note("Source: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
 						graph export "$figures/trend_math.pdf", as(pdf) replace
@@ -59,7 +59,7 @@ graph set window fontface arial
 						xtitle("")  																																				///
 						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///
 						plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-						legend(order(1 "Extended summer break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
+						legend(order(1 "Extended winter break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
 						ysize(5) xsize(5) 																																			///
 						note("Source: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
 						graph export "$figures/trend_port.pdf", as(pdf) replace
@@ -84,7 +84,7 @@ graph set window fontface arial
 		clmethod(custom) clbreaks(-1 1 2)																					///
 		fcolor(cranberry*0.8 gs12 ) 																						///
 		legorder(lohi) 																										///
-		legend(order(2 "Extended summer break" 3 "Other municipalities") size(medium)) saving (distance_`distance', replace)
+		legend(order(2 "Extended winter break" 3 "Other municipalities") size(medium)) saving (distance_`distance', replace)
 		graph export "$figures/tratamento_comparacao.pdf", as(pdf) replace
 	
 	
@@ -113,12 +113,12 @@ graph set window fontface arial
 	label 		define municipalites 1 "School" 2 "Enrollments"
 	label 		val    tipo municipalites
 	set scheme s1mono
-	graph pie var1 var0 , by(tipo, graphregion(fcolor(white))) pie(1,  color(gs12)) pie(2, explode color(cranberry*0.7))     							///
+	graph pie var1 var0 , by(tipo, graphregion(fcolor(white))) pie(1,  color(cranberry*0.7)) pie(2, explode color(gs12))     							///
 	graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))  													///
 	plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 												 	///
 	plabel(_all percent, gap(5) format(%12.1fc) size(small)) 																							///
 	title(, pos(12) size(medsmall) color(black)) 																										///
-	legend(order(1 "Extended summer break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(small) position(6)) 	///
+	legend(order(1 "Extended winter break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(small) position(6)) 	///
 	note("Source: School Census, 2009.", color(black) fcolor(background) pos(7) size(small)) 
 	graph export "$figures/students_affected.pdf", as(pdf) replace	 
 		
@@ -141,7 +141,7 @@ graph set window fontface arial
 	graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
 	plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
 	ysize(5) xsize(7) 																																	///
-	fcolor(none) lcolor(black)), legend(order(1 "Extended summer break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(small) position(6)) ///
+	fcolor(none) lcolor(black)), legend(order(1 "Extended winter break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(small) position(6)) ///
 	note("Source: INEP, 2007.", color(black) fcolor(background) pos(7) size(small)) 
 	graph export "$figures/histogram_performance.pdf", as(pdf) replace	
 	
@@ -252,7 +252,7 @@ graph set window fontface arial
 	reshape wide var_, i(infra) j(treated)
 	
 	graph bar (asis) var_1 var_0  , graphregion(color(white)) bar(1, color(emidblue)) bar(2, color(gs12))  bar(3, color(emidblue))   																	///
-	over(infra, sort(infra) relabel(1  `" "Lab." "informática" "'   2 `" "Lab." "Ciências" "'   3 `" "Quadra" "esportes" "'  4 `" "Biblioteca" "'  5 `" "Acesso" "internet" "') label(labsize(small))) 	///
+	over(infra, sort(infra) relabel(1  `" "Computer" "Lab" "'   2 `" "Science" "Lab" "'   3 `" "Sport" "Court" "'  4 `" "Library" "'  5 `" "Internet" "Access" "') label(labsize(small))) 				///
 	graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 																									///
 	plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 																									///
 	blabel(bar, position(outside) orientation(horizontal) size(vsmall)  color(black) format (%12.1fc))   																								///
@@ -260,11 +260,11 @@ graph set window fontface arial
 	yscale(alt) 																																														///
 	ysize(5) xsize(7) 																																													///
 	ytitle("%", size(medsmall) color(black))  																																							///
-	legend(order(1 "Extended summer break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(small) position(6))
+	legend(order(1 "Extended winter break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(small) position(6))	///
 	note("Source: School Census INEP 2009.", color(black) fcolor(background) pos(7) size(vsmall))
 	graph export "$figures/school_infra.pdf", as(pdf) replace	
 
-	
+/*
 	
 	
 *----------------------------------------------------------------------------------------------------------------------------*
@@ -375,7 +375,7 @@ graph set window fontface arial
 	plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) ///
 	plabel(_all percent, gap(5) format(%12.1fc) size(small)) ///
 	title(, pos(12) size(medsmall) color(black)) ///
-	legend(order(1 "Extended summer break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(small) position(6)) ///
+	legend(order(1 "Extended winter break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(small) position(6)) ///
 	note("Fonte: Censo Escolar, 2009.", color(black) fcolor(background) pos(7) size(small)) 
 	graph export "$figures/enrollment_treated.pdf", as(pdf) replace	
 	
