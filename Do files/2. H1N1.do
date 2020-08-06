@@ -21,7 +21,10 @@ replace year = 2007 if REP == 1
 drop 	REP
 
 save "$inter/H1N1.dta",replace
+ 
+su hosp_h1n1 if treated == 1 & year == 2009
 
+su hosp_h1n1 if treated == 0
 
 	twoway (histogram hosp  if  treated == 0,  fcolor(emidblue) lcolor(black) percent) 										///
 	       (histogram hosp  if  treated == 1,  percent    																	///
@@ -34,3 +37,26 @@ save "$inter/H1N1.dta",replace
 	fcolor(none) lcolor(black)), legend(order(1 "Não adiaram o retorno às aulas" 2 "Adiaram") region(lwidth(none))) 		///
 	note("", color(black) fcolor(background) pos(7) size(small)) 
 	*graph export "$figures/histogram_performance.pdf", as(pdf) replace	
+	
+	
+	
+	use "$geocodes/mun_brasil.dta", clear
+	gen codmunic2 = substr(string(codmunic),1, 6)
+	destring codmunic2, replace
+	keep if coduf == 35
+	gen treated = 0
+	foreach munic in $treated_municipalities {
+		replace treated = 1 if codmunic == `munic'
+	}
+	rename id _ID
+	gen year = 2009
+	
+
+	merge 1:1 codmunic2 year using "$inter/H1N1.dta", nogen 
+	
+	
+
+		spmap hosp_h1n1 using "$geocodes/mun_coord.dta", id(_ID) 																///
+		clmethod(custom) clbreaks(-1 0.14 0.38 1)																					///
+		fcolor(gs12 gs8 cranberry) 																						///
+		legorder(lohi) 																										///

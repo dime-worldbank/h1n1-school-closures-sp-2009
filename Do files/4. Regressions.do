@@ -2,10 +2,11 @@
 												*ESTIMATIVA DO EFEITO DO ADIAMENTO DO RETORNO ÀS AULAS EM DECORRÊNCIA DO H1N1*
 																  **ESCOLAS MUNICIPAIS DE SÃO PAULO**
 
-global final   "C:\Users\wb495845\OneDrive - WBG\Desktop"
-global results "C:\Users\wb495845\OneDrive - WBG\Desktop"
-global inter   "C:\Users\wb495845\OneDrive - WBG\Desktop"
-																  
+*global final   "C:\Users\wb495845\OneDrive - WBG\Desktop"
+*global results "C:\Users\wb495845\OneDrive - WBG\Desktop"
+*global inter   "C:\Users\wb495845\OneDrive - WBG\Desktop"
+
+															  
 *Author: Vivian Amorim
 *vivianamorim5@gmail.com
 
@@ -13,7 +14,7 @@ set scheme economist
 set seed 1
 
 
-*Program to store results
+*Program to store results -> We do that because we show the results in figures
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	estimates clear
@@ -26,12 +27,12 @@ set seed 1
 		
 		*Coeficient
 		matrix A   = r(table) 	
-		local beta = A[1,1]																//coeficiente do tratamento
+		local beta = A[1,1]																					//Average treatment effect on the treated - ATT
 
 		*CI
-		boottest `var',  reps(1000)  boottype(wild)  seed(1) level(95) 					//intervalo de confiança para nossa estimativa
+		boottest `var',  reps(1000)  boottype(wild)  seed(1) level(95) 	bootcluster(codmunic) quietly		//Confidence interval
 		matrix A = r(CI)
-		matrix results = results \ (`model', `sub', `beta', A[1,1], A[1,2], 0)			//modelo testado, disciplina, coeficiente do tratamento, lower bound, upper bound + 0 (só porque precisamos de uma coluna a mais para salvar o quantil - quando fazemos a regressão por quantil)
+		matrix results = results \ (`model', `sub', `beta', A[1,1], A[1,2], 0)								//Model tested, subject, ATT, lower bound, upper bound. 
 	
 	end
 
@@ -39,30 +40,30 @@ set seed 1
 *Regressions
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		foreach subject in port_insuf_  {
-		
+		foreach subject in math { //  port sp math_insuf_ port_insuf_
+		 
 			if "`subject'" == "port" | "`subject'" == "padr_port" {
-				local sub = 1
+				local sub = 1					//subject = 1, Portuguese
 				local title = "Português"
 			}
 			
 			if "`subject'" == "math" | "`subject'" == "padr_math" {
-				local sub = 2
+				local sub = 2					//subject = 2, Math
 				local title = "Matemática"
 			}
 			
 			if "`subject'" == "sp"  {
-				local sub = 3
+				local sub = 3					//subject = 3, Standardized score, Portuguese and Math
 				local title = "Português e Matemática"
 			}
 			
 			if "`subject'" == "math_insuf_"  {
-				local sub = 4
+				local sub = 4					//subject = 4, % of students below the adequate level in Math
 				local title = "% desempenho insuficiente em Matemática"
 			}
 						
 			if "`subject'" == "port_insuf_"  {
-				local sub = 5
+				local sub = 5					//subject = 5, % of students below the adequate level in Portuguese
 				local title = "% desempenho insuficiente em Português"
 			}
 						
@@ -74,16 +75,12 @@ set seed 1
 				use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
 				gen t = (year > 2007)
 				keep if year == 2005 | year == 2007 | year == 2009
-				drop if codmunic == 3509502 | codmunic == 3520509 | codmunic == 3548807 //municipios sem prova brasil em 2005
-				
-				sort codschool year
+				drop if codmunic == 3509502 | codmunic == 3520509 | codmunic == 3548807 				//municipalities without 5th grade scores in 2005
+				sort 	codschool year
 				replace enrollment5 = enrollment5[_n+1] if year[_n] == 2005 & year[_n+1] == 2007 & codschool[_n] == codschool[_n+1]
 					
-				*Foi preciso separar a seleção dos controles porque nem todas as variáveis disponíveis em 2007 e 2009 estão disponíveis em 2005
-				*--------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-
 					*A.1*
-					*Lasso para seleção dos controles - 2005 e 2007 
+					*Lasso to select controls - 2005 e 2007 
 					*----------------------------------------------------------------------------------------------------------------------------------------------------------------*
 					global controls2005 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	   ///
 					c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5
@@ -92,7 +89,7 @@ set seed 1
 					global controls2005  `e(allvars_sel)'
 				
 					*A.2*
-					*Lasso para seleção dos controles - 2007 e 2009
+					*Lasso to select controls - 2007 e 2009
 					*----------------------------------------------------------------------------------------------------------------------------------------------------------------*
 					global controls2007 c.mother_edu_5##c.mother_edu_5 c.ndropout_5##c.ndropout_5 c.nrepetition_5##c.nrepetition_5 c.computer_5##c.computer_5	///
 					c.pib_pcap##c.pib_pcap c.approval5##c.approval5  c.studentwork_5##c.studentwork_5 						   									///
@@ -101,48 +98,88 @@ set seed 1
 					c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour5##c.classhour5 c.tclass5##c.tclass5 									///
 					c.SIncentive1_5##c.SIncentive1_5 c.SIncentive2_5##c.SIncentive2_5 c.SIncentive3_5##c.SIncentive3_5	 										///
 					c.SIncentive4_5##c.SIncentive4_5 c.SIncentive5_5##c.SIncentive5_5 c.SIncentive6_5##c.SIncentive6_5 										
-				
+
 					lasso linear `subject'5 $controls2007 if year >= 2007, rseed(1)		
 					global controls2007  `e(allvars_sel)'
-
-					*Peso das regressões
+					
+					/*
+					global controls2007 mother_edu_5 c.mother_edu_5#c.mother_edu_5 ndropout_5 c.ndropout_5#c.ndropout_5 nrepetition_5 c.nrepetition_5#c.nrepetition_5 		///
+					computer_5 c.computer_5#c.computer_5 pib_pcap c.pib_pcap#c.pib_pcap approval5 c.approval5#c.approval5	studentwork_5 c.studentwork_5#c.studentwork_5 	///
+					white_5 c.white_5#c.white_5 female_5 c.female_5#c.female_5 privateschool_5 c.privateschool_5#c.privateschool_5 	c.livesmother_5#c.livesmother_5			///
+					ComputerLab c.ScienceLab#c.ScienceLab c.Library#c.Library c.InternetAccess#c.InternetAccess classhour5 c.classhour5#c.classhour5 						///
+					tclass5 c.tclass5#c.tclass5 c.SIncentive1_5#c.SIncentive1_5 c.SIncentive2_5#c.SIncentive2_5 c.SIncentive3_5#c.SIncentive3_5 SIncentive4_5 SIncentive5_5 ///
+					c.SIncentive5_5#c.SIncentive5_5 c.SIncentive6_5#c.SIncentive6_5
+					*/
+					
+					*A.3*
 					*----------------------------------------------------------------------------------------------------------------------------------------------------------------*
-					local weight enrollment5
-
+					local weight enrollment5		//5th grade enrollment as weight 
 					
 						*2007 versus 2005
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							eststo: reg `subject'5 T2007 		  i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
+							eststo: 	   reg `subject'5 T2007 		  								 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
 							mat_res, model(1) sub(`sub') var(T2007)		
 							*ritest treated _b[T2007], seed(1) reps(1000) cluster(codmunic): reg `subject'5 T2007 i.treated i.codmunic i.year $controls2005 if year >= 2005 & year <= 2007, cluster(codmunic)
 							*matrix ri = ri\[1, `sub', el(r(p),1,1)] 		//erro padrão com RI
-							
+						
 						*2009 versus 2005/2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							eststo: reg `subject'5 T2007 T2009 	  i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
-					
-					
+							eststo:		   reg `subject'5 T2007 T2009 	  								 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
+							keep if e(sample) == 1
+
 						*2009 versus 2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-						keep if e(sample) == 1
-							eststo: reg `subject'5 	     T2009	  i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
-							mat_res, model(2) sub(`sub') var(T2009)	
-							*ritest treated _b[T2009], seed(1) reps(1000) cluster(codmunic): reg `subject'5 T2009 i.treated i.codmunic i.year $controls2007 if year >= 2007 & year <= 2009, cluster(codmunic)
-							*matrix ri = ri\[2, `sub', el(r(p),1,1)] 	
-								
-								
-							/*
-							*Efeito por quintil
-							*--------------------------------------------------------------------------------------------------------------------------------------------------------*
-							if "`subject'" == "port" | "`subject'" == "math" {
-								foreach quantile in 20 40 50 60 80 {
-									cic continuous `subject'5 treated t $controls2007 i.codmunic 				if year >= 2007 & year <= 2009  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
-									matrix A = r(table)
-									matrix results = results \ (3, `sub', A[1, colsof(A)-2], A[5,colsof(A)-2], A[6,colsof(A)-2], `quantile')	 		 	 
-								}
+							eststo:		   reg `subject'5 	     T2009	  								 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+							mat_res, model(2) sub(`sub') var(T2009)		
+			
+						*Interacting treatment and class size
+						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
+							eststo class5: reg `subject'5 T2009	 T2009_tclass  							 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+							
+							scalar beta = el(r(table), 1, 2)
+							count if e(sample) == 1
+							scalar obs  = r(N)
+							
+							eststo class5: reg `subject'5 T2009	 T2009_tclass  							 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+							boottest T2009_tclass, reps(1000)  boottype(wild)  seed(1) level(95) bootcluster(codmunic) quietly
+							scalar lowerbound = el(r(CI),1,1)	
+							scalar upperbound = el(r(CI),1,2)	
+							scalar sd 	 	  = ((beta - lowerbound)*sqrt(obs))/1.96
+
+						    estadd scalar lowerbound = lowerbound : class5
+						    estadd scalar upperbound = upperbound : class5
+						    estadd scalar sd		 = sd		  : class5
+	
+							
+						*Interacting treatment and class hours per day
+						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
+							eststo hours5: reg `subject'5 T2009    T2009_hours  						 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+
+							scalar beta = el(r(table), 1, 2)
+							count if e(sample) == 1
+							scalar obs  = r(N)
+							
+							eststo class5: reg `subject'5 T2009	 T2009_hours  							 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+							boottest T2009_hours, reps(1000)  boottype(wild)  seed(1) level(95) bootcluster(codmunic) quietly
+							scalar lowerbound = el(r(CI),1,1)	
+							scalar upperbound = el(r(CI),1,2)	
+							scalar sd 	 	  = ((beta - lowerbound)*sqrt(obs))/1.96
+
+						    estadd scalar lowerbound = lowerbound : hours5
+						    estadd scalar upperbound = upperbound : hours5
+						    estadd scalar sd		 = sd		  : hours5
+
+						/*
+						*CIC
+						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
+						if "`subject'" == "port" | "`subject'" == "math" {
+							foreach quantile in 10 20 30 40 50 60 70 80 90 { 
+								cic continuous `subject'5 treated t $controls2007 i.codmunic if year >= 2007 & year <= 2009  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
+								matrix A = r(table)
+								matrix results = results \ (3, `sub', A[1, colsof(A)-2], A[5,colsof(A)-2], A[6,colsof(A)-2], `quantile')	 		 	 
 							}
-							*/
-							}
+						}
+						*/
 						
 						*Parallel trends
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -163,11 +200,22 @@ set seed 1
 						legend(order(1 "Não adiaram o retorno às aulas" 2 "Adiaram") size(small) region(lwidth(none))) 						 ///
 						ysize(6) xsize(7) 																									 ///
 						note("Fonte: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
-						*/
+						
 		}
-	estout * using "$results/Regressions.csv", delimiter(";") label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N r2) mlabels() replace
-
-
+	estout * using "$results/Regressions.csv", delimiter(";") keep(T20*) label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N r2 class5 hours5) replace
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+/*
 *Results			
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -176,7 +224,7 @@ set seed 1
 	drop  in 1
 	rename (results1-results6) (spec sub  beta lower upper quantile)	
 	label define sub   1 "Português"  2 "Matemática" 3 "Português e matemática" 4 "Insuficiente em matemática" 5 "Insuficiente em Português"
-	label define spec  1 "2007 comparado com 2005" 2 "2009 comparado com 2007"  3 "Quantile" 
+	label define spec  1 "2007 comparado com 2005" 2 "2009 comparado com 2007"  3 "Quantile"
 	label define quantile 0 "Total" 20 "1o quintil" 40 "2o quintil" 60 "3o quintil" 4 "4o quintil" 
 	label val sub sub
 	label val spec    spec
@@ -185,43 +233,117 @@ set seed 1
 	label var upper  "Upper bound"
 	format beta lower upper %4.2fc
 	save "$final/Regression Results.dta", replace
-	
 
-	
+/*
 *Gráficos
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	
-	
+	**
 	*Português e Matemática
 	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	use "$final/Regression Results.dta", clear
 		drop if spec == 3 | sub == 3 | sub == 4 | sub == 5 //quantile
-		
 		gen spec1 = spec
 		replace spec1 = 3 if spec == 1 & sub == 2
-		replace spec1 = 4 if spec == 2 & sub == 2		
+		replace spec1 = 4 if spec == 2 & sub == 2
+		
+			foreach language in port english {
+
+				if "`language'" == "english" {
+					local ytitle = "SAEB scale" 
+					local legend = "Extended winter break"
+					local port = "Portuguese"
+					local math = "Math"
+					local both = "Portuguese & Math"
+					local note = "Source: Author's estimate." 
+				}
+				
+				if "`language'" == "port" {
+					local ytitle = "Escala SAEB" 
+					local legend = "Adiamento das aulas"
+					local port   = "Português"
+					local math   = "Matemática"
+					local note   = "Fonte: Estimativa dos autores." 
+				}				
 			
 					twoway    bar beta spec1 if spec1 == 1, ml(beta) barw(0.4) color(cranberry) || bar beta spec1 if spec1 == 2, barw(0.4) color(emidblue) || rcap lower upper spec1, lcolor(navy)	///
 						   || bar beta spec1 if spec1 == 3, ml(beta) barw(0.4) color(cranberry) || bar beta spec1 if spec1 == 4, barw(0.4) color(emidblue) || rcap lower upper spec1, lcolor(navy)	///
 					yline(0, lpattern(shortdash) lcolor(cranberry)) 																																///
 					xline(2.5, lpattern(shortdash) lcolor(navy)) 																																	///
 					xtitle("", size(medsmall)) 											  																											///
-					ytitle("{&gamma}, escala SAEB", size(small)) ylabel(-8(2)4, labsize(small) gmax angle(horizontal) format (%4.1fc))  															///					
+					ytitle("{&gamma}, `ytitle'", size(small)) ylabel(-8(2)4, labsize(small) gmax angle(horizontal) format (%4.1fc))  																///					
 				    xlabel(1 `" "2007" "versus 2005" "' 2 `" "2009" "versus 2007" "' 3 `" "2007" "versus 2005" "' 4 `" "2009" "versus 2007" "', labsize(small) ) 									///
 					xscale(r(0.5 2.5)) 																																								///
 					title(, size(medsmall) color(black)) 																																			///
-					legend(order(1 "Placebo" 2 "Adiamento das aulas" 3 "95% CI" ) region(lstyle(none) fcolor(none)) size(medsmall))  																///
-					text(3.5 1.5 "Português") 																																						///
-					text(3.5 3.5 "Matemática") 																																						///
-					ysize(4) xsize(4)  																													
-					graph export "$figures/Dif-in-Dif_5ano.pdf", as(pdf) replace
-					
+					graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 																		///
+					plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 																				///						
+					legend(order(1 "Placebo" 2 "`legend'" 3 "95% CI" ) region(lstyle(none) fcolor(none)) size(medsmall))  																			///
+					text(3.5 1.5 "`port'") 																																							///
+					text(3.5 3.5 "`math'") 																																							///
+					ysize(4) xsize(4)  ///
+					note("`note'", color(black) fcolor(background) pos(7) size(small)) 
+					graph export "$figures/Dif-in-Dif_5ano_`language'.pdf", as(pdf) replace
+			}		
+		
+		/*
+	**	
+	*Efeitos em termos de desvio padrao	
+	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+	keep if year == 2007
+	drop if codmunic == 3509502 | codmunic == 3520509 | codmunic == 3548807 //municipios sem prova brasil em 2005
 	
-	*Português, Matemática e Nota Padronizada, separadamente
+	foreach var of varlist sp5 math5 port5 {
+		su `var', detail
+		local sd_`var'  = r(sd)
+	}
+
+	matrix A =  [3, `sd_sp5' \ 2, `sd_math5' \ 1, `sd_port5']
+	clear
+	svmat A
+	rename (A1-A2) (sub sd)
+	tempfile sd
+	save `sd' 
+	
+	use "$final/Regression Results.dta", clear
+	merge m:1 sub using `sd', nogen
+	foreach var of varlist beta lower upper {
+		replace `var' = `var'/sd
+	}
+	keep if (sub == 1 | sub == 2 | sub == 3) & (spec == 1 | spec == 2)
+			
+	gen 	spec1 = spec
+	replace spec1 = 3 if spec == 1 & sub == 1
+	replace spec1 = 4 if spec == 2 & sub == 1	
+	replace spec1 = 5 if spec == 1 & sub == 2
+	replace spec1 = 6 if spec == 2 & sub == 2	
+	set scheme s1mono
+		
+		twoway 	   bar beta spec1 if spec1 == 1, ml(beta) barw(0.4) color(cranberry) || bar beta spec1 if spec1 == 2, barw(0.4) color(emidblue) || rcap lower upper spec1, lcolor(navy)	lwidth(thick) ///
+				|| bar beta spec1 if spec1 == 3, ml(beta) barw(0.4) color(cranberry) || bar beta spec1 if spec1 == 4, barw(0.4) color(emidblue) || rcap lower upper spec1, lcolor(navy)	lwidth(thick) ///
+				|| bar beta spec1 if spec1 == 5, ml(beta) barw(0.4) color(cranberry) || bar beta spec1 if spec1 == 6, barw(0.4) color(emidblue) || rcap lower upper spec1, lcolor(navy)	lwidth(thick) ///
+				yline(0, lpattern(shortdash) lcolor(cranberry)) 																																///
+				xline(2.5, lpattern(shortdash) lcolor(navy)) 																																	///
+				xline(4.5, lpattern(shortdash) lcolor(navy)) 																																	///
+				xtitle("", size(medsmall)) 											  																											///
+				ytitle("{&gamma}, in standard deviation", size(small)) ylabel(-0.4(0.1)0.2, labsize(small) gmax angle(horizontal) format (%4.1fc))  														///					
+				xlabel(1 `" "2007" "versus 2005" "' 2 `" "2009" "versus 2007" "' 3 `" "2007" "versus 2005" "' 4 `" "2009" "versus 2007" "' 5 `" "2007" "versus 2005" "' 6 `" "2009" "versus 2007" "', labsize(small) ) 									///
+				title(, size(medsmall) color(black)) 																																			///
+				graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 																		///
+				plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 																				///						
+				legend(order(1 "Robustness" 2 "Extended winter break" 3 "95% CI" ) cols(3) region(lstyle(none) fcolor(none)) size(medsmall))  													///
+				text(0.2 1.6 "Portuguese & Math") 																																				///
+				text(0.2 3.5 "Portuguese") 																																						///
+				text(0.2 5.5 "Math") 																																							///
+				ysize(4) xsize(6)  ///
+				note("", color(black) fcolor(background) pos(7) size(small)) 
+				graph export "$figures/Dif-in-Dif_5ano_all subjects.pdf", as(pdf) replace
+	
+	**
+	*Português, Matemática e Nota Padronizada, separadamente e por quintil
 	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 		use "$final/Regression Results.dta", clear
-		set scheme economist
 		drop if quantile == 0 & spec == 3
 		replace spec = 4 if spec == 3 & quantile == 40
 		replace spec = 5 if spec == 3 & quantile == 60
@@ -274,40 +396,11 @@ set seed 1
 					title("`title', 5{sup:th} grade", size(large) color(black)) 																				///
 					graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 									///
 					plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 											///						
-					legend(order(1 "Placebo" 2 "Extended winter break" 3 "95% CI" ) region(lstyle(none) fcolor(none)) size(medsmall)) 	  																									///
+					legend(order(1 "Robustness" 2 "Extended winter break" 3 "95% CI" ) region(lstyle(none) fcolor(none)) size(medsmall)) 	  																									///
 					ysize(4) xsize(5)  																													
 					graph export "$figures/Dif-in-Dif_`title'5ano.pdf", as(pdf) replace
 			}
+					
 
-					use "$final/Regression Results.dta", clear
-					keep if spec == 2 & (sub == 4 | sub == 5)
-					replace spec = 1 if sub == 4
-					
-					twoway bar beta spec if sub == 4, ml(beta) barw(0.4) color(emidblue) || bar beta spec if sub == 5 , barw(0.4) color(erose) || rcap lower upper spec , lcolor(navy)	///
-					yline(0, lpattern(shortdash) lcolor(cranberry)) 																							///
-					xtitle("", size(medsmall)) 											  																		///
-					ytitle("{&gamma}, %", size(medsmall)) ylabel(-2(2)8, labsize(small) gmax angle(horizontal) format (%4.1fc))  			///					
-				    xlabel(1 `" "Math" "' 2 `" "Portuguese" "', labsize(medsmall) ) 														///
-					xscale(r(0.5 2.5))																															///
-					title("5{sup:th} grade, 95 CI", size(large) color(black)) 																				///
-					graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
-					plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-					legend(off)	  																									///
-					ysize(4) xsize(4)  																													
-					graph export "$figures/Dif-in-Dif_Insuficiente_5ano.pdf", as(pdf) replace
-	
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
 					
 					

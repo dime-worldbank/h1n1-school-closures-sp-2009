@@ -25,7 +25,9 @@
    `r(version)'                        //This line is needed to actually set the version from the command above
 
    
-   set matsize 11000
+    set matsize 11000
+	set scheme economist 
+	graph set window fontface arial
 
    * PART 1:  PREPARING FOLDER PATH GLOBALS
   
@@ -41,12 +43,13 @@
    * ---------------------
    if $user == 1 {
        global projectfolder 	"/Users/vivianamorim/OneDrive/World Bank/Education/SP_H1N1 & School Closure"
+	   global dofiles			"/Users/vivianamorim/Documents/GitHub/h1n1-school-closures-sp-2009/Do files"
 	   
 	   *If you want access to Education Data folder, please ask
 	   global educationdata		"/Users/vivianamorim/OneDrive/Data Analysis"
 	   global ideb         		"$educationdata/IDEB/DataWork/Datasets/3. Final"
 	   global provabrasil       "$educationdata/Prova Brasil/DataWork/Datasets/3. Final"
-	   global censoescolar      "$educationdata/Censo Escolar/DataWork/Datasets/3. Final"
+	   global censoescolar      "$educationdata/Censo Escolar/DataWork/Datasets/3. Final" 
 	   global rendimento        "$educationdata/Rendimento/DataWork/Datasets/3. Final" 
 	   global fnde        		"$educationdata/Gasto_FNDE/DataWork/Datasets/3. Final" 
    }
@@ -60,7 +63,6 @@
    global datawork         	"$projectfolder/DataWork"
    global output           	"$datawork/Output"
    global datasets         	"$datawork/Datasets"
-   global dofiles          	"$datawork/Do files"
    global raw	           	"$datasets/1. Raw"
    global inter				"$datasets/2. Intermediate"
    global final            	"$datasets/3. Final" 

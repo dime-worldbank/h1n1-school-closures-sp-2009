@@ -1,6 +1,4 @@
 
-set scheme economist 
-graph set window fontface arial
 
 
 *----------------------------------------------------------------------------------------------------------------------------*
@@ -14,7 +12,25 @@ graph set window fontface arial
 		gen 	contrafactual = math5 + 4 if treated == 1 & year == 2009
 		replace contrafactual = math5     if treated == 1 & year == 2007
 
+			foreach language in english port {
 
+				if "`language'" == "english" {
+					local ytitle  = "Test score, SAEB scale" 
+					local legend1 = "Extended winter break"
+					local legend2 = "Other municipalities"
+					local title   = "Math, 5{sup:th} grade"
+					local note    = "Source: Prova Brasil." 
+				}
+				
+				
+				if "`language'" == "port" {
+					local ytitle  = "Proficiência, Escala SAEB" 
+					local legend1 = "Adiamento das aulas"
+					local legend2 = "Outros municípios"
+					local title   = "Matemática, 5{sup:o} ano"
+					local note    = "Fonte: Prova Brasil." 
+				}
+					
 						tw 	///
 						(line math5 year if treated == 1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 												///  
 						ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
@@ -26,16 +42,21 @@ graph set window fontface arial
 						yscale( alt )  																																				///
 						xscale(r(2005(2)2009)) 																																		///
 						yscale(r(170(10)220)) 																																		///
-						ytitle("Test score", size(small)) 																					 										///
-						title("Math, 5{sup:th} grade", pos(12) size(medium) color(black))													 										///
+						ytitle("`ytitle'", size(small)) 																					 										///
+						title("", pos(12) size(medium) color(black))													 														///
 						xtitle("")  																																				///
+						xlabel(2005(2)2009, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
 						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
 						plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-						legend(order(1 "Extended winter break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
+						legend(order(1 "`legend1'"  2 "`legend2'"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 									///
 						ysize(5) xsize(5) 																										 									///
-						note("Source: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
-						graph export "$figures/trend_math.pdf", as(pdf) replace
-
+						note("`note'", color(black) fcolor(background) pos(7) size(small)))  
+						*graph export "$figures/trend_math.pdf", as(pdf) replace
+						graph export "$figures/trend_math_`language'.pdf", as(png) replace
+					
+			}
+		 
+		 
 	*Port
 	*------------------------------------------------------------------------------------------------------------------------*
 		use "$inter/trend_port.dta", clear
@@ -43,6 +64,8 @@ graph set window fontface arial
 		replace contrafactual = port5 	  if treated == 1 & year == 2007
 
 
+		
+		
 						tw 	///
 						(line port5 year if treated == 1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 		 											///  
 						ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
@@ -54,15 +77,16 @@ graph set window fontface arial
 						yscale( alt )  																																				///
 						xscale(r(2005(2)2009)) 																																		///
 						yscale(r(170(10)200)) 																																		///
-						ytitle("Test score", size(small)) 																					 										///
-						title("Portuguese, 5{sup:th} grade", pos(12) size(medium) color(black))																						///
+						ytitle("Test score, SAEB scale", size(small)) 																					 										///
+						xlabel(2005(2)2009, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
+						title("", pos(12) size(medium) color(black))																						///
 						xtitle("")  																																				///
 						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///
 						plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
 						legend(order(1 "Extended winter break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
 						ysize(5) xsize(5) 																																			///
 						note("Source: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
-						graph export "$figures/trend_port.pdf", as(pdf) replace
+						graph export "$figures/trend_port_english.pdf", as(png) replace
 						
 						
 
@@ -85,8 +109,18 @@ graph set window fontface arial
 		fcolor(cranberry*0.8 gs12 ) 																						///
 		legorder(lohi) 																										///
 		legend(order(2 "Extended winter break" 3 "Other municipalities") size(medium)) saving (distance_`distance', replace)
-		graph export "$figures/tratamento_comparacao.pdf", as(pdf) replace
-	
+		*graph export "$figures/tratamento_comparacao_englisg.pdf", as(pdf) replace
+		graph export "$figures/tratamento_comparacao_english.png", as(png) replace
+		
+		spmap  grupo using "$geocodes/mun_coord.dta", id(_ID) 																///
+		clmethod(custom) clbreaks(-1 1 2)																					///
+		fcolor(cranberry*0.8 gs12 ) 																						///
+		legorder(lohi) 																										///
+		legend(order(2 "Adiamento das aulas" 3 "Outros municípios") size(medium)) saving (distance_`distance', replace)
+		*graph export "$figures/tratamento_comparacao.pdf", as(pdf) replace
+		graph export "$figures/tratamento_comparacao_port.png", as(png) replace
+		
+		
 	
 *----------------------------------------------------------------------------------------------------------------------------*
 
@@ -264,9 +298,51 @@ graph set window fontface arial
 	note("Source: School Census INEP 2009.", color(black) fcolor(background) pos(7) size(vsmall))
 	graph export "$figures/school_infra.pdf", as(pdf) replace	
 
+	
+*----------------------------------------------------------------------------------------------------------------------------*
+
+*Rede de São Paulo
+*----------------------------------------------------------------------------------------------------------------------------*
+		use 	"$inter/Enrollments at school level.dta", clear
+		gen treated = 0
+			foreach munic in $treated_municipalities {
+			replace treated = 1 if codmunic == `munic'
+		}
+	
+		codebook codschool   if year == 2009 & (treated == 1 | network == 2) & (school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1) //escolas que fecharam
+		codebook codschool   if year == 2009 & (network == 3 | network == 2) & (school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1) //total de escolas
+		
+		
+		gen 	affected = 	    year == 2009 & (treated == 1 | network == 2) & (school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1)
+		replace affected = . if year != 2009
+		egen 	mat = rowtotal(enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEM)
+		total 	mat, over(affected)			//number of students affected
+		
+
+		codebook codschool if year == 2009 & (network == 2 | network == 1 | network == 3 ) & (school_EF1 == 1)	//numero de escolas do EF1 
+		codebook codschool if year == 2009 & (network == 2 								 ) & (school_EF1 == 1)  //escolas estaduais
+		codebook codschool if year == 2009 & (								network == 3 ) & (school_EF1 == 1)  //escolas municipais
+		codebook codschool if year == 2009 & (				 network == 1				 ) & (school_EF1 == 1)
+	
+		total 	enrollmentEF1 if year == 2009 & network == 2	//matrículas do EF1 em escolas estaduais
+		total 	enrollmentEF1 if year == 2009 & network == 3	//matrículas do EF1 em escolas estaduais
+		
+		codebook codschool 			if year == 2009 & (treated == 1) & !missing(enrollment5grade) & enrollment5grade != 0 & network == 3 //escolas municipais
+		total 	 enrollment5grade   if year == 2009 & (treated == 1) & network == 3  
+
+		
+*----------------------------------------------------------------------------------------------------------------------------*
+
+*Balance test
+*----------------------------------------------------------------------------------------------------------------------------*
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+	keep if year == 2009 & !missing(math5)
+	egen tag_mun = tag(codmunic) 
+	replace pop = . if tag_mun!= 1
+	iebaltab math5 port5 repetition5 dropout5 approval5 SIncentive2_5 SIncentive3_5 SIncentive4_5 SIncentive5_5 white_5 livesmother_5 computer_5 mother_edu_5 preschool_5 repetition_5 dropout_5 studentwork_5 ComputerLab ScienceLab Library InternetAccess SportCourt enrollment5 classhour5 tclass5 pop pib_pcap, format(%12.2fc) grpvar(treated) savetex("$descriptives/Balance") rowvarlabels replace 
+
+		
 /*
-	
-	
 *----------------------------------------------------------------------------------------------------------------------------*
 
 *Size of affected municipalities		
