@@ -33,6 +33,14 @@ set seed 1
 		boottest `var',  reps(1000)  boottype(wild)  seed(1) level(95) 	bootcluster(codmunic) quietly		//Confidence interval
 		matrix A = r(CI)
 		matrix results = results \ (`model', `sub', `beta', A[1,1], A[1,2], 0)								//Model tested, subject, ATT, lower bound, upper bound. 
+		
+		scalar pvalue 	= r(p)
+		scalar lowerb 	= el(r(CI),1,1)
+		scalar upperb 	= el(r(CI),1,2)
+		
+		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar pvalue = pvalue: model`model'`sub'
+		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar lowerb = lowerb: model`model'`sub'
+		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar upperb = upperb: model`model'`sub'
 	
 	end
 
@@ -40,7 +48,7 @@ set seed 1
 *Regressions
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		foreach subject in math { //  port sp math_insuf_ port_insuf_
+		foreach subject in sp math math_insuf_ port port_insuf_ { 
 		 
 			if "`subject'" == "port" | "`subject'" == "padr_port" {
 				local sub = 1					//subject = 1, Portuguese
@@ -85,8 +93,8 @@ set seed 1
 					global controls2005 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	   ///
 					c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5
 
-					lasso linear `subject'5 $controls2005 if year <= 2007, rseed(1)						
-					global controls2005  `e(allvars_sel)'
+					*lasso linear `subject'5 $controls2005 if year <= 2007, rseed(1)						
+					*global controls2005  `e(allvars_sel)'
 				
 					*A.2*
 					*Lasso to select controls - 2007 e 2009
@@ -99,17 +107,16 @@ set seed 1
 					c.SIncentive1_5##c.SIncentive1_5 c.SIncentive2_5##c.SIncentive2_5 c.SIncentive3_5##c.SIncentive3_5	 										///
 					c.SIncentive4_5##c.SIncentive4_5 c.SIncentive5_5##c.SIncentive5_5 c.SIncentive6_5##c.SIncentive6_5 										
 
-					lasso linear `subject'5 $controls2007 if year >= 2007, rseed(1)		
-					global controls2007  `e(allvars_sel)'
+					*lasso linear `subject'5 $controls2007 if year >= 2007, rseed(1)		
+					*global controls2007  `e(allvars_sel)'
 					
-					/*
 					global controls2007 mother_edu_5 c.mother_edu_5#c.mother_edu_5 ndropout_5 c.ndropout_5#c.ndropout_5 nrepetition_5 c.nrepetition_5#c.nrepetition_5 		///
 					computer_5 c.computer_5#c.computer_5 pib_pcap c.pib_pcap#c.pib_pcap approval5 c.approval5#c.approval5	studentwork_5 c.studentwork_5#c.studentwork_5 	///
 					white_5 c.white_5#c.white_5 female_5 c.female_5#c.female_5 privateschool_5 c.privateschool_5#c.privateschool_5 	c.livesmother_5#c.livesmother_5			///
 					ComputerLab c.ScienceLab#c.ScienceLab c.Library#c.Library c.InternetAccess#c.InternetAccess classhour5 c.classhour5#c.classhour5 						///
 					tclass5 c.tclass5#c.tclass5 c.SIncentive1_5#c.SIncentive1_5 c.SIncentive2_5#c.SIncentive2_5 c.SIncentive3_5#c.SIncentive3_5 SIncentive4_5 SIncentive5_5 ///
 					c.SIncentive5_5#c.SIncentive5_5 c.SIncentive6_5#c.SIncentive6_5
-					*/
+					
 					
 					*A.3*
 					*----------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -117,69 +124,34 @@ set seed 1
 					
 						*2007 versus 2005
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							eststo: 	   reg `subject'5 T2007 		  								 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
+							reg `subject'5 T2007 		  								 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
+							if `sub' != 4 & `sub' != 5 eststo model1`sub', title("I")
 							mat_res, model(1) sub(`sub') var(T2007)		
 							*ritest treated _b[T2007], seed(1) reps(1000) cluster(codmunic): reg `subject'5 T2007 i.treated i.codmunic i.year $controls2005 if year >= 2005 & year <= 2007, cluster(codmunic)
 							*matrix ri = ri\[1, `sub', el(r(p),1,1)] 		//erro padrão com RI
 						
 						*2009 versus 2005/2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							eststo:		   reg `subject'5 T2007 T2009 	  								 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
+							reg `subject'5 T2007 T2009 	  							 	 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
 							keep if e(sample) == 1
 
 						*2009 versus 2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							eststo:		   reg `subject'5 	     T2009	  								 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+							reg `subject'5 	    T2009	  								 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+							eststo model2`sub', title("II")  
 							mat_res, model(2) sub(`sub') var(T2009)		
-			
-						*Interacting treatment and class size
-						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							eststo class5: reg `subject'5 T2009	 T2009_tclass  							 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
-							
-							scalar beta = el(r(table), 1, 2)
-							count if e(sample) == 1
-							scalar obs  = r(N)
-							
-							eststo class5: reg `subject'5 T2009	 T2009_tclass  							 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
-							boottest T2009_tclass, reps(1000)  boottype(wild)  seed(1) level(95) bootcluster(codmunic) quietly
-							scalar lowerbound = el(r(CI),1,1)	
-							scalar upperbound = el(r(CI),1,2)	
-							scalar sd 	 	  = ((beta - lowerbound)*sqrt(obs))/1.96
 
-						    estadd scalar lowerbound = lowerbound : class5
-						    estadd scalar upperbound = upperbound : class5
-						    estadd scalar sd		 = sd		  : class5
-	
-							
-						*Interacting treatment and class hours per day
-						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							eststo hours5: reg `subject'5 T2009    T2009_hours  						 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
-
-							scalar beta = el(r(table), 1, 2)
-							count if e(sample) == 1
-							scalar obs  = r(N)
-							
-							eststo class5: reg `subject'5 T2009	 T2009_hours  							 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
-							boottest T2009_hours, reps(1000)  boottype(wild)  seed(1) level(95) bootcluster(codmunic) quietly
-							scalar lowerbound = el(r(CI),1,1)	
-							scalar upperbound = el(r(CI),1,2)	
-							scalar sd 	 	  = ((beta - lowerbound)*sqrt(obs))/1.96
-
-						    estadd scalar lowerbound = lowerbound : hours5
-						    estadd scalar upperbound = upperbound : hours5
-						    estadd scalar sd		 = sd		  : hours5
-
-						/*
+						
 						*CIC
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 						if "`subject'" == "port" | "`subject'" == "math" {
 							foreach quantile in 10 20 30 40 50 60 70 80 90 { 
 								cic continuous `subject'5 treated t $controls2007 i.codmunic if year >= 2007 & year <= 2009  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
 								matrix A = r(table)
-								matrix results = results \ (3, `sub', A[1, colsof(A)-2], A[5,colsof(A)-2], A[6,colsof(A)-2], `quantile')	 		 	 
+								matrix results = results \ (3, `sub', A[1, colsof(A)-2], A[5,colsof(A)-2], A[6,colsof(A)-2], `quantile')	 	
 							}
 						}
-						*/
+						
 						
 						*Parallel trends
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -202,8 +174,8 @@ set seed 1
 						note("Fonte: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
 						
 		}
-	estout * using "$results/Regressions.csv", delimiter(";") keep(T20*) label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N r2 class5 hours5) replace
- 
+		
+	estout * using "$results/Regressions.csv", delimiter(";") keep(T20*) label cells(b(fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb) mgroups("Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level",   pattern(1 0 1 0 1 1 0 1)) replace 
  
  
  
@@ -404,3 +376,4 @@ set seed 1
 
 					
 					
+*estout q202 q402 q602 q802  q201 q401 q601 q801 using "$results/Quantiles",  style(tex) keep (q20 q40 q60 q80) label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N,  fmt(%5.0fc)  labels("Number of obs"))  mgroups("Math" "Portuguese",  pattern(1 0 0 0 1 0 0 0 )) replace //

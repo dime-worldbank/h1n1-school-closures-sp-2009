@@ -261,12 +261,9 @@
 	
 	
 	* ------------------------------------------------------------------------------------------------------------------ *
-	quantiles math5 if year == 2009, gen(q_math5) stable nq(5)
-	quantiles port5 if year == 2009, gen(q_port5) stable nq(5)
+	bys year: quantiles math5, gen(q_math5) stable nq(9)
+	bys year: quantiles port5, gen(q_port5) stable nq(9)
 
-	bys codschool: egen quintil_math5 = max(q_math5)
-	bys codschool: egen quintil_port5 = max(q_port5)
-	drop q_math5 q_port5
 
 	su 		mother_edu_5 		if year == 2009, detail
 	gen 	T2009_maeE  	= year == 2009  & treated == 1 & mother_edu_5 >  r(p50) & mother_edu_5 != .
@@ -418,6 +415,9 @@
 		label var tclass5 					"Students per class"
 		label var pop						"Population of the municipality, in thousands"
 		label var pib_pcap					"GDP per capita of the municipality, in 2019 BRL"
+		
+		label var T2007 "2007 versus 2005"
+		label var T2009 "2009 versus 2007"
 		
 		drop 	regiao  n_munic CICLOS operation def_idebEF1 padr_idebEF1 padr_idebEF2 def_idebEF2 school location
 		sort 	codschool year
