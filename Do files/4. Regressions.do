@@ -23,8 +23,21 @@ set seed 1
 	
 	cap program drop mat_res
 	program define   mat_res
-	syntax, model(integer) sub(integer) var(varlist) 
+	syntax, model(integer) sub(integer) var(varlist) dep_var(varlist)
 		
+		*Mean & sd
+		su 		`dep_var' if year == 2007 
+		scalar 	 media = r(mean)
+		scalar   sd    = r(sd)
+		
+		su 		`dep_var' if year == 2007 & e(sample) == 1 & treated == 1
+		scalar 	 mediaT = r(mean)
+		scalar   sdT    = r(sd)
+
+		su 		`dep_var' if year == 2007 & e(sample) == 1 & treated == 0
+		scalar 	 mediaC = r(mean)
+		scalar   sdC    = r(sd)
+
 		*Coeficient
 		matrix A   = r(table) 	
 		local beta = A[1,1]																					//Average treatment effect on the treated - ATT
@@ -41,7 +54,13 @@ set seed 1
 		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar pvalue = pvalue: model`model'`sub'
 		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar lowerb = lowerb: model`model'`sub'
 		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar upperb = upperb: model`model'`sub'
-	
+		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar media  = media: model`model'`sub'
+		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar sd     = sd: model`model'`sub'
+		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar mediaT  = mediaT: model`model'`sub'
+		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar sdT     = sdT: model`model'`sub'
+		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar mediaC  = mediaC: model`model'`sub'
+		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar sdC     = sdC: model`model'`sub'
+				
 	end
 
 	
@@ -126,7 +145,7 @@ set seed 1
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 							reg `subject'5 T2007 		  								 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
 							if `sub' != 4 & `sub' != 5 eststo model1`sub', title("I")
-							mat_res, model(1) sub(`sub') var(T2007)		
+							mat_res, model(1) sub(`sub') var(T2007)	dep_var(`subject'5)	
 							*ritest treated _b[T2007], seed(1) reps(1000) cluster(codmunic): reg `subject'5 T2007 i.treated i.codmunic i.year $controls2005 if year >= 2005 & year <= 2007, cluster(codmunic)
 							*matrix ri = ri\[1, `sub', el(r(p),1,1)] 		//erro padrão com RI
 						
@@ -139,9 +158,9 @@ set seed 1
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 							reg `subject'5 	    T2009	  								 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
 							eststo model2`sub', title("II")  
-							mat_res, model(2) sub(`sub') var(T2009)		
+							mat_res, model(2) sub(`sub') var(T2009) dep_var(`subject'5)	
 
-						
+						/*
 						*CIC
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 						if "`subject'" == "port" | "`subject'" == "math" {
@@ -151,7 +170,7 @@ set seed 1
 								matrix results = results \ (3, `sub', A[1, colsof(A)-2], A[5,colsof(A)-2], A[6,colsof(A)-2], `quantile')	 	
 							}
 						}
-						
+						*/
 						
 						*Parallel trends
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -175,19 +194,9 @@ set seed 1
 						
 		}
 		
-	estout * using "$results/Regressions.csv", delimiter(";") keep(T20*) label cells(b(fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb) mgroups("Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level",   pattern(1 0 1 0 1 1 0 1)) replace 
+	estout * using "$results/Regressions.csv", delimiter(";") keep(T20*) label cells(b(fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) mgroups("Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level",   pattern(1 0 1 0 1 1 0 1)) replace 
  
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-/*
+
 *Results			
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -206,8 +215,8 @@ set seed 1
 	format beta lower upper %4.2fc
 	save "$final/Regression Results.dta", replace
 
-/*
-*Gráficos
+
+*Charts
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	
@@ -258,9 +267,8 @@ set seed 1
 					graph export "$figures/Dif-in-Dif_5ano_`language'.pdf", as(pdf) replace
 			}		
 		
-		/*
 	**	
-	*Efeitos em termos de desvio padrao	
+	*Estimates in standard deviation
 	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
 	keep if year == 2007
@@ -313,67 +321,29 @@ set seed 1
 				graph export "$figures/Dif-in-Dif_5ano_all subjects.pdf", as(pdf) replace
 	
 	**
-	*Português, Matemática e Nota Padronizada, separadamente e por quintil
+	*Impact on Math/Portuguese by percentile
 	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 		use "$final/Regression Results.dta", clear
-		drop if quantile == 0 & spec == 3
-		replace spec = 4 if spec == 3 & quantile == 40
-		replace spec = 5 if spec == 3 & quantile == 60
-		replace spec = 6 if spec == 3 & quantile == 80
-					
+		keep if spec == 3 //quantile
 		foreach sub in 1 2 {	
-		
-				*scale
-				*--------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-					su 	  upper if sub == `sub' , detail
-					local max = r(max) + 0.1
-					su 	  lower if sub == `sub' , detail
-					local min = r(min) - 0.1
-					if 	 `max' < 0 local max = 0
-					local div = (`max' - `min')/4
-					
+
 				*Title & cor
 				*--------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 					if `sub' == 1  local title = "Portuguese"
 					if `sub' == 2  local title = "Math"
-					if `sub' == 3  local title = "Português e Matemática"
-			
-					if `sub' == 1 | `sub' == 2 {
-						local min    = -8
-						local max    =  4
-						local pulo   =  2
-						local ytitle = "Test score"
-					}
-					if `sub' == 3 {
-						local min  = -0.3
-						local max  =  0.1
-						local pulo =  0.1
-						local ytitle = "Nota padronizada (0-10)"						
-					}
-					
-					if `sub' == 4 | `sub' == 5 {
-						local min  = -20
-						local max  =  10
-						local pulo =  20
-						local ytitle = "% de alunos"						
-					}	
-					
-					set scheme economist 
-					twoway bar beta spec if sub == `sub' & (spec == 1), ml(beta) barw(0.4) color(cranberry) || bar beta spec if sub == `sub' & (spec > 1), barw(0.4) color(emidblue) || rcap lower upper spec if sub == `sub', lcolor(navy)	///
-					yline(0, lpattern(shortdash) lcolor(cranberry)) 																							///
-					xtitle("", size(medsmall)) 											  																		///
-					ytitle("{&gamma}, `ytitle'", size(medsmall)) ylabel(`min'(`pulo')`max', labsize(small) gmax angle(horizontal) format (%4.1fc))  			///					
-				    xlabel(1 `" "2007" "versus 2005" "' 2 `" "2009" "versus 2007" "' 3 `" "20{sup:th}" "percentile" "' 4 `" "40{sup:th}" "percentile" "' 5 `" "60{sup:th}" "percentile" "' 6 `"  "80{sup:th}" "percentile" "', labsize(medsmall) ) 														///
-					xscale(r(0.5 2.5))																															///
-					title("`title', 5{sup:th} grade", size(large) color(black)) 																				///
-					graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 									///
-					plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 											///						
-					legend(order(1 "Robustness" 2 "Extended winter break" 3 "95% CI" ) region(lstyle(none) fcolor(none)) size(medsmall)) 	  																									///
-					ysize(4) xsize(5)  																													
-					graph export "$figures/Dif-in-Dif_`title'5ano.pdf", as(pdf) replace
+		
+					set scheme economist
+					twoway 	scatter beta quantile if sub == `sub', msymbol(O) msize(medium) color(cranberry) || rcap lower upper quantile if sub == `sub', lcolor(navy)  lwidth(medthick)	///
+					xtitle("Percentiles of test score distribution", size(small)) xlabel(10(10)90, labsize(small))										  								///
+					ytitle("{&gamma}, SAEB scale", size(medsmall)) ylabel(, labsize(small) gmax angle(horizontal) format (%4.1fc))  														///					
+					title(, size(large) color(black)) 																																		///
+					graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 																///
+					plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 																		///						
+					legend(order(1 "Extended winter break" 2 "95% CI" ) cols(2) region(lstyle(none) fcolor(none)) size(medsmall)) 	  																									///
+					ysize(4) xsize(5)  		///																											
+					note("Source: Author's estimate.", color(black) fcolor(background) pos(7) size(small)) 
+					graph export "$figures/Dif-in-Dif_Quantile_`title'_5ano.pdf", as(pdf) replace
 			}
 					
 
-					
-					
 *estout q202 q402 q602 q802  q201 q401 q601 q801 using "$results/Quantiles",  style(tex) keep (q20 q40 q60 q80) label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N,  fmt(%5.0fc)  labels("Number of obs"))  mgroups("Math" "Portuguese",  pattern(1 0 0 0 1 0 0 0 )) replace //
