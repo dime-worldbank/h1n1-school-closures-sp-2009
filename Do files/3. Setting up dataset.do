@@ -55,10 +55,10 @@
 *4* 
 *Enrollments																								
 *------------------------------------------------------------------------------------------------------------------------*
-   *use 	   "$censoescolar/Enrollments at school level.dta", clear
-   *keep 		if uf == "SP"
-   *collapse 	(sum)$matriculas (mean)school_*, by(year codschool codmunic network)
-   *save	   "$inter/Enrollments at school level.dta", replace
+   use 	   "$censoescolar/Enrollments at school level.dta", clear
+   keep 		if uf == "SP"
+   collapse 	(sum)$matriculas (mean)school_*, by(year codschool codmunic network)
+   save	   "$inter/Enrollments at school level.dta", replace
 	use 	   "$inter/Enrollments at school level.dta", clear
 	foreach var of varlist enrollment*{
 		replace `var' = . if `var' == 0

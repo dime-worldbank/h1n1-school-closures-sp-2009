@@ -304,31 +304,19 @@
 *Rede de São Paulo
 *----------------------------------------------------------------------------------------------------------------------------*
 		use 	"$inter/Enrollments at school level.dta", clear
+		keep if year == 2009 & (network == 2 | network == 3)
 		gen treated = 0
 			foreach munic in $treated_municipalities {
 			replace treated = 1 if codmunic == `munic'
 		}
-	
-		codebook codschool   if year == 2009 & (treated == 1 | network == 2) & (school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1) //escolas que fecharam
-		codebook codschool   if year == 2009 & (network == 3 | network == 2) & (school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1) //total de escolas
 		
+		egen 	mat    = rowtotal(enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal)
+		gen 	escola = school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1
+		gen 	affected = (treated == 1 | network == 2) & escola == 1
+		keep if escola == 1
 		
-		gen 	affected = 	    year == 2009 & (treated == 1 | network == 2) & (school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1)
-		replace affected = . if year != 2009
-		egen 	mat = rowtotal(enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEM)
-		total 	mat, over(affected)			//number of students affected
-		
-
-		codebook codschool if year == 2009 & (network == 2 | network == 1 | network == 3 ) & (school_EF1 == 1)	//numero de escolas do EF1 
-		codebook codschool if year == 2009 & (network == 2 								 ) & (school_EF1 == 1)  //escolas estaduais
-		codebook codschool if year == 2009 & (								network == 3 ) & (school_EF1 == 1)  //escolas municipais
-		codebook codschool if year == 2009 & (				 network == 1				 ) & (school_EF1 == 1)
-	
-		total 	enrollmentEF1 if year == 2009 & network == 2	//matrículas do EF1 em escolas estaduais
-		total 	enrollmentEF1 if year == 2009 & network == 3	//matrículas do EF1 em escolas estaduais
-		
-		codebook codschool 			if year == 2009 & (treated == 1) & !missing(enrollment5grade) & enrollment5grade != 0 & network == 3 //escolas municipais
-		total 	 enrollment5grade   if year == 2009 & (treated == 1) & network == 3  
+		collapse (sum) mat enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal school_*, by(affected network)
+		sort network
 
 		
 *----------------------------------------------------------------------------------------------------------------------------*

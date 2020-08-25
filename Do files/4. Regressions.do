@@ -1,29 +1,32 @@
 
-												*ESTIMATIVA DO EFEITO DO ADIAMENTO DO RETORNO ÀS AULAS EM DECORRÊNCIA DO H1N1*
-																  **ESCOLAS MUNICIPAIS DE SÃO PAULO**
-
-*global final   "C:\Users\wb495845\OneDrive - WBG\Desktop"
-*global results "C:\Users\wb495845\OneDrive - WBG\Desktop"
-*global inter   "C:\Users\wb495845\OneDrive - WBG\Desktop"
-
-															  
-*Author: Vivian Amorim
-*vivianamorim5@gmail.com
-
-set scheme economist
+															*IMPACTS OF SCHOOL SHUTDOWNS ON STUDENT'S LEARNING*
+																        *2009, São Paulo/Brazil*
 set seed 1
-
-
-*Program to store results -> We do that because we show the results in figures
+*Program to store results -> We run this program after our regressions to store the results (coefficient, lower bound and upper bound) in a matrix. 
+*Then we create figures presenting these results. 
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	estimates clear
-	matrix 	results = (0,0,0,0,0,0)
-	matrix  ri      = (0,0,0)
+	matrix 	results = (0,0,0,0,0,0)			//
+	*matrix  ri      = (0,0,0)				//matrix to store the confidence interval using Randomization Inference. 
 	
 	cap program drop mat_res
 	program define   mat_res
 	syntax, model(integer) sub(integer) var(varlist) dep_var(varlist)
+		
+		*Coeficient
+		matrix A   = r(table) 	
+		local beta = A[1,1]																					//Average treatment effect on the treated - ATT
+
+		*CI
+		boottest `var',  reps(1000)  boottype(wild)  seed(1) level(95) 	bootcluster(codmunic) quietly		//Confidence interval
+		matrix A = r(CI)
+		matrix results = results \ (`model', `sub', `beta', A[1,1], A[1,2], 0)								//Model tested, subject, ATT, lower bound, upper bound. 
+		
+		scalar pvalue 	= r(p)
+		scalar lowerb 	= el(r(CI),1,1)
+		scalar upperb 	= el(r(CI),1,2)
+
 		
 		*Mean & sd
 		su 		`dep_var' if year == 2007 
@@ -38,18 +41,6 @@ set seed 1
 		scalar 	 mediaC = r(mean)
 		scalar   sdC    = r(sd)
 
-		*Coeficient
-		matrix A   = r(table) 	
-		local beta = A[1,1]																					//Average treatment effect on the treated - ATT
-
-		*CI
-		boottest `var',  reps(1000)  boottype(wild)  seed(1) level(95) 	bootcluster(codmunic) quietly		//Confidence interval
-		matrix A = r(CI)
-		matrix results = results \ (`model', `sub', `beta', A[1,1], A[1,2], 0)								//Model tested, subject, ATT, lower bound, upper bound. 
-		
-		scalar pvalue 	= r(p)
-		scalar lowerb 	= el(r(CI),1,1)
-		scalar upperb 	= el(r(CI),1,2)
 		
 		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar pvalue = pvalue: model`model'`sub'
 		if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar lowerb = lowerb: model`model'`sub'
@@ -146,8 +137,12 @@ set seed 1
 							reg `subject'5 T2007 		  								 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
 							if `sub' != 4 & `sub' != 5 eststo model1`sub', title("I")
 							mat_res, model(1) sub(`sub') var(T2007)	dep_var(`subject'5)	
+							
+							/*
+							STANDARD DEVIATION WITH RANDOMIZATION INFERENCE
 							*ritest treated _b[T2007], seed(1) reps(1000) cluster(codmunic): reg `subject'5 T2007 i.treated i.codmunic i.year $controls2005 if year >= 2005 & year <= 2007, cluster(codmunic)
-							*matrix ri = ri\[1, `sub', el(r(p),1,1)] 		//erro padrão com RI
+							*matrix ri = ri\[1, `sub', el(r(p),1,1)] 		
+							*/
 						
 						*2009 versus 2005/2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*

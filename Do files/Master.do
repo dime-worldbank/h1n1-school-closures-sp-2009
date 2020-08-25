@@ -1,17 +1,9 @@
 
-														     *MASTER*
-*****************************************************************************************************************************
+*MASTER*
 *Author: Vivian Amorim
 *vivianamorim5@gmail.com
 
-
    * PART 0:  INSTALL PACKAGES AND STANDARDIZE SETTINGS
-   *
-   * - Install packages needed to run all dofiles called by this master dofile.
-   * - Use ieboilstart to harmonize settings across users
- 
-   *Install all packages that this project requires:
-   *(Note that this never updates outdated versions of already installed commands, to update commands use adoupdate)
    local user_commands ietoolkit sxpose  spmap  quantiles xtbalance boottest diff
    foreach command of local user_commands  {
        cap which `command'
@@ -19,25 +11,23 @@
            ssc install `command'
        }
    }
-
-   *Standardize settings accross users
    ieboilstart, version(12.1)          //Set the version number to the oldest version used by anyone in the project team
    `r(version)'                        //This line is needed to actually set the version from the command above
 
-   
     set matsize 11000
 	set scheme economist 
+	set seed 1
 	graph set window fontface arial
 
+	
    * PART 1:  PREPARING FOLDER PATH GLOBALS
-  
    * Users
    * -----------
    * Vivian                  1    
    * Next User               2    
 
    *Set this value to the user currently using this file
-   global user  1
+   global user  1											//*CHANGE HERE TO SET UP A NEW USER
 
    * Root folder globals
    * ---------------------
@@ -46,6 +36,7 @@
 	   global dofiles			"/Users/vivianamorim/Documents/GitHub/h1n1-school-closures-sp-2009/Do files"
 	   
 	   *If you want access to Education Data folder, please ask
+	   **These datasets are
 	   global educationdata		"/Users/vivianamorim/OneDrive/Data Analysis"
 	   global ideb         		"$educationdata/IDEB/DataWork/Datasets/3. Final"
 	   global provabrasil       "$educationdata/Prova Brasil/DataWork/Datasets/3. Final"
@@ -55,7 +46,7 @@
    }
 
    if $user == 2 {
-       global projectfolder ""  
+       global projectfolder ""  							//FILE'S PATH OF THE NEW USER
    }
    
    * Project folder globals
@@ -75,7 +66,19 @@
    global ibge				"$raw/IBGE"
    global sus				"$raw/SUS"
 
-   
    * PART 2:  SETTING UP GLOBALS
-     do "$dofiles/Global.do" 
+     *do "$dofiles/Global.do" 
+	 
+   * PART 3: RUN DO FILES
+	 *do "$dofiles/1. PIB Municipal.do"
+	 *do "$dofiles/2. H1N1.do"
+	 *do "$dofiles/3. Setting up datasets.do"
+	 do "$dofiles/4. Regressions.do"
+	 *do "$dofiles/5. Descriptives.do"
+	 
+	 
+	 
+	 
+	 
+	 
 	  
