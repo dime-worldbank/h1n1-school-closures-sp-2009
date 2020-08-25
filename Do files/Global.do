@@ -21,4 +21,4 @@ global treated_municipalities2    355030  350950  351380  352050  352850  353440
 
 global matching_schools		      ComputerLab ScienceLab SportCourt Library InternetAccess
 
-global matriculas				  enrollmentEI enrollmentcreche enrollmentpre enrollmentEF enrollmentEF1 enrollmentEF2 enrollment5grade enrollment9grade enrollmentEM enrollmentEMTotal
+global matriculas				  enrollmentEI enrollmentcreche enrollmentpre enrollmentEF enrollmentEF1 enrollmentEF2 enrollment5grade enrollment9grade enrollmentEM enrollmentEMtotal

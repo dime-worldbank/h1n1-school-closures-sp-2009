@@ -270,7 +270,7 @@
 	gen 	T2009_maeNE 	= year == 2009  & treated == 1 & mother_edu_5 <= r(p50)
 	replace T2009_maeE 		= . if missing(mother_edu_5) 
 	replace T2009_maeNE 	= . if missing(mother_edu_5) 
-	
+	gen 	post_treat 		= (year > 2007)
 	gen 	T2009_tclass 	= 1*tclass5	 	if year == 2009  & treated == 1
 	replace T2009_tclass 	= 0 if missing(T2009_tclass) & !missing(tclass5)
 	
@@ -421,5 +421,7 @@
 		
 		drop 	regiao  n_munic CICLOS operation def_idebEF1 padr_idebEF1 padr_idebEF2 def_idebEF2 school location
 		sort 	codschool year
+		replace enrollment5 = enrollment5[_n+1] if year[_n] == 2005 & year[_n+1] == 2007 & codschool[_n] == codschool[_n+1]
 		xtset 	codschool year 	
+		
 	save "$final/Performance & Socioeconomic Variables of SP schools.dta", replace
