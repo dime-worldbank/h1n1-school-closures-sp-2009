@@ -13,7 +13,7 @@
 
 				if "`language'" == "english" {
 					local ytitle  = "Test score, SAEB scale" 
-					local legend1 = "Extended summer break"
+					local legend1 = "Extended winter break"
 					local legend2 = "Other municipalities"
 					local title   = "Math, 5{sup:th} grade"
 					local note    = "Source: Prova Brasil." 
@@ -77,7 +77,7 @@
 						xtitle("")  																																				///
 						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///
 						plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-						legend(order(1 "Extended summer break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
+						legend(order(1 "Extended winter break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
 						ysize(5) xsize(5) 																																			///
 						note("Source: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
 						graph export "$figures/time trend for Portuguese_graph in english.pdf", as(pdf) replace

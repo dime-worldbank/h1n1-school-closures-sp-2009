@@ -1,8 +1,13 @@
 
 															*IMPACTS OF SCHOOL SHUTDOWNS ON STUDENT'S LEARNING*
 																        *2009, São Paulo/Brazil*
+
+																		
 set seed 1
 
+global final		"C:\Users\wb495845\OneDrive - WBG\Desktop"
+global figures		"C:\Users\wb495845\OneDrive - WBG\Desktop"
+global inter		"C:\Users\wb495845\OneDrive - WBG\Desktop"
 
 *Important definitions
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -212,7 +217,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						if "`subject'" == "port" | "`subject'" == "math" {
 							foreach quantile in 10 20 30 40 50 60 70 80 90 { 
 								cic continuous `subject'5 treated post_treat $controls2007 i.codmunic if year >= 2007 & year <= 2009  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
-								matriz reg_results = r(table)
+								matrix reg_results = r(table)
 								matrix results = results \ (3, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], A[6,colsof(reg_results)-2], `quantile')	 	
 							}
 						}
@@ -279,7 +284,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 
 				if "`language'" == "english" {
 					local ytitle = "SAEB scale" 
-					local legend = "Extended summer break"
+					local legend = "Extended winter break"
 					local port   = "Portuguese"
 					local math   = "Math"
 					local both   = "Portuguese & Math"
@@ -381,6 +386,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 		
 					set scheme economist
 					twoway 	scatter ATT quantile if sub == `sub', msymbol(O) msize(medium) color(cranberry) || rcap lower upper quantile if sub == `sub', lcolor(navy)  lwidth(medthick)	///
+					yline(0, lp(shortdash) lcolor(gray)) ///
 					xtitle("Percentiles of test score distribution", size(small)) xlabel(10(10)90, labsize(small))										  									///
 					ytitle("{&gamma}, SAEB scale", size(medsmall)) ylabel(, labsize(small) gmax angle(horizontal) format (%4.1fc))  														///					
 					title(, size(large) color(black)) 																																		///
