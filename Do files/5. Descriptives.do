@@ -1,8 +1,5 @@
 
-
-
 *----------------------------------------------------------------------------------------------------------------------------*
-
 *Tendência no tempo
 *----------------------------------------------------------------------------------------------------------------------------*
 
@@ -12,18 +9,18 @@
 		gen 	contrafactual = math5 + 4 if treated == 1 & year == 2009
 		replace contrafactual = math5     if treated == 1 & year == 2007
 
-			foreach language in english port {
+			foreach language in english portuguese {
 
 				if "`language'" == "english" {
 					local ytitle  = "Test score, SAEB scale" 
-					local legend1 = "Extended winter break"
+					local legend1 = "Extended summer break"
 					local legend2 = "Other municipalities"
 					local title   = "Math, 5{sup:th} grade"
 					local note    = "Source: Prova Brasil." 
 				}
 				
 				
-				if "`language'" == "port" {
+				if "`language'" == "portuguese" {
 					local ytitle  = "Proficiência, Escala SAEB" 
 					local legend1 = "Adiamento das aulas"
 					local legend2 = "Outros municípios"
@@ -43,7 +40,7 @@
 						xscale(r(2005(2)2009)) 																																		///
 						yscale(r(170(10)220)) 																																		///
 						ytitle("`ytitle'", size(small)) 																					 										///
-						title("", pos(12) size(medium) color(black))													 														///
+						title("", pos(12) size(medium) color(black))													 															///
 						xtitle("")  																																				///
 						xlabel(2005(2)2009, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
 						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
@@ -52,7 +49,7 @@
 						ysize(5) xsize(5) 																										 									///
 						note("`note'", color(black) fcolor(background) pos(7) size(small)))  
 						*graph export "$figures/trend_math.pdf", as(pdf) replace
-						graph export "$figures/trend_math_`language'.pdf", as(png) replace
+						graph export "$figures/time trend for Math_graph in `language'.pdf", as(pdf) replace
 					
 			}
 		 
@@ -63,9 +60,6 @@
 		gen 	contrafactual = port5 + 1 if treated == 1 & year == 2009
 		replace contrafactual = port5 	  if treated == 1 & year == 2007
 
-
-		
-		
 						tw 	///
 						(line port5 year if treated == 1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 		 											///  
 						ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
@@ -77,21 +71,20 @@
 						yscale( alt )  																																				///
 						xscale(r(2005(2)2009)) 																																		///
 						yscale(r(170(10)200)) 																																		///
-						ytitle("Test score, SAEB scale", size(small)) 																					 										///
+						ytitle("Test score, SAEB scale", size(small)) 																					 							///
 						xlabel(2005(2)2009, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
-						title("", pos(12) size(medium) color(black))																						///
+						title("", pos(12) size(medium) color(black))																												///
 						xtitle("")  																																				///
 						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///
 						plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-						legend(order(1 "Extended winter break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
+						legend(order(1 "Extended summer break"  2 "Other municipalities"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 			///
 						ysize(5) xsize(5) 																																			///
 						note("Source: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
-						graph export "$figures/trend_port_english.pdf", as(png) replace
+						graph export "$figures/time trend for Portuguese_graph in english.pdf", as(pdf) replace
 						
 						
 
 *----------------------------------------------------------------------------------------------------------------------------*
-
 *Grupos de tratamento e comparação
 *----------------------------------------------------------------------------------------------------------------------------*
 	use "$geocodes/mun_brasil.dta", clear
@@ -118,12 +111,11 @@
 		legorder(lohi) 																										///
 		legend(order(2 "Adiamento das aulas" 3 "Outros municípios") size(medium)) saving (distance_`distance', replace)
 		*graph export "$figures/tratamento_comparacao.pdf", as(pdf) replace
-		graph export "$figures/tratamento_comparacao_port.png", as(png) replace
+		graph export "$figures/tratamento_comparacao_port.pdf", as(pdf) replace
 		
 		
 	
 *----------------------------------------------------------------------------------------------------------------------------*
-
 *Rede afetada
 *----------------------------------------------------------------------------------------------------------------------------*
 	use 	"$inter/Enrollments at school level.dta", clear
@@ -158,8 +150,7 @@
 		
 		
 *----------------------------------------------------------------------------------------------------------------------------*
-
-*Performance
+*Desempenho
 *----------------------------------------------------------------------------------------------------------------------------*
 	set scheme economist
 	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
@@ -181,7 +172,6 @@
 	
 	
 *----------------------------------------------------------------------------------------------------------------------------*
-														
 *Histogram of gdp per capita				
 *----------------------------------------------------------------------------------------------------------------------------*
 	use "$inter/GDP per capita.dta", clear
@@ -223,7 +213,6 @@
 	
 	
 *----------------------------------------------------------------------------------------------------------------------------*
-	
 *Expenditure per student	
 *----------------------------------------------------------------------------------------------------------------------------*
 	use "$inter/FNDE Indicators.dta", clear
@@ -269,7 +258,6 @@
 
 	
 *----------------------------------------------------------------------------------------------------------------------------*
-
 *School infrastructure
 *----------------------------------------------------------------------------------------------------------------------------*
 	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
@@ -300,7 +288,6 @@
 
 	
 *----------------------------------------------------------------------------------------------------------------------------*
-
 *Rede de São Paulo
 *----------------------------------------------------------------------------------------------------------------------------*
 		use 	"$inter/Enrollments at school level.dta", clear
@@ -320,18 +307,16 @@
 
 		
 *----------------------------------------------------------------------------------------------------------------------------*
-
 *Balance test
 *----------------------------------------------------------------------------------------------------------------------------*
 	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
 	keep if year == 2009 & !missing(math5)
 	egen tag_mun = tag(codmunic) 
 	replace pop = . if tag_mun!= 1
-	iebaltab math5 port5 repetition5 dropout5 approval5 SIncentive2_5 SIncentive3_5 SIncentive4_5 SIncentive5_5 white_5 livesmother_5 computer_5 mother_edu_5 preschool_5 repetition_5 dropout_5 studentwork_5 ComputerLab ScienceLab Library InternetAccess SportCourt enrollment5 classhour5 tclass5 pop pib_pcap, format(%12.2fc) grpvar(treated) savetex("$descriptives/Balance") rowvarlabels replace 
+	iebaltab math5 port5 repetition5 dropout5 approval5 SIncentive2_5 SIncentive3_5 SIncentive4_5 SIncentive5_5 white_5 livesmother_5 computer_5 mother_edu_5 preschool_5 repetition_5 dropout_5 studentwork_5 ComputerLab ScienceLab Library InternetAccess SportCourt enrollment5 classhour5 tclass5 pop pib_pcap, format(%12.2fc) grpvar(treated) savetex("$descriptives/Balance Test") rowvarlabels replace 
 
 		
 *----------------------------------------------------------------------------------------------------------------------------*
-
 *Size of affected municipalities		
 *----------------------------------------------------------------------------------------------------------------------------*
 	use "$inter/GDP per capita.dta", clear
@@ -353,7 +338,6 @@
 	
 		
 *----------------------------------------------------------------------------------------------------------------------------*
-
 *% com desempenho insuficiente em matemática
 *----------------------------------------------------------------------------------------------------------------------------*
 	use 	"$final/Performance & Socioeconomic Variables of SP schools.dta", clear
@@ -366,7 +350,6 @@
 	
 	
 *----------------------------------------------------------------------------------------------------------------------------*
-
 *Municípios tratados com matrículas no 5o e 9o ano
 *----------------------------------------------------------------------------------------------------------------------------*
 	use 		"$censoescolar/Enrollments at municipal level.dta", clear

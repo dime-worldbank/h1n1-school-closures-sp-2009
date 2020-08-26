@@ -14,7 +14,7 @@ set seed 1
 **Period: 2005, 2007 (pre-treatment) and 2009 (post-treatment). 
 **Dependent variables: proficiency of students in Portuguese, proficiency of students in math, standardized performance in Portuguese and Math, percentage of students with
 insufficient performance in Portuguese and percentage of students with insufficient performance in math. 
-**Independent variables: treatment status (variable treated = 1 for Treament Group; and 0 for Comparison Group); year dummy (bariable year); municipality in each the 
+**Independent variables: treatment status (variable treated = 1 for Treament Group; and 0 for Comparison Group); year dummy (variable year); municipality in each the 
 school is located at (variable codmunic).
 Our analysis includes a series of controls at the school level to account for differences between the groups that are probably correlated with both the decision 
 to close the schools and the performance of the students. The vector of control variables was chosen based on a Lasso regression, 
@@ -23,16 +23,16 @@ library and access to the internet; instruction hours per day; students per clas
 and socioeconomic characteristics of fifth graders. The vector of socioeconomic variables includes the percentage of mothers with a high school diploma; 
 the percentage of students that already repeated or dropped out school; the percentage of whites and girls; the percentage of students that already work, 
 that previously studied in a private school and that have a computer at home; the percentage of students whose parent's incentive them to study, to do the homework, 
-to read, to do not miss classes, and that talk about what happens in the school.
+to read, to not miss classes, and that talk about what happens in the school.
 */
 
 /*
 Models: 1, 2 and 3. 
 
 **Model 1 is the robusteness check. In this model, the post-treament year is 2007 and pre-treatment is 2005. 
-We set up the treatment dummy (T2007) equal to 1 for the year = 2007; and 0 if year = 2005.
+We set up the treatment dummy (T2007) equal to 1 for the year = 2007, and 0 if year = 2005.
 
-**Model 2 is the estimation of the Average Treatment Effect (T2009). T2009 if equal if year = 2009 and 0 if year = 2007. 
+**Model 2 is the estimation of the Average Treatment Effect (T2009). T2009 if equal if year = 2009, and 0 if year = 2007. 
 
 **Model 3 is the estimation of ATT by quantiles using Changes in Changes Model. 
 */
@@ -42,11 +42,11 @@ Subjects:
 
 We establish a code (sub) for each one of our dependent variables (in order to store this code in our matrix with regression results). 
 
-**Sub 1 -> Proficiency in Portuguese (port5).
-**Sub 2 -> Proficiency in Math (math5).
-**Sub 3 -> Standardized Performance in Portuguese and Math (sp5). 
-**Sub 4 -> Percentage of students with insufficient proficiency in Math (math_insuf_5).
-**Sub 5 -> Percentage of students with insufficient proficiency in Portuguese (port_insuf_5).
+**Sub 1 -> Proficiency in Portuguese (variable port5).
+**Sub 2 -> Proficiency in Math (variable math5).
+**Sub 3 -> Standardized Performance in Portuguese and Math (variable sp5). 
+**Sub 4 -> Percentage of students with insufficient proficiency in Math (variable math_insuf_5).
+**Sub 5 -> Percentage of students with insufficient proficiency in Portuguese (variable port_insuf_5).
 */
 
 
@@ -66,8 +66,8 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 	syntax, model(integer) sub(integer) var(varlist) dep_var(varlist)  //model(number of model tested - 1, 2 or 3 ); sub (code of the dependent variable - 1, 2, 3, 4 and 5);
 																	   //var(treatment dummy - T2007 or T2009); dep_var(dependent variable - math5, portuguese5, sp5, port_insuf_5 and math_insuf_5).																   
 		*Average treatment effect
-		matriz reg_results  = r(table) 	
-		local ATT = A[1,1]																					
+		matrix reg_results  = r(table) 	
+		local ATT = reg_results[1,1]																					
 
 		*Confidence Interval 
 		boottest `var',  reps(1000)  boottype(wild)  seed(1) level(95) 	bootcluster(codmunic) quietly		//Confidence interval using bootstrap
@@ -110,12 +110,12 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 		foreach subject in sp math math_insuf_ port port_insuf_ { 		//regression for each of our dependent variables
 		 
-			if "`subject'" == "port" | "`subject'" == "padr_port" {
+			if "`subject'" == "port" {
 				local sub = 1					//subject = 1, Portuguese
 				local title = "Português"		//saving the title for our line graph showing the time trend of treatment and comparison groups
 			}
 			
-			if "`subject'" == "math" | "`subject'" == "padr_math" {
+			if "`subject'" == "math" {
 				local sub = 2					//subject = 2, Math
 				local title = "Matemática"
 			}
@@ -152,6 +152,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 					global controls2005 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	   ///
 					c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5
 
+					*In case you have stata 16, just delete "*" from the two rows below
 					*lasso linear `subject'5 $controls2005 if year <= 2007, rseed(1)						
 					*global controls2005  `e(allvars_sel)'
 				
@@ -165,7 +166,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 					c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour5##c.classhour5 c.tclass5##c.tclass5 									///
 					c.SIncentive1_5##c.SIncentive1_5 c.SIncentive2_5##c.SIncentive2_5 c.SIncentive3_5##c.SIncentive3_5	 										///
 					c.SIncentive4_5##c.SIncentive4_5 c.SIncentive5_5##c.SIncentive5_5 c.SIncentive6_5##c.SIncentive6_5 										
-
+					
 					*lasso linear `subject'5 $controls2007 if year >= 2007, rseed(1)		
 					*global controls2007  `e(allvars_sel)'
 					
@@ -236,7 +237,6 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						legend(order(1 "Não adiaram o retorno às aulas" 2 "Adiaram") size(small) region(lwidth(none))) 						 ///
 						ysize(6) xsize(7) 																									 ///
 						note("Fonte: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
-						save "$figures/Time trend_`subject'.pdf", as(pdf) replace
 		}
 		
 	estout * using "$results/Regressions.csv", delimiter(";") keep(T20*) label cells(b(fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) mgroups("Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level",   pattern(1 0 1 0 1 1 0 1)) replace 
@@ -268,24 +268,25 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 	*ATT for Portuguese and Math. Models 1 and 2. Subjects 1 (portuguese) and 2 (math)
 	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	use "$final/Regression Results.dta", clear
-		drop if model == 3 | sub == 3 | sub == 4 | sub == 5 		//keeping only models 1 and 2; subjects 1 and 2. 
+		drop if model == 3 | sub == 3 | sub == 4 | sub == 5 				//keeping only models 1 and 2; subjects 1 and 2. 
 		
-		gen 	spec1 = model
-		replace spec1 = 3 if model == 1 & model == 2
-		replace spec1 = 4 if model == 2 & model == 2
+		gen 	spec1 = model												//spec1 = 1 for portuguese & model 1, spec1 = 2 for portuguese & model 2.
+																			//spec1 = 3 for math	   & model 1, spec1 = 4 for math 	   & model 2.
+		replace spec1 = 3 if model == 1 & sub == 2
+		replace spec1 = 4 if model == 2 & sub == 2
 		
-			foreach language in port english {						//graphs in portuguese and english
+			foreach language in portuguese english {						//graphs in portuguese and english
 
 				if "`language'" == "english" {
 					local ytitle = "SAEB scale" 
-					local legend = "Extended winter break"
+					local legend = "Extended summer break"
 					local port   = "Portuguese"
 					local math   = "Math"
 					local both   = "Portuguese & Math"
 					local note   = "Source: Author's estimate." 
 				}
 				
-				if "`language'" == "port" {
+				if "`language'" == "portuguese" {
 					local ytitle = "Escala SAEB" 
 					local legend = "Adiamento das aulas"
 					local port   = "Português"
@@ -309,25 +310,25 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 					text(3.5 3.5 "`math'") 																																							///
 					ysize(4) xsize(4)  ///
 					note("`note'", color(black) fcolor(background) pos(7) size(small)) 
-					graph export "$figures/Dif-in-Dif_5ano_`language'.pdf", as(pdf) replace
+					graph export "$figures/ATT_graph in `language'.pdf", as(pdf) replace
 			}		
 		
 	**	
 	*Estimates in standard deviation
 	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-	keep if year == 2007
+	keep if year == 2007															//pre-treatment year
 	drop if codmunic == 3509502 | codmunic == 3520509 | codmunic == 3548807 		//municipalities without proficiency data for 2005
 	
-	foreach var of varlist sp5 math5 port5 {										//standard deviation
+	foreach var of varlist sp5 math5 port5 {										//standard deviation of standardized performance, and proficiency in portuguese and math 
 		su `var', detail
 		local sd_`var'  = r(sd)
 	}
 
-	matrix A =   [3, `sd_sp5' \ 2, `sd_math5' \ 1, `sd_port5']					   //subject and its standard deviation
+	matrix standard_deviation =   [3, `sd_sp5' \ 2, `sd_math5' \ 1, `sd_port5']	    //subject and its standard deviation
 	clear
-	svmat A
-	rename (A1-A2) (sub sd)
+	svmat standard_deviation
+	rename (standard_deviation1 standard_deviation2) (sub sd)
 	tempfile sd
 	save `sd' 
 	
@@ -363,7 +364,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 				text(0.2 5.5 "Math") 																																							///
 				ysize(4) xsize(6)  ///
 				note("", color(black) fcolor(background) pos(7) size(small)) 
-				graph export "$figures/Dif-in-Dif_5ano_all subjects.pdf", as(pdf) replace
+				graph export "$figures/ATT in standard deviation_graph in english.pdf", as(pdf) replace
 	
 	**
 	*Impact on Math/Portuguese by percentile
@@ -388,12 +389,19 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 					legend(order(1 "Extended winter break" 2 "95% CI" ) cols(2) region(lstyle(none) fcolor(none)) size(medsmall)) 	  																									///
 					ysize(4) xsize(5)  		///																											
 					note("Source: Author's estimate.", color(black) fcolor(background) pos(7) size(small)) 
-					graph export "$figures/Dif-in-Dif_Quantile_`title'_5ano.pdf", as(pdf) replace
+					graph export "$figures/CIC estimator for `title' skills_graph in english.pdf", as(pdf) replace
 			}
 					
 
 					
 					
 					
-					
+	
+	
+	
+	
+	
+	
+	
+	
 *estout q202 q402 q602 q802  q201 q401 q601 q801 using "$results/Quantiles",  style(tex) keep (q20 q40 q60 q80) label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N,  fmt(%5.0fc)  labels("Number of obs"))  mgroups("Math" "Portuguese",  pattern(1 0 0 0 1 0 0 0 )) replace //

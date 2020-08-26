@@ -67,7 +67,7 @@
    global sus				"$raw/SUS"
 
    * PART 2:  SETTING UP GLOBALS
-     *do "$dofiles/Global.do" 
+     do "$dofiles/Global.do" 
 	 
    * PART 3: RUN DO FILES
 	 *do "$dofiles/1. PIB Municipal.do"
