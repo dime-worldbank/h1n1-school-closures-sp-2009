@@ -27,7 +27,9 @@
    * Next User               2    
 
    *Set this value to the user currently using this file
-   global user  1											//*CHANGE HERE TO SET UP A NEW USER
+   **************************
+   global user  1												//*CHANGE HERE TO SET UP A NEW USER
+   **************************
 
    * Root folder globals
    * ---------------------
@@ -35,7 +37,7 @@
        global projectfolder 	"/Users/vivianamorim/OneDrive/World Bank/Education/SP_H1N1 & School Closure"
 	   global dofiles			"/Users/vivianamorim/Documents/GitHub/h1n1-school-closures-sp-2009/Do files"
 	   
-	   *If you want access to Education Data folder, please ask
+	   *If you want access to Education Data folder, please ask, for running as a second user, you do not need access to these folders. 
 	   **These datasets are
 	   global educationdata		"/Users/vivianamorim/OneDrive/Data Analysis"
 	   global ideb         		"$educationdata/IDEB/DataWork/Datasets/3. Final"
@@ -46,7 +48,8 @@
    }
 
    if $user == 2 {
-       global projectfolder ""  							//FILE'S PATH OF THE NEW USER
+       global projectfolder ""  							//fill the path of where you saved the folder "SP_H1N1 & School Closure" 
+	   global dofiles										//fill the path of where you saved the do files" 
    }
    
    * Project folder globals
