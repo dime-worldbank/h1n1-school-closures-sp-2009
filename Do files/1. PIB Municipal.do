@@ -1,5 +1,5 @@
 
-												*SETTING UP PIB PER CAPITA*
+													*PIB PER CAPITA*
 
 													  
 *1* 
@@ -14,7 +14,7 @@
 		gen       year = 2007
 		destring, replace
 		expand 2, gen(REP)
-		replace year = 2005 if REP ==1
+		replace year = 2005 if REP == 1		
 		drop REP
 		tempfile  pop_2007
 		save     `pop_2007'

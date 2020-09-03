@@ -76,7 +76,7 @@
 	 *do "$dofiles/1. PIB Municipal.do"
 	 *do "$dofiles/2. H1N1.do"
 	 *do "$dofiles/3. Setting up datasets.do"
-	 do "$dofiles/4. Regressions.do"
+	 *do "$dofiles/4. Regressions.do"
 	 *do "$dofiles/5. Descriptives.do"
 	 
 	 

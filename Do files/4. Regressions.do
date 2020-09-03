@@ -79,7 +79,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 
 		*Mean of the dependent variable and standard deviation
 			**Pooled sample
-			su 		`dep_var' if year == 2007 
+			su 		`dep_var' if year == 2007 & e(sample) == 1 
 			scalar 	 media = r(mean)
 			scalar   sd    = r(sd)
 		
@@ -92,24 +92,27 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 			su 		`dep_var' if year == 2007 & e(sample) == 1 & treated == 0
 			scalar 	 mediaC = r(mean)
 			scalar   sdC    = r(sd)
-
+			
+			
 		*We use estout to export regression results. Besides the coefficients, we export pvalues, confidence interval, mean and standard deviation of the dependent variable.
-			if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar pvalue  = pvalue: model`model'`sub'
-			if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar lowerb  = lowerb: model`model'`sub'
-			if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar upperb  = upperb: model`model'`sub'
-			if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar media   = media: model`model'`sub'
-			if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar sd      = sd: model`model'`sub'
-			if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar mediaT  = mediaT: model`model'`sub'
-			if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar sdT     = sdT: model`model'`sub'
-			if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar mediaC  = mediaC: model`model'`sub'
-			if (`model' == 1 & `sub' < 4) | `model' == 2 estadd scalar sdC     = sdC: model`model'`sub'
+			if ((`model' == 1 | `model' == 3) & `sub' < 4) | `model' == 2 | `model' == 4 estadd scalar pvalue  = pvalue: model`model'`sub'
+			if ((`model' == 1 | `model' == 3) & `sub' < 4) | `model' == 2 | `model' == 4 estadd scalar lowerb  = lowerb: model`model'`sub'
+			if ((`model' == 1 | `model' == 3) & `sub' < 4) | `model' == 2 | `model' == 4 estadd scalar upperb  = upperb: model`model'`sub'
+			if ((`model' == 1 | `model' == 3) & `sub' < 4) | `model' == 2 | `model' == 4 estadd scalar media   = media: model`model'`sub'
+			if ((`model' == 1 | `model' == 3) & `sub' < 4) | `model' == 2 | `model' == 4 estadd scalar sd      = sd: model`model'`sub'
+			if ((`model' == 1 | `model' == 3) & `sub' < 4) | `model' == 2 | `model' == 4 estadd scalar mediaT  = mediaT: model`model'`sub'
+			if ((`model' == 1 | `model' == 3) & `sub' < 4) | `model' == 2 | `model' == 4 estadd scalar sdT     = sdT: model`model'`sub'
+			if ((`model' == 1 | `model' == 3) & `sub' < 4) | `model' == 2 | `model' == 4 estadd scalar mediaC  = mediaC: model`model'`sub'
+			if ((`model' == 1 | `model' == 3) & `sub' < 4) | `model' == 2 | `model' == 4 estadd scalar sdC     = sdC: model`model'`sub'
 	end
+	
+			
 
 	
 *Regressions
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		foreach subject in sp math math_insuf_ port port_insuf_ { 		//regression for each of our dependent variables
+		foreach subject in sp math math_insuf_ port port_insuf_ { 		//regression for each of our dependent variables 
 		 
 			if "`subject'" == "port" {
 				local sub = 1					//subject = 1, Portuguese
@@ -182,45 +185,48 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 					*3*
 					*Regressions
 					*----------------------------------------------------------------------------------------------------------------------------------------------------------------*
-					local weight enrollment5		//we weight all regressions by the number of students enrolled in fifth grade
+					local weight enrollment5		//we weight all regressions by the number of students enrolled in fifth grade 
 					
 						*2007 versus 2005
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							reg `subject'5 T2007 		  								 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
+							reg `subject'5 T2007 		  								 i.treated i.codmunic i.year $controls2005 	if network == 3 & year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
 							if `sub' != 4 & `sub' != 5 eststo model1`sub', title("I")
 							mat_res, model(1) sub(`sub') var(T2007)	dep_var(`subject'5)	
 							
 							/*
 							P VALUE WITH RANDOMIZATION INFERENCE
-							*ritest treated _b[T2007], seed(1) reps(1000) cluster(codmunic): reg `subject'5 T2007 i.treated i.codmunic i.year $controls2005 if year >= 2005 & year <= 2007, cluster(codmunic)
+							*ritest treated _b[T2007], seed(1) reps(1000) cluster(codmunic): reg `subject'5 T2007 i.treated i.codmunic i.year $controls2005 if network == 3 year >= 2005 & year <= 2007, cluster(codmunic)
 							*matrix ri = ri\[1, `sub', el(r(p),1,1)] 		
 							*/
 						
 						*2009 versus 2005/2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							reg `subject'5 T2007 T2009 	  							 	 i.treated i.codmunic i.year $controls2005 	if year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
-							keep if e(sample) == 1
+							reg `subject'5 T2007 T2009 	  							 	 i.treated i.codmunic i.year $controls2005 	if network == 3 & year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
+						
 
 						*2009 versus 2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
-							reg `subject'5 	    T2009	  								 i.treated i.codmunic i.year $controls2007 	if year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+							reg `subject'5 	    T2009	  								 i.treated i.codmunic i.year $controls2007 	if network == 3 & year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
 							eststo model2`sub', title("II")  
 							mat_res, model(2) sub(`sub') var(T2009) dep_var(`subject'5)	
 
-						
+						/*
 						*Changes in changes estimator
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 						if "`subject'" == "port" | "`subject'" == "math" {
 							foreach quantile in 10 20 30 40 50 60 70 80 90 { 
-								cic continuous `subject'5 treated post_treat $controls2007 i.codmunic if year >= 2007 & year <= 2009  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
+								cic continuous `subject'5 treated post_treat $controls2007 i.codmunic if network == 3 & year >= 2007 & year <= 2009  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
 								matrix reg_results = r(table)
-								matrix results = results \ (3, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], A[6,colsof(reg_results)-2], `quantile')	 	
+								matrix results = results \ (5, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile')	 	
 							}
 						}
+						*/
 						
 						
 						*Parallel trends
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
+						preserve	
+						keep if network == 3
 						collapse (mean)`subject'5 [aw = `weight'], by(year treated)
 						format 	 	   `subject'5 %4.1fc
 						save 		   "$inter/trend_`subject'.dta", replace
@@ -238,11 +244,50 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						legend(order(1 "Não adiaram o retorno às aulas" 2 "Adiaram") size(small) region(lwidth(none))) 						 ///
 						ysize(6) xsize(7) 																									 ///
 						note("Fonte: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
+						graph export "$figures/parallel_trends_dif_in_dif_`subjet'.pdf", as(pdf) replace
+						restore
+		
+							
+						*2007 versus 2005
+						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
+							reg `subject'5  T2007 		treated treated_state_network post_treated_state_network i.codmunic i.year $controls2005 	if tipo_municipio_ef1 == 1 & year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
+							if `sub' != 4 & `sub' != 5 eststo model3`sub', title("I")
+							mat_res, model(3) sub(`sub') var(T2007)	dep_var(`subject'5)	
+						
+						*2009 versus 2005/2007
+						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
+							reg `subject'5  T2007 T2009 treated treated_state_network post_treated_state_network i.codmunic i.year $controls2005 	if tipo_municipio_ef1 == 1 &  year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
+
+						*2009 versus 2007
+						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
+							reg `subject'5 		  T2009 treated treated_state_network post_treated_state_network i.codmunic i.year $controls2007 	if tipo_municipio_ef1 == 1 &  year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+							eststo model4`sub', title("II")  
+							mat_res, model(4) sub(`sub') var(T2009) dep_var(`subject'5)	
+							/*
+							collapse (mean)`subject'5 [aw = `weight'], by(year treated)
+							format 	 	   `subject'5 %4.1fc
+							save 		   "$inter/trend_`subject'.dta", replace
+							
+							tw 	///
+							(line `subject'5 year if treated == 0, lwidth(0.5) color(ebblue) lp(shortdash) connect(direct) recast(connected) 	 ///  
+							ml(`subject'5) mlabcolor(gs2) msize(1.5) ms(o) mlabposition(12)  mlabsize(2.5)) 									 ///
+							(line `subject'5 year if treated == 1, lwidth(0.5) color(gs12) lp(shortdash) connect(direct) recast(connected)  	 ///  
+							ml(`subject'5) mlabcolor(gs2) msize(1.5) ms(o) mlabposition(3)  mlabsize(2.5) 										 ///
+							ylabel(, nogrid labsize(small) gmax angle(horizontal) format(%4.0fc))											     ///
+							ytitle("Escala SAEB", size(small)) 																					 ///
+							title("`title', 5{sup:o} ano", pos(12) size(medsmall) color(black))													 ///
+							graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 					 ///
+							plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 					 ///
+							legend(order(1 "Não adiaram o retorno às aulas" 2 "Adiaram") size(small) region(lwidth(none))) 						 ///
+							ysize(6) xsize(7) 																									 ///
+							note("Fonte: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
+							*/
+		
 		}
 		
-	estout * using "$results/Regressions.csv", delimiter(";") keep(T20*) label cells(b(fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) mgroups("Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level",   pattern(1 0 1 0 1 1 0 1)) replace 
+	estout * using "$results/Regressions.csv", delimiter(";") keep(T20*) label cells(b(fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) mgroups("Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level",   pattern(1 0 0 0 1 0 0 0 1 0 1 0 0 0 1 0 )) replace 
  
-
+/*
 *Results			
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -251,7 +296,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 	drop  in 1
 	rename (results1-results6) (model sub  ATT lower upper quantile)	
 	label define sub   1 "Português"  2 "Matemática" 3 "Português e matemática" 4 "Insuficiente em matemática" 5 "Insuficiente em Português"
-	label define model  1 "2007 comparado com 2005" 2 "2009 comparado com 2007"  3 "Quantile"
+	label define model  1 "2007 comparado com 2005" 2 "2009 comparado com 2007" 5 "Quantile"
 	label val sub sub
 	label val model model
 	label var ATT    "Average treatment effect"
@@ -260,7 +305,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 	format ATT lower upper %4.2fc
 	save "$final/Regression Results.dta", replace
 
-
+/*
 *Charts
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
@@ -393,17 +438,70 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 					note("Source: Author's estimate.", color(black) fcolor(background) pos(7) size(small)) 
 					graph export "$figures/CIC estimator for `title' skills_graph in english.pdf", as(pdf) replace
 			}
-					
 
+	
+	**
+	*ATT for Portuguese and Math. Models 1 and 2. Subjects 1 (portuguese) and 2 (math)
+	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+	use "$final/Regression Results.dta", clear
+		drop if model == 1 | model == 2 | model == 5 | sub == 3 | sub == 4 | sub == 5 				
+		
+		gen 	spec1 = 1 if model == 3 & sub == 1									
+		replace spec1 = 2 if model == 4 & sub == 1									
+				
+		replace spec1 = 3 if model == 3 & sub == 2
+		replace spec1 = 4 if model == 4 & sub == 2
+		
+			foreach language in portuguese{						//graphs in portuguese and english
+
+				if "`language'" == "english" {
+					local ytitle = "SAEB scale" 
+					local legend = "Extended winter break"
+					local port   = "Portuguese"
+					local math   = "Math"
+					local both   = "Portuguese & Math"
+					local note   = "Source: Author's estimate." 
+				}
+				
+				if "`language'" == "portuguese" {
+					local ytitle = "Escala SAEB" 
+					local legend = "Adiamento das aulas"
+					local port   = "Português"
+					local math   = "Matemática"
+					local note   = "Fonte: Estimativa dos autores." 
+				}				
+			
+					twoway    bar ATT spec1 if spec1 == 1, ml(ATT) barw(0.4) color(cranberry) || bar ATT spec1 if spec1 == 2, barw(0.4) color(emidblue) || rcap lower upper spec1, lcolor(navy)	///
+						   || bar ATT spec1 if spec1 == 3, ml(ATT) barw(0.4) color(cranberry) || bar ATT spec1 if spec1 == 4, barw(0.4) color(emidblue) || rcap lower upper spec1, lcolor(navy)	///
+					yline(0, lpattern(shortdash) lcolor(cranberry)) 																																///
+					xline(2.5, lpattern(shortdash) lcolor(navy)) 																																	///
+					xtitle("", size(medsmall)) 											  																											///
+					ytitle("{&gamma}, `ytitle'", size(small)) ylabel(-8(2)4, labsize(small) gmax angle(horizontal) format (%4.1fc))  																///					
+				    xlabel(1 `" "2007" "versus 2005" "' 2 `" "2009" "versus 2007" "' 3 `" "2007" "versus 2005" "' 4 `" "2009" "versus 2007" "', labsize(small) ) 									///
+					xscale(r(0.5 2.5)) 																																								///
+					title(, size(medsmall) color(black)) 																																			///
+					graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 																		///
+					plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 																				///						
+					legend(order(1 "Placebo" 2 "`legend'" 3 "95% CI" ) region(lstyle(none) fcolor(none)) size(medsmall))  																			///
+					text(3.5 1.5 "`port'") 																																							///
+					text(3.5 3.5 "`math'") 																																							///
+					ysize(4) xsize(4)  ///
+					note("`note'", color(black) fcolor(background) pos(7) size(small)) 
+					graph export "$figures/ATT_3_dif_graph in `language'.pdf", as(pdf) replace
+			}		
 					
-					
-					
-	
-	
-	
-	
-	
-	
-	
+		
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 	
 *estout q202 q402 q602 q802  q201 q401 q601 q801 using "$results/Quantiles",  style(tex) keep (q20 q40 q60 q80) label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N,  fmt(%5.0fc)  labels("Number of obs"))  mgroups("Math" "Portuguese",  pattern(1 0 0 0 1 0 0 0 )) replace //

@@ -11,7 +11,7 @@
 	*2007 & 2009
 	*--------------------------------------------------------------------------------------------------------------------*
 	*use 	   "$provabrasil/Socioeconomic Characteristics at student level.dta", clear
-	*keep 	    if coduf == 35 & network == 3 & !missing(codschool)
+	*keep 	    if coduf == 35 & (network == 3 | network == 2) & !missing(codschool)
 	*save 	   "$inter/Socioeconomic Characteristics at student level.dta", replace
 	use 	   "$inter/Socioeconomic Characteristics at student level.dta", clear
 	collapse   (mean) $socioeco_variables, by(grade year codschool)
@@ -29,9 +29,9 @@
 *Flow Indicators																											
 *------------------------------------------------------------------------------------------------------------------------*
 	*use 	   "$rendimento/Flow Indicators at school level.dta", clear
-	*keep 	    if uf == "SP" & network == 3 & !missing(codschool)
+	*keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
 	*save 	   "$inter/Flow Indicators at school level.dta", replace
-	 use 	   "$inter/Flow Indicators at school level.dta", clear
+	use 	   "$inter/Flow Indicators at school level.dta", clear
 	drop 		*EM*
 	tempfile    flow_index
 	save       `flow_index'
@@ -41,7 +41,7 @@
 *School Infrastructure																									
 *------------------------------------------------------------------------------------------------------------------------*
 	*use 	   "$censoescolar/School Infrastructure at school level.dta", clear
-	*keep 	    if uf == "SP" & network == 3 & !missing(codschool)
+	*keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
 	*save 	   "$inter/School Infrastructure at school level.dta", replace
 	use 	   "$inter/School Infrastructure at school level.dta", clear
 	keep 		$matching_schools year codschool coduf uf codmunic codmunic2 operation network location cfim_letivo cinicio_letivo mes_fim_letivo dia_fim_letivo CICLOS
@@ -55,16 +55,16 @@
 *4* 
 *Enrollments																								
 *------------------------------------------------------------------------------------------------------------------------*
-   use 	   "$censoescolar/Enrollments at school level.dta", clear
-   keep 		if uf == "SP"
-   collapse 	(sum)$matriculas (mean)school_*, by(year codschool codmunic network)
-   save	   "$inter/Enrollments at school level.dta", replace
+   *use 	   "$censoescolar/Enrollments at school level.dta", clear
+   *keep 		if uf == "SP"
+   *collapse 	(sum)$matriculas (mean)school_*, by(year codschool codmunic network)
+   *save	   "$inter/Enrollments at school level.dta", replace
 	use 	   "$inter/Enrollments at school level.dta", clear
-	foreach var of varlist enrollment*{
+	foreach var of varlist enrollment* {
 		replace `var' = . if `var' == 0
 	}
-	keep 	    if network == 3 & !missing(codschool)
-	keep 		year codschool enrollment5grade 
+	keep 	    if (network == 3 | network == 2)  & !missing(codschool)
+	keep 		year codschool enrollment5grade network
 	tempfile    enrollments
 	save       `enrollments'	
 	
@@ -73,7 +73,7 @@
 *Class-hours																								
 *------------------------------------------------------------------------------------------------------------------------*
    *use 	   "$censoescolar/Class-Hours at school level.dta", clear
-   *keep 	    if uf == "SP" & network == 3 & !missing(codschool)
+   *keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
    *save 	   "$inter/Class-Hours at school level.dta", replace
 	use 	   "$inter/Class-Hours at school level.dta", clear
 	keep 		classhour5grade year codschool
@@ -85,7 +85,7 @@
 *Size of the classrooms																						
 *------------------------------------------------------------------------------------------------------------------------*
     *use 	   "$censoescolar/Class-Size at school level.dta", clear
-    *keep 	    if uf == "SP" & network == 3 & !missing(codschool)
+    *keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
     *save 	   "$inter/Class-Size at school level.dta", replace
 	use 	   "$inter/Class-Size at school level.dta", clear
 	keep 		tclass5grade year codschool
@@ -97,7 +97,7 @@
 *Expenditure per student																						
 *------------------------------------------------------------------------------------------------------------------------*
    *use 	   "$fnde/FNDE Indicators.dta", clear
-   *keep 	    if network == 3 & coduf == 35
+   *keep 	    if (network == 3 | network == 2) & coduf == 35
    *save 	   "$inter/FNDE Indicators.dta", replace
 	use 	   "$inter/FNDE Indicators.dta", clear
 	keep 	    year codmunic2 ind_49 r_ind_49 //r_ind_49 gasto por aluno do EF em R$ de 2018
@@ -108,14 +108,14 @@
 *8* 
 *IDEB school level
 *------------------------------------------------------------------------------------------------------------------------*
-   *use 		"$ideb/IDEB at schoool level.dta", clear
-   *keep 	 	if uf == "SP" & network == 3 & !missing(codschool)
-   *save		"$inter/IDEB at schoool level.dta", replace
-	use 		"$inter/IDEB at schoool level.dta", clear
+   use 		"$ideb/IDEB at school level.dta", clear
+   *keep 	 	if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
+   *save		"$inter/IDEB at school level.dta", replace
+	use 		"$inter/IDEB at school level.dta", clear
 	foreach var of varlist approval* {
 		replace `var' = `var'*100
 	}
-	keep 		if year == 2005 | year == 2007 | year == 2009 | year == 2011 | year == 2013
+	keep 		if year == 2005 | year == 2007 | year == 2009 | year == 2011 | year == 2013 | year == 2015
 	rename 		(spEF1 spEF2) (sp5 sp9)
 	drop 		flowindexEF* target* 
 	tempfile    ideb
@@ -132,117 +132,110 @@
 *9* 
 *Performance + school infrastructure + socioeconomic characteristics + GeoCodes + pib per capita + expenditure per student	
 *------------------------------------------------------------------------------------------------------------------------*
-		use 	`flow_index', clear
-		drop 	approval*
-		merge   1:1 codschool year using `school_infra'	 			, nogen
-		merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade)
-		merge   1:1 codschool year using `class_hours'	 			, nogen keepusing(classhour5grade)
-		merge   1:1 codschool year using `class_size'	 			, nogen keepusing(tclass5grade)
-		merge 	1:1 codschool year using `ideb'						, nogen
-		merge 	1:1 codschool year using `socio_economic'			, nogen 
-		merge   m:1 codmunic2 year using `expenditure'   			, nogen 
-		merge   m:1 codmunic  year using "$inter/GDP per capita.dta", nogen keep(1 3)
-		merge 	m:1 codschool 	   using `data'						, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
-		sort 	codschool year 
-		xtset   codschool year  
+	use 	`flow_index', clear
+	drop 	approval*
+	merge   1:1 codschool year using `school_infra'	 			, nogen
+	merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade)
+	merge   1:1 codschool year using `class_hours'	 			, nogen keepusing(classhour5grade)
+	merge   1:1 codschool year using `class_size'	 			, nogen keepusing(tclass5grade)
+	merge 	1:1 codschool year using `ideb'						, nogen
+	merge 	1:1 codschool year using `socio_economic'			, nogen 
+	merge   m:1 codmunic2 year using `expenditure'   			, nogen 
+	merge   m:1 codmunic  year using "$inter/GDP per capita.dta", nogen keep(1 3) keepusing(pib_pcap pop)
+	merge 	m:1 codschool 	   using `data'						, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
+	sort 	codschool year 
+	xtset   codschool year  
+	
+	
 	
 *------------------------------------------------------------------------------------------------------------------------*
-		foreach var of varlist *grade {
-			local newname  = substr("`var'",1, length("`var'")-5)
-			rename `var'  `newname'
+	foreach var of varlist *grade {
+		local newname  = substr("`var'",1, length("`var'")-5)
+		rename `var'  `newname'
+	}
+	foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {                                    	
+		gen padr_`var' = .
+		gen def_`var'  = .
+	}
+	forvalues year = 2005(2)2013 {
+		foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {           		//variables standartization
+			sum    `var' 									  if year == `year', detail
+			replace padr_`var' = (`var' - `r(mean)')/ `r(sd)' if year == `year',
 		}
-		foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {                                    	
-			gen padr_`var' = .
-			gen def_`var'  = .
-		}
-		forvalues year = 2005(2)2013 {
-			foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {           		//variables standartization
-				sum    `var' 									  if year == `year', detail
-				replace padr_`var' = (`var' - `r(mean)')/ `r(sd)' if year == `year',
-			}
-		}
-		sort	codschool year
-		foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {
-			replace	def_`var' = `var'[_n-2] if codschool[_n] == codschool[_n-2] & year[_n] == year[_n-2] + 2 & year >= 2009
-			replace	def_`var' = `var'[_n-1] if codschool[_n] == codschool[_n-1] & year[_n] == year[_n-1] + 2 & year == 2007
-		}
-		format  padr_* def_* %4.2fc	
+	}
+	sort	codschool year
+	foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {
+		replace	def_`var' = `var'[_n-2] if codschool[_n] == codschool[_n-2] & year[_n] == year[_n-2] + 2 & year >= 2009
+		replace	def_`var' = `var'[_n-1] if codschool[_n] == codschool[_n-1] & year[_n] == year[_n-1] + 2 & year == 2007
+	}
+	format  padr_* def_* %4.2fc	
 		
 		
 *GEOCODES
 *------------------------------------------------------------------------------------------------------------------------*
-		merge m:1 codmunic using "$geocodes/mun_brasil.dta", nogen keep(1 3)
-		keep if SIGLA == "SP"
+	merge m:1 codmunic using "$geocodes/mun_brasil.dta", nogen keep(1 3)
+	keep if SIGLA == "SP"
 		
 		
 *Treated municipalities
 *------------------------------------------------------------------------------------------------------------------------*
-		replace treated = .
-		foreach munic in $treated_municipalities {
-			replace treated = 1 if codmunic == `munic'
-		}
-		replace treated   = 0 if treated == .
-		gen 	t_treated = (year >= 2009  & treated == 1)
-		gen 	post      = (year >= 2009) 
-		gen 	T2007 	  =  year == 2007  & treated == 1
-		gen 	T2009 	  =  year == 2009  & treated == 1
-		foreach var of varlist t_treated post T2007 T2009 {
-			replace `var' = . if year > 2009
-		}
-		gen    postT 	   = post*treated
-		rename id _ID
-		save "$final/Performance & Socioeconomic Variables of SP schools.dta", replace
-
-/*
-*Municipios proximos uns aos outros
-*------------------------------------------------------------------------------------------------------------------------*
+	gen treated   = .				//1 for closed schools, 0 otherwise
+	gen id_13_mun = 0				//1 for the 13 municipalities that extended the winter break, 0 otherwise
+	gen id_M	  = 1				//0 for the 13 municipalities that extended the winter break, 1 otherwise
 	
-	*Control geocodes
-	* ------------------------------------------------------------------------------------------------------------------ *
-		use 	"$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-		duplicates drop _ID, force
-		keep 	if treated == 0
-		keep 	_ID x_stub y_stub
-		rename  (_ID x_stub y_stub ) (control_id control_long control_lat)
-		tempfile control_geo_codes
-		save    `control_geo_codes'
-	
-	*Treated communes and their distance to comparison communes
-	* ------------------------------------------------------------------------------------------------------------------ *
-		foreach distance in 20 50 100 {
-			use 	"$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-			duplicates drop _ID, force
-			keep 	if treated == 1
-			rename  (_ID x_stub y_stub ) (treat_id treat_long treat_lat)
-			
-			geonear treat_id treat_lat treat_long using `control_geo_codes', n(control_id control_lat control_long) within(`distance') long near(0) 
-		
-			codebook treat_id
-			codebook control_id
-				
-			mkmat	 treat_id  , matrix(T)
-			mkmat 	 control_id, matrix(C)
-				
-			matrix  _ID = T \ C
-			clear
-			svmat   _ID
-			duplicates drop _ID1, force	
-			rename  _ID1 _ID 
-			gen 	 distance`distance' = 1
-			tempfile data_`distance'
-			save    `data_`distance''
-		}
+	foreach munic in $treated_municipalities {
+		replace treated   = 1 if codmunic == `munic' & network == 3
+		replace id_13_mun = 1 if codmunic == `munic'
+		replace id_M	  = 0 if codmunic == `munic'
+	}		
+	replace treated    = 1 if network == 2
+	replace treated    = 0 if treated == .
+	gen 	post_treat = (year > 2007)
+	gen 	T2007 	   =  year == 2007  & treated == 1
+	gen 	T2009 	   =  year == 2009  & treated == 1
 
-			
-	*Identifying cities close to each other according to the distance define above
-	* ------------------------------------------------------------------------------------------------------------------ *
-	use 	"$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-		foreach distance in 20 50 100 {
-			merge m:1 _ID using `data_`distance'', nogen
-		}
-		gen distance0 = 1
-	*/
-		
+	gen 	state_network = network == 2
+	
+	gen 	A = 1 if network == 2 & !missing(math5)
+	bys 	year codmunic: egen mun_escolas_estaduais_ef1  = max(A)			//municipalities with state schools offering 1st to 5th grade
+	drop 	A	
+	
+	gen 	A = 1 if network == 2 & !missing(math9) 
+	bys 	year codmunic: egen mun_escolas_estaduais_ef2  = max(A)			//municipalities with state schools offering 6th to 9th grade
+	drop 	A
+	
+	gen 	A = 1 if network == 3 & !missing(math5)
+	bys 	year codmunic: egen mun_escolas_municipais_ef1 = max(A)			//municipalities with municipal schools offering 1st to 5th grade
+	drop 	A
+	
+	gen 	A = 1 if network == 3 & !missing(math9) 
+	bys 	year codmunic: egen mun_escolas_municipais_ef2 = max(A)			//municipalities with municipal schools offering 6th to 9th grade
+	drop 	A	
+	
+	gen 	tipo_municipio_ef1 = 1 if mun_escolas_estaduais_ef1 == 1 & mun_escolas_municipais_ef1 == 1
+	replace tipo_municipio_ef1 = 2 if mun_escolas_estaduais_ef1 == . & mun_escolas_municipais_ef1 == 1
+	replace tipo_municipio_ef1 = 3 if mun_escolas_estaduais_ef1 == 1 & mun_escolas_municipais_ef1 == .
+	replace tipo_municipio_ef1 = 4 if mun_escolas_estaduais_ef1 == . & mun_escolas_municipais_ef1 == .
+	label 	define tipo_municipio_ef1 1 "Escolas Estaduais e Municipais com EF1" 2  "Sem escolas Estaduais e com escolas municipais de EF1" 3 "Com escolas Estaduais e sem escolas municipais de EF1" 4 "Sem escolas de EF1" 
+	label 	val tipo_municipio_ef1 tipo_municipio_ef1
+	
+	gen 	tipo_municipio_ef2 = 1 if mun_escolas_estaduais_ef2 == 1 & mun_escolas_municipais_ef2 == 1
+	replace tipo_municipio_ef2 = 2 if mun_escolas_estaduais_ef2 == . & mun_escolas_municipais_ef2 == 1
+	replace tipo_municipio_ef2 = 3 if mun_escolas_estaduais_ef2 == 1 & mun_escolas_municipais_ef2 == .
+	replace tipo_municipio_ef2 = 4 if mun_escolas_estaduais_ef2 == . & mun_escolas_municipais_ef2 == .
+	label 	define tipo_municipio_ef2 1 "Escolas Estaduais e Municipais com EF2" 2  "Sem escolas Estaduais e com escolas municipais de EF2" 3 "Com escolas Estaduais e sem escolas municipais de EF2" 4 "Sem escolas de EF2" 
+	label 	val tipo_municipio_ef2 tipo_municipio_ef2
+	
+	gen 	offers_ef1 = !missing(math5) 
+	gen 	offers_ef2 = !missing(math9)
+	
+	replace offers_ef1 = . if year == 2008 | year == 2010 | year == 2012 | year == 2014 | year == 2016
+	replace offers_ef2 = . if year == 2008 | year == 2010 | year == 2012 | year == 2014 | year == 2016
+	
+	rename id _ID
+	save "$final/Performance & Socioeconomic Variables of SP schools.dta", replace
+
+
 	* ------------------------------------------------------------------------------------------------------------------ *
 	gen 	pop_2007 = pop if year == 2007
 	bys 	codmunic: egen max = max(pop_2007)
@@ -264,25 +257,23 @@
 	bys year: quantiles math5, gen(q_math5) stable nq(9)
 	bys year: quantiles port5, gen(q_port5) stable nq(9)
 
-
 	su 		mother_edu_5 		if year == 2009, detail
 	gen 	T2009_maeE  	= year == 2009  & treated == 1 & mother_edu_5 >  r(p50) & mother_edu_5 != .
 	gen 	T2009_maeNE 	= year == 2009  & treated == 1 & mother_edu_5 <= r(p50)
 	replace T2009_maeE 		= . if missing(mother_edu_5) 
 	replace T2009_maeNE 	= . if missing(mother_edu_5) 
-	gen 	post_treat 		= (year > 2007)
 	gen 	T2009_tclass 	= 1*tclass5	 	if year == 2009  & treated == 1
 	replace T2009_tclass 	= 0 if missing(T2009_tclass) & !missing(tclass5)
-	
 	gen 	T2009_hours  	= 1*classhour5 	if year == 2009  & treated == 1
 	replace T2009_hours 	= 0 if missing(T2009_hours)  & !missing(classhour5)
 	
 	* ------------------------------------------------------------------------------------------------------------------ *
 	drop    region municipality SIGLA NOME_MUNIC NOME_MESO NOME_MICRO
 	sort 	codschool year 
-	order   codschool year network location treated t_treated coduf uf codmunic codmunic2 n_munic pop pib_pcap ind_49 r_ind_49  operation cinicio_letivo cfim_letivo dia_fim_letivo mes_fim_letivo CICLOS math5 port5 repetition5 dropout5 approval5  math9 port9 repetition9 dropout9 approval9  padr_math5 padr_port5 def_math5 def_port5 padr_math9 padr_port9  def_math9 def_port9 
+	order   codschool year network location treated  coduf uf codmunic codmunic2 n_munic pop pib_pcap ind_49 r_ind_49  operation cinicio_letivo cfim_letivo dia_fim_letivo mes_fim_letivo CICLOS math5 port5 math9 port9 padr_math5 padr_port5 def_math5 def_port5 padr_math9 padr_port9  def_math9 def_port9 
 	rename (y_stub-MICRORREGI) (y_stub regiao meso_regiao micro_regiao)
-
+	format pop %20.0fc
+	
 	*Labels
 	* ------------------------------------------------------------------------------------------------------------------ *
 	foreach grade in 5 9 {
@@ -374,7 +365,6 @@
 		label var network 					"=3, escolas municipais"
 		label var location					"1 se urbana e 2 se rural"
 		label var treated 					"1 para municípios que adiaram o retorno às aulas"
-		label var t_treated 				"0 para 2007, 0 para C em 2009 e 1 para T em 2009"
 		label var coduf 					"Código da UF"
 		label var uf 						"Sigla da UF"
 		label var codmunic					"Código do município"
@@ -421,7 +411,7 @@
 		
 		drop 	regiao  n_munic CICLOS operation def_idebEF1 padr_idebEF1 padr_idebEF2 def_idebEF2 school location
 		sort 	codschool year
-		replace enrollment5 = enrollment5[_n+1] if year[_n] == 2005 & year[_n+1] == 2007 & codschool[_n] == codschool[_n+1]
 		xtset 	codschool year 	
+		compress
 		
 	save "$final/Performance & Socioeconomic Variables of SP schools.dta", replace

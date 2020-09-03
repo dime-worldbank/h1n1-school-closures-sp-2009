@@ -1,4 +1,31 @@
 
+
+
+
+use "$ideb/IDEB at municipal level.dta", clear
+
+keep if uf == "SP" & (network == 2 | network == 3) & year < 2009
+
+gen id_M = 1
+gen id_13_M= 0
+	foreach munic in $treated_municipalities {
+		replace id_M = 0 if codmunic == `munic'
+		replace id_13_M = 1 if codmunic == `munic'
+	}
+
+gen state = network == 2
+
+reg math5 state##year if id_M == 1
+
+
+
+reg math5 id_M##state##year
+
+
+
+
+
+
 *----------------------------------------------------------------------------------------------------------------------------*
 *Tendência no tempo
 *----------------------------------------------------------------------------------------------------------------------------*
@@ -304,7 +331,40 @@
 		
 		collapse (sum) mat enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal school_*, by(affected network)
 		sort network
-
+		
+*----------------------------------------------------------------------------------------------------------------------------*
+*Numero de escolas
+*----------------------------------------------------------------------------------------------------------------------------*
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+		keep if year == 2009
+		codebook codmunic  if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of municipalities (among the ones that did not extend the winter break) with at lest one state school
+		codebook codschool if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of state schools in the municipalities that opted to not extend the winter break
+		codebook codschool if id_13_mun == 0 & network == 3 & !missing(math5) & mun_escolas_estaduais_ef1 == 1  //number of municipal schools in the municipalities that opted to not extend the winter break
+	
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+		keep if year == 2009
+		duplicates drop codmunic, force
+		gen ind = 1
+		collapse (sum) ind , by (id_13_mun tipo_municipio_ef1)
+		
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+		keep if year == 2009
+		duplicates drop codmunic, force
+		gen ind = 1
+		collapse (sum) ind , by (id_13_mun tipo_municipio_ef2)
+		
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+		keep if year == 2005
+		gen ind_estadual  = 1 if network == 2 & !missing(math5)
+		gen ind_municipal = 1 if network == 3 & !missing(math5)
+		collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef1)	
+		
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+		keep if year == 2009
+		gen ind_estadual  = 1 if network == 2 & !missing(math9)
+		gen ind_municipal = 1 if network == 3 & !missing(math9)
+		collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef2)	
+				
 		
 *----------------------------------------------------------------------------------------------------------------------------*
 *Balance test
@@ -363,6 +423,9 @@
 	 tab codmunic if treated == 1 & enrollment9grade !=0 & year == 2009
 	   
 
+	
+	use "$ideb/IDEB at municipal level.dta", clear
+	
 	
 	
 	
