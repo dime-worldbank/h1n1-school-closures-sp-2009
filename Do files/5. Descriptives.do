@@ -1,33 +1,53 @@
 
 
+*----------------------------------------------------------------------------------------------------------------------------*
+*Parallel trends 
+*----------------------------------------------------------------------------------------------------------------------------*
+	use "$ideb/IDEB at municipal level.dta", clear
+
+	keep if uf == "SP" & (network == 2 | network == 3) & year < 2009
+
+	gen id_M    = 1
+	gen id_13_M = 0
 
 
-use "$ideb/IDEB at municipal level.dta", clear
-
-keep if uf == "SP" & (network == 2 | network == 3) & year < 2009
-
-gen id_M = 1
-gen id_13_M= 0
 	foreach munic in $treated_municipalities {
 		replace id_M = 0 if codmunic == `munic'
 		replace id_13_M = 1 if codmunic == `munic'
 	}
 
-gen state = network == 2
+	gen state = network == 2
 
-reg math5 state##year if id_M == 1
-
-
-
-reg math5 id_M##state##year
+	reg math5 state##year if id_M == 1
+	reg math5 state##year if id_M == 1
 
 
+	reg math5 id_M##state##year
+	reg port5 id_M##state##year
+	
+	
+	
+	
+	use "$ideb/IDEB at school level.dta", clear
+	keep if uf == "SP" & network == 3 & year < 2009
+	
+	gen treated = 0
+	foreach munic in $treated_municipalities {
+		replace treated = 1 if codmunic == `munic'
+	}
+
+
+	reg math5 treated##year i.codmunic
+	
+	reg port5 treated##year i.codmunic
+		
+	
 
 
 
 
 *----------------------------------------------------------------------------------------------------------------------------*
-*Tendência no tempo
+*Tendência no tempo 
 *----------------------------------------------------------------------------------------------------------------------------*
 
 	*Math

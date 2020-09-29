@@ -10,9 +10,9 @@
 	
 	*2007 & 2009
 	*--------------------------------------------------------------------------------------------------------------------*
-	*use 	   "$provabrasil/Socioeconomic Characteristics at student level.dta", clear
-	*keep 	    if coduf == 35 & (network == 3 | network == 2) & !missing(codschool)
-	*save 	   "$inter/Socioeconomic Characteristics at student level.dta", replace
+	use 	   "$provabrasil/Socioeconomic Characteristics at student level.dta", clear
+	keep 	    if coduf == 35 & (network == 3 | network == 2) & !missing(codschool)
+	save 	   "$inter/Socioeconomic Characteristics at student level.dta", replace
 	use 	   "$inter/Socioeconomic Characteristics at student level.dta", clear
 	collapse   (mean) $socioeco_variables, by(grade year codschool)
 	foreach var of varlist $socioeco_variables100 {
@@ -64,7 +64,7 @@
 		replace `var' = . if `var' == 0
 	}
 	keep 	    if (network == 3 | network == 2)  & !missing(codschool)
-	keep 		year codschool enrollment5grade network
+	keep 		year codschool enrollment5grade network enrollment9grade enrollmentEF1 enrollmentEF2
 	tempfile    enrollments
 	save       `enrollments'	
 	
@@ -76,7 +76,7 @@
    *keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
    *save 	   "$inter/Class-Hours at school level.dta", replace
 	use 	   "$inter/Class-Hours at school level.dta", clear
-	keep 		classhour5grade year codschool
+	keep 		classhour5grade classhour9grade  year codschool
 	tempfile    class_hours
 	save       `class_hours'	
 	
@@ -88,7 +88,7 @@
     *keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
     *save 	   "$inter/Class-Size at school level.dta", replace
 	use 	   "$inter/Class-Size at school level.dta", clear
-	keep 		tclass5grade year codschool
+	keep 		tclass5grade tclass9grade year codschool
 	tempfile    class_size
 	save       `class_size'	
 	
@@ -135,13 +135,13 @@
 	use 	`flow_index', clear
 	drop 	approval*
 	merge   1:1 codschool year using `school_infra'	 			, nogen
-	merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade)
-	merge   1:1 codschool year using `class_hours'	 			, nogen keepusing(classhour5grade)
-	merge   1:1 codschool year using `class_size'	 			, nogen keepusing(tclass5grade)
+	merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade enrollment9grade enrollmentEF1 enrollmentEF2)
+	merge   1:1 codschool year using `class_hours'	 			, nogen keepusing(classhour5grade classhour9grade)
+	merge   1:1 codschool year using `class_size'	 			, nogen keepusing(tclass5grade tclass9grade)
 	merge 	1:1 codschool year using `ideb'						, nogen
 	merge 	1:1 codschool year using `socio_economic'			, nogen 
 	merge   m:1 codmunic2 year using `expenditure'   			, nogen 
-	merge   m:1 codmunic  year using "$inter/GDP per capita.dta", nogen keep(1 3) keepusing(pib_pcap pop)
+	merge   m:1 codmunic  year using "$inter/GDP per capita.dta", nogen keep(1 3) keepusing(pib_pcap pop porte)
 	merge 	m:1 codschool 	   using `data'						, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
 	sort 	codschool year 
 	xtset   codschool year  
@@ -242,6 +242,8 @@
 	drop 	pop_2007
 	rename  max pop_2007
 	
+	
+	
 	*gen 	mat_pop = enrollmentEF/pop //matriculas a cada 1000 habitantes
 	*format  mat_pop %4.2fc	
 	
@@ -273,6 +275,31 @@
 	order   codschool year network location treated  coduf uf codmunic codmunic2 n_munic pop pib_pcap ind_49 r_ind_49  operation cinicio_letivo cfim_letivo dia_fim_letivo mes_fim_letivo CICLOS math5 port5 math9 port9 padr_math5 padr_port5 def_math5 def_port5 padr_math9 padr_port9  def_math9 def_port9 
 	rename (y_stub-MICRORREGI) (y_stub regiao meso_regiao micro_regiao)
 	format pop %20.0fc
+	
+	*Triple dif in dif
+	* ------------------------------------------------------------------------------------------------------------------ *
+	gen D = (year == 2009)
+	gen G = id_M == 1
+	gen T = treated
+	gen E = state_network
+	gen beta1  = E
+	gen beta2  = G
+	gen beta3  = T
+	gen beta4  = D
+	gen beta5  = E*G
+	gen beta6  = E*T //colinearidade perfeita com beta1 pq todas as escolas estaduais sao tratadas. 
+	gen beta7  = E*D
+	gen beta8  = G*T
+	gen beta9  = G*D
+	gen beta10 = T*D
+	gen beta11 = E*G*T //sempre igual EG
+	gen beta12 = E*G*D //sempre igual a GDE
+	gen beta13 = E*T*D //igual ED
+	gen beta14 = G*T*D 
+	gen beta15 = E*G*T*D
+	
+	gen tend = 1 if year == 2007
+	replace tend = 2 if year == 2009
 	
 	*Labels
 	* ------------------------------------------------------------------------------------------------------------------ *

@@ -74,6 +74,15 @@
 			replace pib_pcap = pib_pcap*`ipca`year'' if year == `year'
 		}
 		
+		gen 	porte = 1 if pop <= 5000
+		replace porte = 2 if pop >  5000   & pop < 50000
+		replace porte = 3 if pop >  50000  & pop < 100000
+		replace porte = 4 if pop >  100000 & pop < 500000
+		replace porte = 5 if pop >  500000 & !missing(pop)
+		
+		label define porte 1 "Up to 5k" 2 "Between 5k and 50k" 3 "Between 50k and 100k" 4 "Between 100k and 500k" 5 "More than 500k"
+		label val    porte porte
+		
 		replace pop = pop/1000
 		
 		format pib 		%25.2fc
@@ -85,6 +94,8 @@
 		
 		gen 	 codmunic2 = substr(string(codmunic), 1,6)
 		destring codmunic2, replace
+		
+		
 		save   "$inter/GDP per capita.dta", replace
 
 

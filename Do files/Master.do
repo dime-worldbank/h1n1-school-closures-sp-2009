@@ -4,15 +4,15 @@
 *vivianamorim5@gmail.com
 
    * PART 0:  INSTALL PACKAGES AND STANDARDIZE SETTINGS
-   local user_commands ietoolkit sxpose  spmap  quantiles xtbalance boottest diff
+   local user_commands ietoolkit sxpose  spmap  quantiles xtbalance boottest diff cic
    foreach command of local user_commands  {
        cap which `command'
        if _rc == 111 {
            ssc install `command'
        }
    }
-   ieboilstart, version(12.1)          //Set the version number to the oldest version used by anyone in the project team
-   `r(version)'                        //This line is needed to actually set the version from the command above
+   ieboilstart, version(15)          	//Set the version number to the oldest version used by anyone in the project team
+   `r(version)'                         //This line is needed to actually set the version from the command above
 
     set matsize 11000
 	set scheme economist 
