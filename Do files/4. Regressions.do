@@ -1,3 +1,6 @@
+global final   "C:\Users\wb495845\OneDrive - WBG\Desktop"
+global results "C:\Users\wb495845\OneDrive - WBG\Desktop"
+global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 
 															*IMPACTS OF SCHOOL SHUTDOWNS ON STUDENT'S LEARNING*
 																        *2009, São Paulo/Brazil*
@@ -70,8 +73,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 		local ATT = reg_results[1,1]																					
 
 		*Confidence Interval 
-		
-		if `model' < 3 {		//model 3 is the triple dif in dif, we dont have the problem of a small number of clusters
+		if `model' != 5 {		//model 3 is the triple dif in dif, we dont have the problem of a small number of clusters
 		boottest `var',  reps(1000)  boottype(wild)  seed(1) level(95) 	bootcluster(codmunic) quietly		//Confidence interval using bootstrap
 			scalar pvalue 	= r(p)				
 			scalar lowerb 	= el(r(CI),1,1)
@@ -97,73 +99,88 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 			
 			
 		*We use estout to export regression results. Besides the coefficients, we export pvalues, confidence interval, mean and standard deviation of the dependent variable.
-			if ((`model' == 1) & `sub' != 4 & `sub' != 5) | `model' == 2 estadd scalar pvalue  = pvalue: model`model'`sub'`grade'
-			if ((`model' == 1) & `sub' != 4 & `sub' != 5) | `model' == 2 estadd scalar lowerb  = lowerb: model`model'`sub'`grade'
-			if ((`model' == 1) & `sub' != 4 & `sub' != 5) | `model' == 2 estadd scalar upperb  = upperb: model`model'`sub'`grade'
-			if ((`model' == 1) & `sub' != 4 & `sub' != 5) | `model' > 1  estadd scalar media   = media: model`model'`sub'`grade'
-			if ((`model' == 1) & `sub' != 4 & `sub' != 5) | `model' > 1  estadd scalar sd      = sd: model`model'`sub'`grade'
-			if ((`model' == 1) & `sub' != 4 & `sub' != 5) | `model' > 1  estadd scalar mediaT  = mediaT: model`model'`sub'`grade'
-			if ((`model' == 1) & `sub' != 4 & `sub' != 5) | `model' > 1  estadd scalar sdT     = sdT: model`model'`sub'`grade'
-			if ((`model' == 1) & `sub' != 4 & `sub' != 5) | `model' > 1  estadd scalar mediaC  = mediaC: model`model'`sub'`grade'
-			if ((`model' == 1) & `sub' != 4 & `sub' != 5) | `model' > 1  estadd scalar sdC     = sdC: model`model'`sub'`grade'
+			estadd scalar pvalue  = pvalue: model`model'`sub'`grade'
+			estadd scalar lowerb  = lowerb: model`model'`sub'`grade'
+			estadd scalar upperb  = upperb: model`model'`sub'`grade'
+			estadd scalar media   = media: model`model'`sub'`grade'
+			estadd scalar sd      = sd: model`model'`sub'`grade'
+			estadd scalar mediaT  = mediaT: model`model'`sub'`grade'
+			estadd scalar sdT     = sdT: model`model'`sub'`grade'
+			estadd scalar mediaC  = mediaC: model`model'`sub'`grade'
+			estadd scalar sdC     = sdC: model`model'`sub'`grade'
 	end
 	
 
 *Regressions // 
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		foreach subject in  sp5  math5 math_insuf_5 port5 port_insuf_5 approval5 sp9  math9 math_insuf_9 port9 port_insuf_9 approval9 { 		//regression for each of our dependent variables 
+		foreach subject in sp5 math5 math_insuf_5 port5 port_insuf_5 approval5 dropout5 sp9 math9 math_insuf_9 port9 port_insuf_9 approval9 dropout9 { 	// sp5 math5 math_insuf_5 port5 port_insuf_5 approval5 sp9 math9 math_insuf_9 port9 port_insuf_9 approval9  //regression for each of our dependent variables 
 		 
-			if  "`subject'" == "sp5" |  "`subject'" == "port5" |  "`subject'" == "math5" |  "`subject'" == "port_insuf_5" |  "`subject'" == "math_insuf_5" | "`subject'" == "approval5" {
+			if  substr("`subject'", -1,.) == "5" {
 				local etapa 1
 				local weight enrollment5		//we weight all regressions by the number of students enrolled in fifth grade 
 				local grade 5
 			}
 			
-			if  "`subject'" == "sp9" |  "`subject'" == "port9" |  "`subject'" == "math9" |  "`subject'" == "port_insuf_9" |  "`subject'" == "math_insuf_9" | "`subject'" == "approval9" {
+			if  substr("`subject'", -1,.) == "9" {
 				local etapa 2
-				local weight enrollment9		//we weight all regressions by the number of students enrolled in fifth grade 
+				local weight enrollment9		//we weight all regressions by the number of students enrolled ninth-grade 
 				local grade 9
-			}		 
+			}		
+			
+			if  substr("`subject'", -1,.) != "5" & substr("`subject'", -1,.) != "9" {
+				local etapa 3
+				local weight enrollment		
+				local grade 0
+			}				
 
-			if "`subject'" == "port5" | "`subject'" == "port9" {
+			if  substr("`subject'", 1,4) == "port" {
 				local sub = 1					//subject = 1, Portuguese
-				local title = "Português"		//saving the title for our line graph showing the time trend of treatment and comparison groups
+				local title = "Português"	
 			}
 			
-			if "`subject'" == "math5" | "`subject'" == "math9" {
+			if  substr("`subject'", 1,4) == "math" {
 				local sub = 2					//subject = 2, Math
 				local title = "Matemática"
 			}
 			
-			if "`subject'" == "sp5" | "`subject'" == "sp9" {
+			if  substr("`subject'", 1,2) == "sp"   {
 				local sub = 3					//subject = 3, Standardized score, Portuguese and Math
 				local title = "Português e Matemática"
 			}
 			
-			if "`subject'" == "math_insuf_5"  | "`subject'" == "math_insuf_9" {
+			if  substr("`subject'", 1,10) == "math_insuf"  {
 				local sub = 4					//subject = 4, % of students below the adequate level in Math
 				local title = "% desempenho insuficiente em Matemática"
 			}
 						
-			if "`subject'" == "port_insuf_5"  | "`subject'" == "port_insuf_9" {
+			if  substr("`subject'", 1,10) == "port_insuf"  {
 				local sub = 5					//subject = 5, % of students below the adequate level in Portuguese
 				local title = "% desempenho insuficiente em Português"
 			}
 			
-			if "`subject'" == "approval5"     | "`subject'" == "approval9"    {
+			if  substr("`subject'", 1,8) == "approval"     {
 				local sub = 6					//subject = 6, approval
-				local title = "Approval"
+				local title = "Approvação"
 			}
 			
+			if  substr("`subject'", 1,10) == "repetition"  {
+				local sub = 7					//subject = 7, approval
+				local title = "Reprovação"
+			}
+						
+			if  substr("`subject'", 1,7) == "dropout" { //subject = 8, dropout
+				local sub = 8	
+				local title = "Abandono"
+			}
+							
 				*--------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 				*Dif in dif
 				*--------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 				use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-				keep if year == 2005 | year == 2007 | year == 2009										
 				drop if codmunic == 3509502 | codmunic == 3520509 | codmunic == 3548807 				//municipalities without 5th grade scores in 2005. Since we can not test parallel trends for these municipalities, we did not consider them in our analaysis
 				sort 	codschool year
-					
+
 					**********************************
 					**YOU NEED STATA 16 to run LASSO**
 					**********************************
@@ -174,8 +191,8 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 					c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5
 
 					*In case you have stata 16, just delete "*" from the two rows below
-					*lasso linear `subject'5 $controls2005 if year <= 2007, rseed(1)						
-					*global controls2005  `e(allvars_sel)'
+					lasso linear `subject'5 $controls2005 if year <= 2007, rseed(8901892080)						
+					global controls2005  `e(allvars_sel)'
 				
 					*2*
 					*Lasso to select controls of model 2
@@ -189,9 +206,10 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						c.SIncentive1_5##c.SIncentive1_5 c.SIncentive2_5##c.SIncentive2_5 c.SIncentive3_5##c.SIncentive3_5	 										///
 						c.SIncentive4_5##c.SIncentive4_5 c.SIncentive5_5##c.SIncentive5_5 c.SIncentive6_5##c.SIncentive6_5 										
 						
-						*lasso linear `subject' $controls2007 if year >= 2007, rseed(1)		
-						*global controls2007  `e(allvars_sel)'
+						lasso linear `subject' $controls2007 if year >= 2007, rseed(2222434657)		
+						global controls2007  `e(allvars_sel)'
 						
+						/*
 						*In case you do not have STATA 16, these are the dependent variables selected:
 						global controls2007 mother_edu_5 c.mother_edu_5#c.mother_edu_5 ndropout_5 c.ndropout_5#c.ndropout_5 nrepetition_5 c.nrepetition_5#c.nrepetition_5 		///
 						computer_5 c.computer_5#c.computer_5 pib_pcap c.pib_pcap#c.pib_pcap approval5 c.approval5#c.approval5	studentwork_5 c.studentwork_5#c.studentwork_5 	///
@@ -199,8 +217,9 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						ComputerLab c.ScienceLab#c.ScienceLab c.Library#c.Library c.InternetAccess#c.InternetAccess classhour5 c.classhour5#c.classhour5 						///
 						tclass5 c.tclass5#c.tclass5 c.SIncentive1_5#c.SIncentive1_5 c.SIncentive2_5#c.SIncentive2_5 c.SIncentive3_5#c.SIncentive3_5 SIncentive4_5 SIncentive5_5 ///
 						c.SIncentive5_5#c.SIncentive5_5 c.SIncentive6_5#c.SIncentive6_5
+						*/
 					}
-					else {
+					if `etapa' == 2 {
 						global controls2007 c.mother_edu_9##c.mother_edu_9 c.ndropout_9##c.ndropout_9 c.nrepetition_9##c.nrepetition_9 c.computer_9##c.computer_9	///
 						c.pib_pcap##c.pib_pcap c.approval5##c.approval5  c.studentwork_9##c.studentwork_9 						   									///
 						c.white_9##c.white_9 c.female_9##c.female_9 c.privateschool_9##c.privateschool_9 c.livesmother_9##c.livesmother_9 							///
@@ -209,9 +228,9 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						c.SIncentive1_9##c.SIncentive1_9 c.SIncentive2_9##c.SIncentive2_9 c.SIncentive3_9##c.SIncentive3_9	 										///
 						c.SIncentive4_9##c.SIncentive4_9 c.SIncentive5_9##c.SIncentive5_9 c.SIncentive6_9##c.SIncentive6_9 										
 						
-						*lasso linear `subject' $controls2007 if year >= 2007, rseed(1)		
-						*global controls2007  `e(allvars_sel)'
-						
+						lasso linear `subject' $controls2007 if year >= 2007, rseed(344646656)		
+						global controls2007  `e(allvars_sel)'
+						/*
 						*In case you do not have STATA 16, these are the dependent variables selected:
 						global controls2007 mother_edu_9 c.mother_edu_9#c.mother_edu_9 ndropout_9 c.ndropout_9#c.ndropout_9 nrepetition_9 c.nrepetition_9#c.nrepetition_9 		///
 						computer_9 c.computer_9#c.computer_9 pib_pcap c.pib_pcap#c.pib_pcap approval5 c.approval5#c.approval5	studentwork_9 c.studentwork_9#c.studentwork_9 	///
@@ -219,7 +238,29 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						ComputerLab c.ScienceLab#c.ScienceLab c.Library#c.Library c.InternetAccess#c.InternetAccess classhour5 c.classhour5#c.classhour5 						///
 						tclass5 c.tclass5#c.tclass5 c.SIncentive1_9#c.SIncentive1_9 c.SIncentive2_9#c.SIncentive2_9 c.SIncentive3_9#c.SIncentive3_9 SIncentive4_9 SIncentive5_9 ///
 						c.SIncentive5_9#c.SIncentive5_9 c.SIncentive6_9#c.SIncentive6_9
+						*/
 					}
+					if `etapa' ==  3 {
+						global controls2007 c.mother_edu_##c.mother_edu_ c.ndropout_##c.ndropout_ c.nrepetition_##c.nrepetition_ c.computer_##c.computer_			///
+						c.pib_pcap##c.pib_pcap c.approval5##c.approval5  c.studentwork_##c.studentwork_ 						   									///
+						c.white_##c.white_ c.female_##c.female_ c.privateschool_##c.privateschool_ c.livesmother_##c.livesmother_ 									///
+						c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt 															///
+						c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour5##c.classhour5 c.tclass5##c.tclass5 									///
+						c.SIncentive1_##c.SIncentive1_ c.SIncentive2_##c.SIncentive2_ c.SIncentive3_##c.SIncentive3_	 											///
+						c.SIncentive4_##c.SIncentive4_ c.SIncentive5_##c.SIncentive5_ c.SIncentive6_##c.SIncentive6_ 										
+						
+						*lasso linear `subject' $controls2007 if year >= 2007, rseed(9384938493)		
+						*global controls2007  `e(allvars_sel)'
+						
+						*In case you do not have STATA 16, these are the dependent variables selected:
+						global controls2007 mother_edu_ c.mother_edu_#c.mother_edu_ ndropout_ c.ndropout_#c.ndropout_ nrepetition_ c.nrepetition_#c.nrepetition_ 		///
+						computer_ c.computer_#c.computer_ pib_pcap c.pib_pcap#c.pib_pcap approval5 c.approval5#c.approval5	studentwork_ c.studentwork_#c.studentwork_ 	///
+						white_ c.white_#c.white_ female_ c.female_#c.female_ privateschool_ c.privateschool_#c.privateschool_ 	c.livesmother_#c.livesmother_			///
+						ComputerLab c.ScienceLab#c.ScienceLab c.Library#c.Library c.InternetAccess#c.InternetAccess classhour5 c.classhour5#c.classhour5 				///
+						tclass5 c.tclass5#c.tclass5 c.SIncentive1_#c.SIncentive1_ c.SIncentive2_#c.SIncentive2_ c.SIncentive3_#c.SIncentive3_ SIncentive4_ SIncentive5_ ///
+						c.SIncentive5_#c.SIncentive5_ c.SIncentive6_#c.SIncentive6_
+					}
+					
 					
 					*3*
 					*Regressions
@@ -230,7 +271,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						if `etapa' == 1 {
 						
 							reg `subject' T2007 		  								 i.treated i.codmunic i.year $controls2005 					    if network == 3 & year >= 2005 & year <= 2007  [aw = `weight'], cluster(codmunic)
-							if `sub' != 4 & `sub' != 5 eststo model1`sub'`grade', title("dif_dif_placebo")
+							eststo model1`sub'`grade', title("dif_dif_placebo")
 							mat_res, model(1) sub(`sub') var(T2007)	dep_var(`subject') grade(`grade')
 							
 							/*
@@ -250,22 +291,34 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 							eststo model2`sub'`grade', title("Dif-in-dif")  
 							mat_res, model(2) sub(`sub') var(T2009) dep_var(`subject') grade(`grade')
 							
-						/*
+						*ROBUSTNESS CHECK	
+						*Comparison group: only municipalities that do not have state schools, since one can argue that in municipalities with state and municipal schools, we can have
+						*spilovers if the same teacher works in a municipal and a state schools at the same time. 
+						*2009 versus 2007
+						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
+							reg `subject' 	    T2009	  								 i.treated i.codmunic i.year $controls2007 						if network == 3 & year >= 2007 & year <= 2009 & (treated == 1 | (treated == 0 & tipo_municipio_ef1 == 2))  [aw = `weight'], cluster(codmunic)
+							eststo model3`sub'`grade', title("Dif-in-dif")  
+							mat_res, model(3) sub(`sub') var(T2009) dep_var(`subject') grade(`grade')
+							
+						
 						*Changes in changes estimator
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 						if "`subject'" == "port" | "`subject'" == "math" {
 							foreach quantile in 10 20 30 40 50 60 70 80 90 { 
 								cic continuous `subject' treated post_treat $controls2007 i.codmunic if network == 3 & year >= 2007 & year <= 2009  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
 								matrix reg_results = r(table)
-								matrix results = results \ (6, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile')	 	
+								matrix results = results \ (4, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile')	 	
 							}
 						}
-						*/
-		
-		
+						
+
 						*Parallel trends
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 							preserve	
+							sort codschool year
+							replace enrollment5 = enrollment5[_n+1] if year[_n] == 2008 & year[_n+1] == 2009 & codschool[_n] == codschool[_n+1]
+							replace enrollment9 = enrollment9[_n+1] if year[_n] == 2008 & year[_n+1] == 2009 & codschool[_n] == codschool[_n+1]
+							
 							keep if network == 3
 							collapse (mean)`subject' [aw = `weight'], by(year treated)
 							format 	 	   `subject' %4.1fc
@@ -286,23 +339,46 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 							note("Fonte: Prova Brasil.", color(black) fcolor(background) pos(7) size(small)))  
 							graph export "$figures/parallel_trends_dif_in_dif_`subjet'_`grade'.pdf", as(pdf) replace
 							restore
-						} 
+						}
 						
+						*Triple Dif in Dif
 						*2009 versus 2007
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*							
-							use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-							keep if year == 2005 | year == 2007 | year == 2009										
+						if `etapa' == 1 | `etapa' == 2 {
+							use "$final/Performance & Socioeconomic Variables of SP schools.dta" if (year == 2007 | year == 2009) & tipo_municipio_ef`etapa' == 1, clear
 							
-							reg `subject' beta15 beta1-beta14 i.codmunic $controls2007 						    if year >= 2007 & year <= 2009 & tipo_municipio_ef`etapa' == 1 [aw = `weight'], cluster(codmunic)
-							eststo model3`sub'`grade', title("Triple dif")  
-							mat_res, model(3) sub(`sub') var(beta15) dep_var(`subject') grade(`grade')	
+							reg `subject' beta7 beta1-beta6 i.codmunic $controls2007 [aw = `weight'], cluster(codmunic)
+							eststo model5`sub'`grade', title("Triple dif")  
+							mat_res, model(5) sub(`sub') var(beta7) dep_var(`subject') grade(`grade')	
 							//tipo_municipio_ef1 : municipalities with state and municipal schools offering 1st to 5th grade
 							//tipo_municipio_ef2 : municipalities with state and municipal schools offering 6th to 9th grade
+
 							
+							if  substr("`subject'", 1,4) == "math" |  substr("`subject'", 1,4) == "port" {
+								foreach quantile in 10 20 30 40 50 60 70 80 90 { 
+									cic continuous `subject' beta4 beta3 beta1 beta2 beta5 beta6 $controls2007 i.codmunic  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
+									matrix reg_results = r(table)
+									matrix results = results \ (7, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile')	 	
+								}
+							}
+						}
+
+						*Same cohort
+						*2009 versus 2005
+						**We only have 4 treated clusters and 98 comparison clusters
+						*-----------------------------------------------------------------------------------------------------------------------------------------------------------*							
+						/*
+						if `etapa' == 3 {
+							use "$final/Performance & Socioeconomic Variables of SP schools.dta" if school_2005_ef1_ef2 == 1 , clear
+							reg `subject' 	    T2009	  								 i.treated i.codmunic i.year $controls2007  [aw = `weight'], cluster(codmunic)
+							eststo model5`sub'`grade', title("Dif-in-dif")  
+							mat_res, model(5) sub(`sub') var(T2009) dep_var(`subject') grade(`grade')
+						}
+						*/
 		}
 		
-		*estout * using "$results/Regressions.csv", delimiter(";") keep(beta15) label cells(b(star fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) starlevels(* 0.1 ** 0.05 *** 0.01) replace
- 		estout * using "$results/Regressions.csv", delimiter(";") keep(T2007 T2009 beta15) label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) mgroups("Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level" "Approval" "Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level" "Approval",   pattern(1 0 0 1 0 0 1 0 1 0 0 1 0 1 0 0 1 1 1 1 1 1)) replace 
+		estout * using "$results/Regressions.csv", delimiter(";") keep(T2007 T2009 beta7 ) label cells(b(star fmt(3)) se(fmt(2))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) starlevels(* 0.1 ** 0.05 *** 0.01) replace
+		*estout * using "$results/Regressions.csv", delimiter(";") keep(T2007 T2009 beta7) label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) mgroups("Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level" "Approval" "Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level" "Approval",   pattern(1 0 0 1 0 0 1 0 1 0 0 1 0 1 0 0 1 1 1 1 1 1)) replace 
 
  
 /*
@@ -434,7 +510,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 	*Impact on Math/Portuguese by percentile
 	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 		use "$final/Regression Results.dta", clear
-		keep if model == 3 //changes in changes estimator
+		keep if model == 7 //changes in changes estimator
 		
 		foreach sub in 1 2 {	
 

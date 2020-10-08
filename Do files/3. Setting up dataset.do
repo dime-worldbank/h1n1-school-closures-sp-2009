@@ -112,12 +112,9 @@
    *keep 	 	if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
    *save		"$inter/IDEB at school level.dta", replace
 	use 		"$inter/IDEB at school level.dta", clear
-	foreach var of varlist approval* {
-		replace `var' = `var'*100
-	}
 	keep 		if year == 2005 | year == 2007 | year == 2009 | year == 2011 | year == 2013 | year == 2015
 	rename 		(spEF1 spEF2) (sp5 sp9)
-	drop 		flowindexEF* target* 
+	drop 		flowindexEF* target* approval*
 	tempfile    ideb
 	save       `ideb'
 	
@@ -133,7 +130,6 @@
 *Performance + school infrastructure + socioeconomic characteristics + GeoCodes + pib per capita + expenditure per student	
 *------------------------------------------------------------------------------------------------------------------------*
 	use 	`flow_index', clear
-	drop 	approval*
 	merge   1:1 codschool year using `school_infra'	 			, nogen
 	merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade enrollment9grade enrollmentEF1 enrollmentEF2)
 	merge   1:1 codschool year using `class_hours'	 			, nogen keepusing(classhour5grade classhour9grade)
@@ -228,9 +224,39 @@
 	
 	gen 	offers_ef1 = !missing(math5) 
 	gen 	offers_ef2 = !missing(math9)
+	gen 	offers_ef1_ef2 = offers_ef1 == 1 & offers_ef2 == 1
 	
-	replace offers_ef1 = . if year == 2008 | year == 2010 | year == 2012 | year == 2014 | year == 2016
-	replace offers_ef2 = . if year == 2008 | year == 2010 | year == 2012 | year == 2014 | year == 2016
+	
+	**We are selecting all municipal schools offering EF1 and EF2 in 2005. These schools will have the variable school_2005_ef1_ef2 = 1. 
+	**with this, we can compare the same cohort of students. in 2005 = their performance in 5th grade; in 2009 their performance in 9th grade. 
+	gen 	T = 1 if year == 2005 & network == 3 & offers_ef1_ef2 ==1 
+	bys 	codschool: egen school_2005_ef1_ef2 = max(T)
+	drop T
+	
+	foreach variable in math port sp math_insuf_ port_insuf_ enrollment mother_edu_ ndropout_ nrepetition_ computer_ approval studentwork_ white_ female_ privateschool_ livesmother_	classhour tclass SIncentive1_ SIncentive2_ SIncentive3_ SIncentive4_ SIncentive5_ SIncentive6_ {
+		gen 	`variable' = `variable'5 if year == 2005
+		replace `variable' = `variable'9 if year == 2009
+	}
+	
+	foreach var of varlist offers* tipo_* {
+		replace `var' = . if year == 2005 | year == 2006 | year == 2008 | year == 2010 | year == 2012 | year == 2014 | year == 2016
+	}
+	
+	preserve
+	duplicates drop codmunic year tipo_municipio_ef1 tipo_municipio_ef2, force
+	keep codmunic tipo_municipio_ef1 tipo_municipio_ef2 year
+	drop if year == 2005 | year == 2006 | year == 2008 | year == 2010 | year == 2012 | year == 2014 | year == 2016
+	replace year = year + 1
+	expand 2 if year == 2008, gen(REP)
+	replace year = 2005 if REP == 1
+	drop REP
+	
+	tempfile tipo
+	save `tipo'
+	restore
+	
+	merge m:1 codmunic year using `tipo', update nogen
+	
 	
 	rename id _ID
 	save "$final/Performance & Socioeconomic Variables of SP schools.dta", replace
@@ -278,6 +304,7 @@
 	
 	*Triple dif in dif
 	* ------------------------------------------------------------------------------------------------------------------ *
+	/*
 	gen D = (year == 2009)
 	gen G = id_M == 1
 	gen T = treated
@@ -297,8 +324,20 @@
 	gen beta13 = E*T*D //igual ED
 	gen beta14 = G*T*D 
 	gen beta15 = E*G*T*D
+	*/
 	
-	gen tend = 1 if year == 2007
+	gen D = (year == 2009)
+	gen G = id_M == 1
+	gen E = state_network
+	gen beta1  = E
+	gen beta2  = G
+	gen beta3  = D
+	gen beta4  = E*G
+	gen beta5  = E*D
+	gen beta6  = G*D
+	gen beta7  = E*G*D 
+
+	gen 	tend = 1 if year == 2007
 	replace tend = 2 if year == 2009
 	
 	*Labels
