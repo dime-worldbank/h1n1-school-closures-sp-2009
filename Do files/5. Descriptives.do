@@ -1,76 +1,69 @@
 
-
-
-
-
-
 *----------------------------------------------------------------------------------------------------------------------------*
-*IDEB
+*WHAT WILL HAPPEN WITH IDEB AFTER COVID?
 *----------------------------------------------------------------------------------------------------------------------------*
-
-
-	use "$ideb/IDEB at municipal level.dta" if coduf == 35 & network == 3, clear
-
+	use "$ideb/IDEB at municipal level.dta" if network == 3, clear
 	gen treated = 0
 	foreach munic in $treated_municipalities {
 		replace treated = 1 if codmunic == `munic'
 	}
+
 	keep if treated
-	
-	sort 	codmunic year
-	gen 	math5_covid = math5[_n-1] - 36   if year == 2021 & codmunic[_n] == codmunic[_n-1] 
-	
-	gen 	port5_covid = port5[_n-1] - 19.2 if year == 2021 & codmunic[_n] == codmunic[_n-1] 
-	
-	foreach sub in math port {
-		su 		`sub'5_covid,detail
-		local max = r(max) 
-		local min = r(min)
-		
-		replace `sub'5_covid = (`sub'5_covid - `min')/`max'-`min' if `sub'5_covid >= `min'  & `sub'5_covid <= `max'
-		replace `sub'5_covid =  `min'							  if `sub'5_covid <  `min' 
-		replace `sub'5_covid =  `max'							  if `sub'5_covid >  `max' 
-		
-		
-	}
-	
-	gen	 nota_padronizada = (math5_covid + port5_covid)/2
 	
 	collapse (mean) idebEF1 targetEF1 math5 port5 approval5 spEF1, by (year)
 	sort year
 	
+	replace math5 		= math5[_n-1] - 20  if year == 2021  //considering that we will lose one year of learning, which is estimated do be equivalent to 20 points in the SAEB score scale. 
+	replace port5 		= port5[_n-1] - 20  if year == 2021 
+	replace approval5   = approval5[_n-1] 	if year == 2021 
 	
+	gen media_nota = (math5+port5)/2
 	
+	gen var = media_nota[_n]/media_nota[_n-1] - 1
 	
-	
-	
+	replace spEF1 = spEF1[_n-1] + spEF1[_n-1]*var if year ==  2021 
+
+	replace idebEF1 = spEF1*approval5 if year == 2021
+
 	tw 	///
-	(line idebEF1 year, lwidth(0.5) color(emidblue) lp(solid) cnmnmjonnect(direct) recast(connected) 	 															///  
+	(line idebEF1 year if year < 2021, lwidth(0.5) color(navy) lp(solid) connect(direct) recast(connected) 	 													///  
 	ml() mlabcolor(gs2) msize(2) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
-	(line targetEF1  year, lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 													///  
+	(line targetEF1  year, lwidth(0.5) color(emidblue) lp(shortdash) connect(direct) recast(connected) 	 														///  
+	ml() mlabcolor(gs2) msize(2) ms(o) mlabposition(12)  mlabsize(2.5))																							///
+	(line idebEF1 year if year > 2017, lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 										///  
 	ml() mlabcolor(gs2) msize(2) ms(o) mlabposition(12)  mlabsize(2.5)																							///
 	ylabel(, labsize(small) gmax angle(horizontal) format(%4.1fc))											     												///
 	yscale( alt )  																																				///
 	title(, pos(12) size(medium) color(black))													 																///
 	ytitle("IDEB, 1{sup:st} to 5{sup:th} grades", size(medium))																									/// 																																				///
-	xtitle("") ///
+	xtitle("") 																																					///
 	xlabel(2005(2)2021, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
 	graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
 	plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-	legend(order(1 "Education Development Index"  2 "Target" ) size(medlarge) region(lwidth(none) color(white) fcolor(none))) 									///
+	legend(order(1 "Education Development Index" 2 "Target" 3 "After Covid" ) cols(1) size(large) region(lwidth(none) color(white) fcolor(none))) 				///
 	ysize(5) xsize(7) 																										 									///
 	note("", color(black) fcolor(background) pos(7) size(small)))  
 	graph export "$figures/ideb_projected.pdf", as(pdf) replace
 
 	
 
-/*
+
 *----------------------------------------------------------------------------------------------------------------------------*
 *Parallel trends 
 *----------------------------------------------------------------------------------------------------------------------------*
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+	duplicates drop tipo_municipio_ef1 codmunic year, force
+	keep codmunic year tipo_municipio_ef1
+	tempfile tipo
+	save `tipo'
+	
 	use "$ideb/IDEB at municipal level.dta", clear
+	
 
 	keep if uf == "SP" & (network == 2 | network == 3) & year < 2009
+	
+		merge m:1 codmunic year using `tipo', nogen keep(3)
+
 
 	gen id_M    = 1
 	gen id_13_M = 0
@@ -81,69 +74,23 @@
 		replace id_13_M = 1 if codmunic == `munic'
 	}
 
-	gen state = network == 2
-
-	reg math5 state##year if id_M == 1
-	reg math5 state##year if id_M == 1
 
 
-	reg math5 id_M##state##year
-	reg port5 id_M##state##year
 	
-	
-	
-	
-	use "$ideb/IDEB at school level.dta", clear
-	keep if uf == "SP" & network == 3 & year < 2009
-	
-	gen treated = 0
-	foreach munic in $treated_municipalities {
-		replace treated = 1 if codmunic == `munic'
-	}
+	gen D = (year == 2007)
+	gen G = id_M == 1
+	gen E = network == 2
+	gen beta1  = E
+	gen beta2  = G
+	gen beta3  = D
+	gen beta4  = E*G
+	gen beta5  = E*D
+	gen beta6  = G*D
+	gen beta7  = E*G*D 
+
+reg math5 beta1-beta7
 
 
-	reg math5 treated##year i.codmunic
-	
-	reg port5 treated##year i.codmunic
-		
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-	keep if tipo_municipio_ef1 == 1
-	sort codschool year
-	replace enrollment5 = enrollment5[_n+1] if year[_n] == 2008 & year[_n+1] == 2009 & codschool[_n] == codschool[_n+1]
-	replace enrollment9 = enrollment9[_n+1] if year[_n] == 2008 & year[_n+1] == 2009 & codschool[_n] == codschool[_n+1]
-
-	
-	label define id_M 0 "13 municípios" 1 "Outros"
-	label val id_M id_M
-	
-	
-	
-	collapse (mean)math5 port5 [aw = enrollment5] if year < 2010, by(year id_M network)
-						tw 	///
-						(line math5  year if network == 2, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 												///  
-						ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
-						(line math5  year if network == 3, by(id_M) lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 	///  
-						ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)																							///
-						ylabel(, labsize(small) gmax angle(horizontal) format(%4.1fc))											     												///
-						yscale( alt )  																																				///
-						title("", pos(12) size(medium) color(black))													 															///
-						xtitle("")  																																				///
-						xlabel(2005(2)2009, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
-						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
-						plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-						legend(order(1 "Estadual"  2 "Municipal"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 									///
-						ysize(5) xsize(5) 																										 									///
-						note("", color(black) fcolor(background) pos(7) size(small)))  
-						*graph export "$figures/trend_math.pdf", as(pdf) replace
-						graph export "$figures/time trend for Math_graph in `language'.pdf", as(pdf) replace
-
-	
-		use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-		duplicates drop tipo_municipio_ef1 codmunic year, force
-		keep codmunic year tipo_municipio_ef1
-		tempfile tipo
-		save `tipo'
-	
 	
 	use "$ideb/IDEB at municipal level.dta" , clear
 	merge 1:1 codmunic year network using "$censoescolar/Enrollments at municipal level", nogen
@@ -152,7 +99,7 @@
 	replace enrollment5grade = enrollment5grade[_n+1] if year[_n] == 2008 & year[_n+1] == 2009 & codmunic[_n] == codmunic[_n+1]
 	merge m:1 codmunic year using `tipo', nogen keep(3)
 		
-		gen id_M = 1
+	gen id_M = 1
 	foreach munic in $treated_municipalities {
 		replace id_M	  = 0 if codmunic == `munic'
 	}	
@@ -178,6 +125,26 @@
 						graph export "$figures/time trend for Math_graph in `language'.pdf", as(pdf) replace
 
 	
+	reshape wide math5 port5, i(year id_M) j(network)
+	gen dif_math = math52-math53 
+	
+	gen dif_port = port52-port53 
+
+						tw 	///
+						(line math5  year if network == 3, by(id_M) lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 	///  
+						ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)																							///
+						ylabel(, labsize(small) gmax angle(horizontal) format(%4.1fc))											     												///
+						yscale( alt )  																																				///
+						title("", pos(12) size(medium) color(black))													 															///
+						xtitle("")  																																				///
+						xlabel(2005(2)2009, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
+						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
+						plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
+						legend(order(1 "Estadual"  2 "Municipal"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 									///
+						ysize(5) xsize(5) 																										 									///
+						note("", color(black) fcolor(background) pos(7) size(small)))  
+						*graph export "$figures/trend_math.pdf", as(pdf) replace
+						graph export "$figures/time trend for Math_graph in `language'.pdf", as(pdf) replace
 
 
 
@@ -306,7 +273,7 @@
 	}
 	replace treated   = 0 if treated == .
 	
-	keep 		if year == 2009 & network == 3
+	keep 		if year == 2009 & (network == 3 | network == 2)
 	collapse 	(sum)enrollmentEF, by (codschool treated)
 	gen 		var1 = 1 if enrollmentEF > 0		//if the school has EI or EF
 	drop 		if var1 == . 
@@ -440,11 +407,11 @@
 *School infrastructure
 *----------------------------------------------------------------------------------------------------------------------------*
 	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
-
+	/*
 	foreach var of varlist $matching_schools {
 		replace `var' = `var'*100
 	}
-	
+	*/
 	collapse (mean) $matching_schools, by(treated)
 	
 	rename (ComputerLab ScienceLab SportCourt Library InternetAccess) (var_1 var_2 var_3 var_4 var_5)
@@ -515,12 +482,19 @@
 *----------------------------------------------------------------------------------------------------------------------------*
 *Balance test
 *----------------------------------------------------------------------------------------------------------------------------*
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-	keep if year == 2009 & !missing(math5)
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & network == 3, clear
 	egen tag_mun = tag(codmunic) 
 	replace pop = . if tag_mun!= 1
-	iebaltab math5 port5 repetition5 dropout5 approval5 SIncentive2_5 SIncentive3_5 SIncentive4_5 SIncentive5_5 white_5 livesmother_5 computer_5 mother_edu_5 preschool_5 repetition_5 dropout_5 studentwork_5 ComputerLab ScienceLab Library InternetAccess SportCourt enrollment5 classhour5 tclass5 pop pib_pcap, format(%12.2fc) grpvar(treated) savetex("$descriptives/Balance Test") rowvarlabels replace 
+	iebaltab math5 port5 repetition5 dropout5 approval5 SIncentive2_5 SIncentive3_5 SIncentive4_5 SIncentive5_5 white_5 livesmother_5 computer_5 mother_edu_5 preschool_5 repetition_5 dropout_5 studentwork_5 ComputerLab ScienceLab Library InternetAccess SportCourt enrollment5 classhour5 tclass5 pop pib_pcap, format(%12.2fc) grpvar(treated) savetex("$descriptives/Balance Test_municipal networks") rowvarlabels replace 
+	iebaltab math5 port5 repetition5 dropout5 approval5 SIncentive2_5 SIncentive3_5 SIncentive4_5 SIncentive5_5 white_5 livesmother_5 computer_5 mother_edu_5 preschool_5 repetition_5 dropout_5 studentwork_5 ComputerLab ScienceLab Library InternetAccess SportCourt enrollment5 classhour5 tclass5 pop pib_pcap, format(%12.2fc) grpvar(treated) save("$descriptives/Balance Test_municipal networks") rowvarlabels replace 
 
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & id_M == 1, clear
+	egen tag_mun = tag(codmunic) 
+	replace pop = . if tag_mun!= 1
+	iebaltab math5 port5 repetition5 dropout5 approval5 SIncentive2_5 SIncentive3_5 SIncentive4_5 SIncentive5_5 white_5 livesmother_5 computer_5 mother_edu_5 preschool_5 repetition_5 dropout_5 studentwork_5 ComputerLab ScienceLab Library InternetAccess SportCourt enrollment5 classhour5 tclass5 pop pib_pcap, format(%12.2fc) grpvar(state_network) savetex("$descriptives/Balance Test_state and municipal networks") rowvarlabels replace 
+	iebaltab math5 port5 repetition5 dropout5 approval5 SIncentive2_5 SIncentive3_5 SIncentive4_5 SIncentive5_5 white_5 livesmother_5 computer_5 mother_edu_5 preschool_5 repetition_5 dropout_5 studentwork_5 ComputerLab ScienceLab Library InternetAccess SportCourt enrollment5 classhour5 tclass5 pop pib_pcap, format(%12.2fc) grpvar(state_network) save("$descriptives/Balance Test_state and municipal networks") rowvarlabels replace 
+
+	
 		
 *----------------------------------------------------------------------------------------------------------------------------*
 *Size of affected municipalities		
@@ -547,10 +521,24 @@
 *% com desempenho insuficiente em matemática
 *----------------------------------------------------------------------------------------------------------------------------*
 	use 	"$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-	bys treated: su	 math_insuf_5 if year == 2007
-	bys treated: su  port_insuf_5 if year == 2007
-	bys treated: su	 math_insuf_9 if year == 2007
-	bys treated: su  port_insuf_9 if year == 2007
+	
+	
+	bys treated: su	 math_insuf_5 if year == 2007 & network == 3
+	bys treated: su	 math5 if year == 2007 & network == 3
+	
+	bys treated: su  port_insuf_5 if year == 2007 & network == 3
+	bys treated: su	 port5 if year == 2007 & network == 3
+	
+	
+	bys id_13_mun: su	 math_insuf_5 if year == 2007 & network == 2
+	bys id_13_mun: su	 math5 if year == 2007 & network == 2
+	
+	bys id_13_mun: su  port_insuf_5 if year == 2007 & network == 2
+	bys id_13_mun: su	 port5 if year == 2007 & network == 2
+
+	
+	bys treated: su	 math_insuf_9 if year == 2007 & network == 3
+	bys treated: su  port_insuf_9 if year == 2007 & network == 3
 	
 	keep 	 if year == 2009
 	by 		 treated, sort: quantiles math5, gen(quintile) stable  nq(10)

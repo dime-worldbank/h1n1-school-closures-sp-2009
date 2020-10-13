@@ -1,4 +1,5 @@
 global final   "C:\Users\wb495845\OneDrive - WBG\Desktop"
+global inter   "C:\Users\wb495845\OneDrive - WBG\Desktop"
 global results "C:\Users\wb495845\OneDrive - WBG\Desktop"
 global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 
@@ -59,7 +60,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	estimates clear
-	matrix 	results = (0,0,0,0,0,0)			//matrix to store the model tested (column 1), depende variable (column 2), the ATT (column 3), lower bound (column 4), 
+	matrix 	results = (0,0,0,0,0,0,0)		//matrix to store the model tested (column 1), depende variable (column 2), the ATT (column 3), lower bound (column 4), 
 											//upper bound (column 5), and quantile (column 6). This last column is equal to 0 for Models 1 and 2. For model 3 is stores the 
 											//quantiles (10, 20, 30....90). 
 	*matrix  ri      = (0,0,0)				//matrix to store the model tested (column 1), the dependent variable (column 2) and the p-value calculated by on Randomization Inference. 
@@ -70,17 +71,22 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 																	   //var(treatment dummy - T2007 or T2009); dep_var(dependent variable - math5, portuguese5, sp5, port_insuf_5 and math_insuf_5).																   
 		*Average treatment effect
 		matrix reg_results  = r(table) 	
-		local ATT = reg_results[1,1]																					
+		local ATT = reg_results[1,1]	
+		local lowerbr = reg_results[5,1]	
+		local upperbr = reg_results[6,1]	
 
 		*Confidence Interval 
-		if `model' != 5 {		//model 3 is the triple dif in dif, we dont have the problem of a small number of clusters
+		if `model' != 6 & `model'!= 7 {
 		boottest `var',  reps(1000)  boottype(wild)  seed(1) level(95) 	bootcluster(codmunic) quietly		//Confidence interval using bootstrap
 			scalar pvalue 	= r(p)				
 			scalar lowerb 	= el(r(CI),1,1)
 			scalar upperb 	= el(r(CI),1,2)
-			matrix results = results \ (`model', `sub', `ATT', lowerb, upperb, 0)								
+			matrix results = results \ (`model', `sub', `ATT', lowerb,  upperb,  0, `grade')								
 		}
-			
+		else {
+			matrix results = results \ (`model', `sub', `ATT', `lowerbr', `upperbr', 0, `grade')
+		}
+
 		*Mean of the dependent variable and standard deviation
 			**Pooled sample
 			su 		`dep_var' if year == 2007 & e(sample) == 1 
@@ -114,7 +120,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 *Regressions // 
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		foreach subject in sp5 math5 math_insuf_5 port5 port_insuf_5 approval5 dropout5 sp9 math9 math_insuf_9 port9 port_insuf_9 approval9 dropout9 { 	// sp5 math5 math_insuf_5 port5 port_insuf_5 approval5 sp9 math9 math_insuf_9 port9 port_insuf_9 approval9  //regression for each of our dependent variables 
+		foreach subject in sp5 math5 math_insuf_5 port5 port_insuf_5 dropout5 sp9 math9 math_insuf_9 port9 port_insuf_9 dropout9  { 	// sp5 math5 math_insuf_5 port5 port_insuf_5 dropout5 sp9 math9 math_insuf_9 port9 port_insuf_9 dropout9  //regression for each of our dependent variables 
 		 
 			if  substr("`subject'", -1,.) == "5" {
 				local etapa 1
@@ -126,13 +132,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 				local etapa 2
 				local weight enrollment9		//we weight all regressions by the number of students enrolled ninth-grade 
 				local grade 9
-			}		
-			
-			if  substr("`subject'", -1,.) != "5" & substr("`subject'", -1,.) != "9" {
-				local etapa 3
-				local weight enrollment		
-				local grade 0
-			}				
+			}					
 
 			if  substr("`subject'", 1,4) == "port" {
 				local sub = 1					//subject = 1, Portuguese
@@ -191,7 +191,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 					c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5
 
 					*In case you have stata 16, just delete "*" from the two rows below
-					lasso linear `subject'5 $controls2005 if year <= 2007, rseed(8901892080)						
+					lasso linear `subject' $controls2005 if year <= 2007, rseed(89018)						
 					global controls2005  `e(allvars_sel)'
 				
 					*2*
@@ -206,7 +206,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						c.SIncentive1_5##c.SIncentive1_5 c.SIncentive2_5##c.SIncentive2_5 c.SIncentive3_5##c.SIncentive3_5	 										///
 						c.SIncentive4_5##c.SIncentive4_5 c.SIncentive5_5##c.SIncentive5_5 c.SIncentive6_5##c.SIncentive6_5 										
 						
-						lasso linear `subject' $controls2007 if year >= 2007, rseed(2222434657)		
+						lasso linear `subject' $controls2007 if year >= 2007, rseed(22224)		
 						global controls2007  `e(allvars_sel)'
 						
 						/*
@@ -228,7 +228,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						c.SIncentive1_9##c.SIncentive1_9 c.SIncentive2_9##c.SIncentive2_9 c.SIncentive3_9##c.SIncentive3_9	 										///
 						c.SIncentive4_9##c.SIncentive4_9 c.SIncentive5_9##c.SIncentive5_9 c.SIncentive6_9##c.SIncentive6_9 										
 						
-						lasso linear `subject' $controls2007 if year >= 2007, rseed(344646656)		
+						lasso linear `subject' $controls2007 if year >= 2007, rseed(34464)		
 						global controls2007  `e(allvars_sel)'
 						/*
 						*In case you do not have STATA 16, these are the dependent variables selected:
@@ -240,27 +240,6 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						c.SIncentive5_9#c.SIncentive5_9 c.SIncentive6_9#c.SIncentive6_9
 						*/
 					}
-					if `etapa' ==  3 {
-						global controls2007 c.mother_edu_##c.mother_edu_ c.ndropout_##c.ndropout_ c.nrepetition_##c.nrepetition_ c.computer_##c.computer_			///
-						c.pib_pcap##c.pib_pcap c.approval5##c.approval5  c.studentwork_##c.studentwork_ 						   									///
-						c.white_##c.white_ c.female_##c.female_ c.privateschool_##c.privateschool_ c.livesmother_##c.livesmother_ 									///
-						c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt 															///
-						c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour5##c.classhour5 c.tclass5##c.tclass5 									///
-						c.SIncentive1_##c.SIncentive1_ c.SIncentive2_##c.SIncentive2_ c.SIncentive3_##c.SIncentive3_	 											///
-						c.SIncentive4_##c.SIncentive4_ c.SIncentive5_##c.SIncentive5_ c.SIncentive6_##c.SIncentive6_ 										
-						
-						*lasso linear `subject' $controls2007 if year >= 2007, rseed(9384938493)		
-						*global controls2007  `e(allvars_sel)'
-						
-						*In case you do not have STATA 16, these are the dependent variables selected:
-						global controls2007 mother_edu_ c.mother_edu_#c.mother_edu_ ndropout_ c.ndropout_#c.ndropout_ nrepetition_ c.nrepetition_#c.nrepetition_ 		///
-						computer_ c.computer_#c.computer_ pib_pcap c.pib_pcap#c.pib_pcap approval5 c.approval5#c.approval5	studentwork_ c.studentwork_#c.studentwork_ 	///
-						white_ c.white_#c.white_ female_ c.female_#c.female_ privateschool_ c.privateschool_#c.privateschool_ 	c.livesmother_#c.livesmother_			///
-						ComputerLab c.ScienceLab#c.ScienceLab c.Library#c.Library c.InternetAccess#c.InternetAccess classhour5 c.classhour5#c.classhour5 				///
-						tclass5 c.tclass5#c.tclass5 c.SIncentive1_#c.SIncentive1_ c.SIncentive2_#c.SIncentive2_ c.SIncentive3_#c.SIncentive3_ SIncentive4_ SIncentive5_ ///
-						c.SIncentive5_#c.SIncentive5_ c.SIncentive6_#c.SIncentive6_
-					}
-					
 					
 					*3*
 					*Regressions
@@ -299,19 +278,28 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 							reg `subject' 	    T2009	  								 i.treated i.codmunic i.year $controls2007 						if network == 3 & year >= 2007 & year <= 2009 & (treated == 1 | (treated == 0 & tipo_municipio_ef1 == 2))  [aw = `weight'], cluster(codmunic)
 							eststo model3`sub'`grade', title("Dif-in-dif")  
 							mat_res, model(3) sub(`sub') var(T2009) dep_var(`subject') grade(`grade')
-							
-						
+
+						/*
+						*2009 versus 2005/2007
+						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
+							reg `subject' T2007 T2009 T2009_ME`grade' mon_educ_`grade'	 i.treated i.codmunic i.year $controls2005 						if network == 3 & year >= 2005 & year <= 2009  [aw = `weight'], cluster(codmunic)					
+							eststo model4`sub'`grade', title("Dif-in-dif")  
+							mat_res, model(4) sub(`sub') var(T2009) dep_var(`subject') grade(`grade')
+						*/
+
+						/*
 						*Changes in changes estimator
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 						if "`subject'" == "port" | "`subject'" == "math" {
 							foreach quantile in 10 20 30 40 50 60 70 80 90 { 
 								cic continuous `subject' treated post_treat $controls2007 i.codmunic if network == 3 & year >= 2007 & year <= 2009  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
 								matrix reg_results = r(table)
-								matrix results = results \ (4, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile')	 	
+								matrix results = results \ (5, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile')	 	
 							}
 						}
+						*/
 						
-
+						
 						*Parallel trends
 						*------------------------------------------------------------------------------------------------------------------------------------------------------------*
 							preserve	
@@ -319,6 +307,11 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 							replace enrollment5 = enrollment5[_n+1] if year[_n] == 2008 & year[_n+1] == 2009 & codschool[_n] == codschool[_n+1]
 							replace enrollment9 = enrollment9[_n+1] if year[_n] == 2008 & year[_n+1] == 2009 & codschool[_n] == codschool[_n+1]
 							
+							if  substr("`subject'", 1,4) == "port" |  substr("`subject'", 1,4) == "math" {
+								reg `subject' 	    T2009	  								 i.treated i.codmunic i.year $controls2007 	if network == 3 & year >= 2007 & year <= 2009  [aw = `weight'], cluster(codmunic)
+								keep if e(sample)
+							}
+								
 							keep if network == 3
 							collapse (mean)`subject' [aw = `weight'], by(year treated)
 							format 	 	   `subject' %4.1fc
@@ -347,39 +340,42 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 						if `etapa' == 1 | `etapa' == 2 {
 							use "$final/Performance & Socioeconomic Variables of SP schools.dta" if (year == 2007 | year == 2009) & tipo_municipio_ef`etapa' == 1, clear
 							
-							reg `subject' beta7 beta1-beta6 i.codmunic $controls2007 [aw = `weight'], cluster(codmunic)
-							eststo model5`sub'`grade', title("Triple dif")  
-							mat_res, model(5) sub(`sub') var(beta7) dep_var(`subject') grade(`grade')	
+							drop T2009
+							clonevar T2009 = beta7
+							reg `subject' T2009 beta1-beta6 i.codmunic $controls2007 [aw = `weight'], cluster(codmunic)
+							eststo model6`sub'`grade', title("Triple dif")  
+							mat_res, model(6) sub(`sub') var(T2009) dep_var(`subject') grade(`grade')	
+							
+							gen M = mon_educ_`grade'
+							gen beta8 = M
+							gen beta9 = E*M
+							gen beta10 = G*M
+							gen beta11 = D*M
+							gen beta12 = E*D*M
+							gen beta13 = G*D*M
+							gen beta14 = E*G*D*M
+							/*
+							reg `subject' beta7 beta14 beta* i.codmunic $controls2007 [aw = `weight'], cluster(codmunic)
+							eststo model7`sub'`grade', title("Triple dif")  
+							mat_res, model(7) sub(`sub') var(beta7) dep_var(`subject') grade(`grade')	
+							*/
 							//tipo_municipio_ef1 : municipalities with state and municipal schools offering 1st to 5th grade
 							//tipo_municipio_ef2 : municipalities with state and municipal schools offering 6th to 9th grade
 
-							
-							if  substr("`subject'", 1,4) == "math" |  substr("`subject'", 1,4) == "port" {
+							/*
+							if  "`subject'" == "math5" | "`subject'" ==  "port5" {
 								foreach quantile in 10 20 30 40 50 60 70 80 90 { 
-									cic continuous `subject' beta4 beta3 beta1 beta2 beta5 beta6 $controls2007 i.codmunic  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
+									cic continuous `subject' beta4 beta3 beta1 beta2 beta5 beta6 $controls2007 i.codmunic  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(500))
 									matrix reg_results = r(table)
-									matrix results = results \ (7, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile')	 	
+									matrix results = results \ (8, `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile', `grade')	 	
 								}
 							}
+							*/
 						}
 
-						*Same cohort
-						*2009 versus 2005
-						**We only have 4 treated clusters and 98 comparison clusters
-						*-----------------------------------------------------------------------------------------------------------------------------------------------------------*							
-						/*
-						if `etapa' == 3 {
-							use "$final/Performance & Socioeconomic Variables of SP schools.dta" if school_2005_ef1_ef2 == 1 , clear
-							reg `subject' 	    T2009	  								 i.treated i.codmunic i.year $controls2007  [aw = `weight'], cluster(codmunic)
-							eststo model5`sub'`grade', title("Dif-in-dif")  
-							mat_res, model(5) sub(`sub') var(T2009) dep_var(`subject') grade(`grade')
-						}
-						*/
 		}
 		
-		estout * using "$results/Regressions.csv", delimiter(";") keep(T2007 T2009 beta7 ) label cells(b(star fmt(3)) se(fmt(2))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) starlevels(* 0.1 ** 0.05 *** 0.01) replace
-		*estout * using "$results/Regressions.csv", delimiter(";") keep(T2007 T2009 beta7) label starlevels(* 0.1 ** 0.05 *** 0.01) cells(b(star fmt(3)) se(fmt(3))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) mgroups("Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level" "Approval" "Math & Portuguese" "Math" "% below adequate level" "Portuguese" "% below adequate level" "Approval",   pattern(1 0 0 1 0 0 1 0 1 0 0 1 0 1 0 0 1 1 1 1 1 1)) replace 
-
+		estout * model135 model235 model635 model125 model225 model625 model115 model215 model615 using "$results/Regressions.csv", delimiter(";") keep(T2007 T2009) label cells(b(star fmt(3)) se(fmt(2))) stats(N r2 pvalue lowerb upperb media sd mediaT sdT mediaC sdC) starlevels(* 0.1 ** 0.05 *** 0.01) replace
  
 /*
 *Results			
@@ -388,7 +384,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 	clear
 	svmat results
 	drop  in 1
-	rename (results1-results6) (model sub  ATT lower upper quantile)	
+	rename (results1-results7) (model sub  ATT lower upper quantile grade)	
 	label define sub   1 "Português"  2 "Matemática" 3 "Português e matemática" 4 "Insuficiente em matemática" 5 "Insuficiente em Português"
 	label define model  1 "2007 comparado com 2005" 2 "2009 comparado com 2007" 5 "Quantile"
 	label val sub sub
@@ -512,7 +508,7 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 		use "$final/Regression Results.dta", clear
 		keep if model == 7 //changes in changes estimator
 		
-		foreach sub in 1 2 {	
+		foreach sub in 2  {	
 
 				*Title & cor
 				*--------------------------------------------------------------------------------------------------------------------------------------------------------------------*

@@ -285,15 +285,6 @@
 	bys year: quantiles math5, gen(q_math5) stable nq(9)
 	bys year: quantiles port5, gen(q_port5) stable nq(9)
 
-	su 		mother_edu_5 		if year == 2009, detail
-	gen 	T2009_maeE  	= year == 2009  & treated == 1 & mother_edu_5 >  r(p50) & mother_edu_5 != .
-	gen 	T2009_maeNE 	= year == 2009  & treated == 1 & mother_edu_5 <= r(p50)
-	replace T2009_maeE 		= . if missing(mother_edu_5) 
-	replace T2009_maeNE 	= . if missing(mother_edu_5) 
-	gen 	T2009_tclass 	= 1*tclass5	 	if year == 2009  & treated == 1
-	replace T2009_tclass 	= 0 if missing(T2009_tclass) & !missing(tclass5)
-	gen 	T2009_hours  	= 1*classhour5 	if year == 2009  & treated == 1
-	replace T2009_hours 	= 0 if missing(T2009_hours)  & !missing(classhour5)
 	
 	* ------------------------------------------------------------------------------------------------------------------ *
 	drop    region municipality SIGLA NOME_MUNIC NOME_MESO NOME_MICRO
@@ -336,6 +327,20 @@
 	gen beta5  = E*D
 	gen beta6  = G*D
 	gen beta7  = E*G*D 
+	
+	foreach grade in 5 9 {
+		su 		mother_edu_`grade' 		if year == 2009, detail
+		gen		mon_educ_`grade'    = year == 2009 & mother_edu_`grade' >  r(p50) & mother_edu_`grade' != .
+		replace mon_educ_`grade'    = . if   missing(mother_edu_`grade')
+		gen 	T2009_ME`grade' = T2009*mon_educ_`grade' 
+	}
+	
+	/*
+	gen 	T2009_tclass 	= 1*tclass5	 	if year == 2009  & treated == 1
+	replace T2009_tclass 	= 0 if missing(T2009_tclass) & !missing(tclass5)
+	gen 	T2009_hours  	= 1*classhour5 	if year == 2009  & treated == 1
+	replace T2009_hours 	= 0 if missing(T2009_hours)  & !missing(classhour5)
+	*/
 
 	gen 	tend = 1 if year == 2007
 	replace tend = 2 if year == 2009
