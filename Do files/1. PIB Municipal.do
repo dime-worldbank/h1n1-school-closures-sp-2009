@@ -90,12 +90,8 @@
 		format pib_pcap %12.2fc
 		drop   pib munic
 		sort   codmunic year
-		
-		
 		gen 	 codmunic2 = substr(string(codmunic), 1,6)
 		destring codmunic2, replace
-		
-		
 		save   "$inter/GDP per capita.dta", replace
 
 

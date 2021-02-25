@@ -5,22 +5,22 @@
 
 
 *1* 
-*Socioeconomic characteristics at school level																													
+*Socioeconomic characteristics of the students at school level																													
 *------------------------------------------------------------------------------------------------------------------------*
 	
 	*2007 & 2009
 	*--------------------------------------------------------------------------------------------------------------------*
-	use 	   "$provabrasil/Socioeconomic Characteristics at student level.dta", clear
-	keep 	    if coduf == 35 & (network == 3 | network == 2) & !missing(codschool)
-	save 	   "$inter/Socioeconomic Characteristics at student level.dta", replace
+	use 	   "$provabrasil/Students.dta" if coduf == 35, clear
+	save  	   "$inter/Socioeconomic Characteristics at student level.dta", replace
 	use 	   "$inter/Socioeconomic Characteristics at student level.dta", clear
 	collapse   (mean) $socioeco_variables, by(grade year codschool)
 	foreach var of varlist $socioeco_variables100 {
 		replace `var' = `var'*100 
 		format  `var' %4.2fc
 	}
-	format SIncentive* parentsincentive_* nrepetition_ ndropout_ math* port* %4.2fc
+	format 		incentive* number* %4.2fc
 	reshape 	wide  $socioeco_variables, i(year codschool) j(grade)
+	sort 		codschool year
 	tempfile    socio_economic
 	save       `socio_economic'
 
@@ -28,8 +28,7 @@
 *2* 
 *Flow Indicators																											
 *------------------------------------------------------------------------------------------------------------------------*
-	*use 	   "$rendimento/Flow Indicators at school level.dta", clear
-	*keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
+	*use 	   "$rendimento/Flow Indicators at school level.dta" if uf == "SP" & (network == 3 | network == 2) & !missing(codschool), clear
 	*save 	   "$inter/Flow Indicators at school level.dta", replace
 	use 	   "$inter/Flow Indicators at school level.dta", clear
 	drop 		*EM*
@@ -37,14 +36,12 @@
 	save       `flow_index'
 	
 	
-*3* 
+*3*
 *School Infrastructure																									
 *------------------------------------------------------------------------------------------------------------------------*
-	*use 	   "$censoescolar/School Infrastructure at school level.dta", clear
-	*keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
+	*use 	   "$censoescolar/School Infrastructure at school level.dta"   if uf == "SP" & (network == 3 | network == 2) & !missing(codschool), clear
 	*save 	   "$inter/School Infrastructure at school level.dta", replace
-	use 	   "$inter/School Infrastructure at school level.dta", clear
-	keep 		$matching_schools year codschool coduf uf codmunic codmunic2 operation network location cfim_letivo cinicio_letivo mes_fim_letivo dia_fim_letivo CICLOS
+	use 	   	$matching_schools year codschool coduf uf codmunic codmunic2 operation network location cfim_letivo cinicio_letivo mes_fim_letivo dia_fim_letivo CICLOS using "$inter/School Infrastructure at school level.dta", clear
 	foreach var of varlist $matching_schools {
 		replace `var' = `var'*100
 	}
@@ -55,16 +52,15 @@
 *4* 
 *Enrollments																								
 *------------------------------------------------------------------------------------------------------------------------*
-   *use 	   "$censoescolar/Enrollments at school level.dta", clear
-   *keep 		if uf == "SP"
-   *collapse 	(sum)$matriculas (mean)school_*, by(year codschool codmunic network)
-   *save	   "$inter/Enrollments at school level.dta", replace
-	use 	   "$inter/Enrollments at school level.dta", clear
+   use 	   "$censoescolar/Enrollments at school level.dta" if uf == "SP", clear
+   collapse 	(sum)$matriculas (mean)school_*, by(year codschool codmunic network)
+   save	   "$inter/Enrollments at school level.dta", replace
+	use 		year codschool enrollment5grade network enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentEI enrollmentEMtotal  using "$inter/Enrollments at school level.dta"  if (network == 3 | network == 2)  & !missing(codschool), clear
 	foreach var of varlist enrollment* {
 		replace `var' = . if `var' == 0
 	}
-	keep 	    if (network == 3 | network == 2)  & !missing(codschool)
-	keep 		year codschool enrollment5grade network enrollment9grade enrollmentEF1 enrollmentEF2
+	
+	egen enrollmentTotal = rsum(enrollmentEF1 enrollmentEF2 enrollmentEI enrollmentEMtotal)
 	tempfile    enrollments
 	save       `enrollments'	
 	
@@ -72,11 +68,9 @@
 *5* 
 *Class-hours																								
 *------------------------------------------------------------------------------------------------------------------------*
-   *use 	   "$censoescolar/Class-Hours at school level.dta", clear
-   *keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
+   *use 	   "$censoescolar/Class-Hours at school level.dta" if uf == "SP" & (network == 3 | network == 2) & !missing(codschool), clear
    *save 	   "$inter/Class-Hours at school level.dta", replace
-	use 	   "$inter/Class-Hours at school level.dta", clear
-	keep 		classhour5grade classhour9grade  year codschool
+	use 		classhour5grade classhour9grade  year codschool using "$inter/Class-Hours at school level.dta", clear
 	tempfile    class_hours
 	save       `class_hours'	
 	
@@ -84,11 +78,9 @@
 *6* 
 *Size of the classrooms																						
 *------------------------------------------------------------------------------------------------------------------------*
-    *use 	   "$censoescolar/Class-Size at school level.dta", clear
-    *keep 	    if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
+    *use 	   "$censoescolar/Class-Size at school level.dta"  if uf == "SP" & (network == 3 | network == 2) & !missing(codschool), clear
     *save 	   "$inter/Class-Size at school level.dta", replace
-	use 	   "$inter/Class-Size at school level.dta", clear
-	keep 		tclass5grade tclass9grade year codschool
+	use 	    tclass5grade tclass9grade year codschool 		using "$inter/Class-Size at school level.dta", clear
 	tempfile    class_size
 	save       `class_size'	
 	
@@ -96,11 +88,9 @@
 *7*
 *Expenditure per student																						
 *------------------------------------------------------------------------------------------------------------------------*
-   *use 	   "$fnde/FNDE Indicators.dta", clear
-   *keep 	    if (network == 3 | network == 2) & coduf == 35
+   *use 	   "$fnde/FNDE Indicators.dta"  if (network == 3 | network == 2) & coduf == 35, clear
    *save 	   "$inter/FNDE Indicators.dta", replace
-	use 	   "$inter/FNDE Indicators.dta", clear
-	keep 	    year codmunic2 ind_49 r_ind_49 //r_ind_49 gasto por aluno do EF em R$ de 2018
+	use			year codmunic2 ind_49 r_ind_49 					using	"$inter/FNDE Indicators.dta", clear  //r_ind_49 gasto por aluno do EF em R$ de 2018
 	tempfile    expenditure
 	save       `expenditure'	
 	
@@ -108,11 +98,9 @@
 *8* 
 *IDEB school level
 *------------------------------------------------------------------------------------------------------------------------*
-   use 		"$ideb/IDEB at school level.dta", clear
-   *keep 	 	if uf == "SP" & (network == 3 | network == 2) & !missing(codschool)
+   *use 		"$ideb/IDEB at school level.dta" if uf == "SP" & (network == 3 | network == 2) & !missing(codschool), clear   *
    *save		"$inter/IDEB at school level.dta", replace
-	use 		"$inter/IDEB at school level.dta", clear
-	keep 		if year == 2005 | year == 2007 | year == 2009 | year == 2011 | year == 2013 | year == 2015
+	use 		"$inter/IDEB at school level.dta" if year == 2005 | year == 2007 | year == 2009 | year == 2011 | year == 2013 | year == 2015, clear
 	rename 		(spEF1 spEF2) (sp5 sp9)
 	drop 		flowindexEF* target* approval*
 	tempfile    ideb
@@ -124,54 +112,55 @@
 	keep 	 codschool
 	tempfile data
 	save 	`data'
-
 	
 *9* 
+*Teachers
+*------------------------------------------------------------------------------------------------------------------------*
+	use "$provabrasil/Teachers.dta" if !missing(grade) & grade < 12, clear
+	save "$inter/Teachers.dta", replace
+	use  "$inter/Teachers.dta", replace
+	collapse 		 (mean)$teachers, 	by (		  codschool year    grade)
+	reshape wide $teachers, 		   				i(codschool year) j(grade)
+	format teacher_male5-quality_books49 %4.2fc
+	tempfile teachers
+	save	`teachers'
+	
+
+*10* 
+*Principals
+*------------------------------------------------------------------------------------------------------------------------*
+	use  "$provabrasil/Principals.dta", clear
+	save "$inter/Principals.dta", replace
+	use  "$inter/Principals.dta", clear
+	keep codschool year $principals
+	tempfile principals
+	save	`principals'
+
+	
+*11* 
 *Performance + school infrastructure + socioeconomic characteristics + GeoCodes + pib per capita + expenditure per student	
 *------------------------------------------------------------------------------------------------------------------------*
 	use 	`flow_index', clear
 	merge   1:1 codschool year using `school_infra'	 			, nogen
-	merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade enrollment9grade enrollmentEF1 enrollmentEF2)
+	merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentTotal)
 	merge   1:1 codschool year using `class_hours'	 			, nogen keepusing(classhour5grade classhour9grade)
 	merge   1:1 codschool year using `class_size'	 			, nogen keepusing(tclass5grade tclass9grade)
 	merge 	1:1 codschool year using `ideb'						, nogen
 	merge 	1:1 codschool year using `socio_economic'			, nogen 
+	merge 	1:1 codschool year using `teachers'					, nogen 
+	merge 	1:1 codschool year using `principals'				, nogen 
 	merge   m:1 codmunic2 year using `expenditure'   			, nogen 
 	merge   m:1 codmunic  year using "$inter/GDP per capita.dta", nogen keep(1 3) keepusing(pib_pcap pop porte)
 	merge 	m:1 codschool 	   using `data'						, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
 	sort 	codschool year 
 	xtset   codschool year  
 	
-	
-	
+
 *------------------------------------------------------------------------------------------------------------------------*
 	foreach var of varlist *grade {
-		local newname  = substr("`var'",1, length("`var'")-5)
+		local newname  = substr("`var'",1, length("`var'") - 5)
 		rename `var'  `newname'
 	}
-	foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {                                    	
-		gen padr_`var' = .
-		gen def_`var'  = .
-	}
-	forvalues year = 2005(2)2013 {
-		foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {           		//variables standartization
-			sum    `var' 									  if year == `year', detail
-			replace padr_`var' = (`var' - `r(mean)')/ `r(sd)' if year == `year',
-		}
-	}
-	sort	codschool year
-	foreach var of varlist math5 port5 idebEF1 math9 port9 idebEF2 sp5 sp9 {
-		replace	def_`var' = `var'[_n-2] if codschool[_n] == codschool[_n-2] & year[_n] == year[_n-2] + 2 & year >= 2009
-		replace	def_`var' = `var'[_n-1] if codschool[_n] == codschool[_n-1] & year[_n] == year[_n-1] + 2 & year == 2007
-	}
-	format  padr_* def_* %4.2fc	
-		
-		
-*GEOCODES
-*------------------------------------------------------------------------------------------------------------------------*
-	merge m:1 codmunic using "$geocodes/mun_brasil.dta", nogen keep(1 3)
-	keep if SIGLA == "SP"
-		
 		
 *Treated municipalities
 *------------------------------------------------------------------------------------------------------------------------*
@@ -192,6 +181,8 @@
 
 	gen 	state_network = network == 2
 	
+*Type of municipalities
+*------------------------------------------------------------------------------------------------------------------------*
 	gen 	A = 1 if network == 2 & !missing(math5)
 	bys 	year codmunic: egen mun_escolas_estaduais_ef1  = max(A)			//municipalities with state schools offering 1st to 5th grade
 	drop 	A	
@@ -226,58 +217,48 @@
 	gen 	offers_ef2 = !missing(math9)
 	gen 	offers_ef1_ef2 = offers_ef1 == 1 & offers_ef2 == 1
 	
-	
+	/*
 	**We are selecting all municipal schools offering EF1 and EF2 in 2005. These schools will have the variable school_2005_ef1_ef2 = 1. 
 	**with this, we can compare the same cohort of students. in 2005 = their performance in 5th grade; in 2009 their performance in 9th grade. 
-	gen 	T = 1 if year == 2005 & network == 3 & offers_ef1_ef2 ==1 
+	gen 	T = 1 if year == 2005 & network == 3 & offers_ef1_ef2 == 1 
 	bys 	codschool: egen school_2005_ef1_ef2 = max(T)
 	drop T
-	
-	foreach variable in math port sp math_insuf_ port_insuf_ enrollment mother_edu_ ndropout_ nrepetition_ computer_ approval studentwork_ white_ female_ privateschool_ livesmother_	classhour tclass SIncentive1_ SIncentive2_ SIncentive3_ SIncentive4_ SIncentive5_ SIncentive6_ {
+	foreach variable in {
 		gen 	`variable' = `variable'5 if year == 2005
 		replace `variable' = `variable'9 if year == 2009
 	}
+	*/
 	
 	foreach var of varlist offers* tipo_* {
 		replace `var' = . if year == 2005 | year == 2006 | year == 2008 | year == 2010 | year == 2012 | year == 2014 | year == 2016
 	}
 	
 	preserve
-	duplicates drop codmunic year tipo_municipio_ef1 tipo_municipio_ef2, force
-	keep codmunic tipo_municipio_ef1 tipo_municipio_ef2 year
-	drop if year == 2005 | year == 2006 | year == 2008 | year == 2010 | year == 2012 | year == 2014 | year == 2016
-	replace year = year + 1
-	expand 2 if year == 2008, gen(REP)
-	replace year = 2005 if REP == 1
-	drop REP
-	
-	tempfile tipo
-	save `tipo'
+		duplicates drop codmunic year tipo_municipio_ef1 tipo_municipio_ef2, force
+		keep 			codmunic year tipo_municipio_ef1 tipo_municipio_ef2 
+		drop 		if year == 2005 | year == 2006 | year == 2008 | year == 2010 | year == 2012 | year == 2014 | year == 2016
+		replace 	   year =  year + 1
+		expand 2 	if year == 2008, gen(REP)
+		replace 	   year =  2005 			if REP == 1
+		drop REP
+		
+		tempfile tipo
+		save 	`tipo'
 	restore
 	
 	merge m:1 codmunic year using `tipo', update nogen
-	
-	
-	rename id _ID
-	save "$final/Performance & Socioeconomic Variables of SP schools.dta", replace
 
-
+	
 	* ------------------------------------------------------------------------------------------------------------------ *
 	gen 	pop_2007 = pop if year == 2007
 	bys 	codmunic: egen max = max(pop_2007)
 	drop 	pop_2007
 	rename  max pop_2007
 	
-	
-	
-	*gen 	mat_pop = enrollmentEF/pop //matriculas a cada 1000 habitantes
-	*format  mat_pop %4.2fc	
-	
-	
 	* ------------------------------------------------------------------------------------------------------------------ *
 	foreach grade in 5 9 {
-		egen port_basic_more_`grade' = rowtotal(port_basic_`grade' port_adequ_`grade'), missing
-		egen math_basic_more_`grade' = rowtotal(math_basic_`grade' math_adequ_`grade'), missing
+		egen port_basic_more_`grade' = rowtotal(port_basic`grade' port_adequ`grade'), missing
+		egen math_basic_more_`grade' = rowtotal(math_basic`grade' math_adequ`grade'), missing
 	}
 	
 	
@@ -287,36 +268,14 @@
 
 	
 	* ------------------------------------------------------------------------------------------------------------------ *
-	drop    region municipality SIGLA NOME_MUNIC NOME_MESO NOME_MICRO
 	sort 	codschool year 
-	order   codschool year network location treated  coduf uf codmunic codmunic2 n_munic pop pib_pcap ind_49 r_ind_49  operation cinicio_letivo cfim_letivo dia_fim_letivo mes_fim_letivo CICLOS math5 port5 math9 port9 padr_math5 padr_port5 def_math5 def_port5 padr_math9 padr_port9  def_math9 def_port9 
-	rename (y_stub-MICRORREGI) (y_stub regiao meso_regiao micro_regiao)
-	format pop %20.0fc
+	order   codschool year network location treated  coduf uf codmunic codmunic2 n_munic pop pib_pcap ind_49 r_ind_49  operation cinicio_letivo cfim_letivo dia_fim_letivo mes_fim_letivo CICLOS 
+	format  pop %20.0fc
+	keep if year == 2005 | year == 2007 | year == 2009
+	
 	
 	*Triple dif in dif
 	* ------------------------------------------------------------------------------------------------------------------ *
-	/*
-	gen D = (year == 2009)
-	gen G = id_M == 1
-	gen T = treated
-	gen E = state_network
-	gen beta1  = E
-	gen beta2  = G
-	gen beta3  = T
-	gen beta4  = D
-	gen beta5  = E*G
-	gen beta6  = E*T //colinearidade perfeita com beta1 pq todas as escolas estaduais sao tratadas. 
-	gen beta7  = E*D
-	gen beta8  = G*T
-	gen beta9  = G*D
-	gen beta10 = T*D
-	gen beta11 = E*G*T //sempre igual EG
-	gen beta12 = E*G*D //sempre igual a GDE
-	gen beta13 = E*T*D //igual ED
-	gen beta14 = G*T*D 
-	gen beta15 = E*G*T*D
-	*/
-	
 	gen D = (year == 2009)
 	gen G = id_M == 1
 	gen E = state_network
@@ -326,95 +285,82 @@
 	gen beta4  = E*G
 	gen beta5  = E*D
 	gen beta6  = G*D
-	gen beta7  = E*G*D 
+	gen beta7  = E*G*D  //triple dif coefficient
 	
-	foreach grade in 5 9 {
-		su 		mother_edu_`grade' 		if year == 2009, detail
-		gen		mon_educ_`grade'    = year == 2009 & mother_edu_`grade' >  r(p50) & mother_edu_`grade' != .
-		replace mon_educ_`grade'    = . if   missing(mother_edu_`grade')
-		gen 	T2009_ME`grade' = T2009*mon_educ_`grade' 
+	clonevar enrollmentTotal5 = enrollmentTotal
+	clonevar enrollmentTotal9 = enrollmentTotal
+	
+	foreach variable in tclass mother_edu_highschool principal_effort_index teacher_tenure enrollmentTotal teacher_more10yearsexp {
+		if "`variable'" == "tclass" 					local name = "class_int"
+		if "`variable'" == "principal_effort_index"		local name = "principal_int"
+		if "`variable'" == "mother_edu_highschool" 		local name = "mother_int"
+		if "`variable'" == "teacher_tenure" 			local name = "teacher_tenure_int"
+		if "`variable'" == "enrollmentTotal"			local name = "enrollment_int"
+		if "`variable'" == "teacher_more10yearsexp"	    local name = "teacher_exp_int"
+		
+		foreach grade in 5 9 {
+			gen `name'`grade'  = 0						  if 												   !missing(`variable'`grade')
+				forvalues year = 2005(2)2009 {
+					su 		`variable'`grade' 	  		  if year == `year', detail
+					replace `name'`grade' = 1			  if year == `year' 	& `variable'`grade' >= r(p50) & !missing(`variable'`grade')	
+				}
+			gen T2009_`name'`grade' = T2009*`name'`grade'
+		}
 	}
 	
-	/*
-	gen 	T2009_tclass 	= 1*tclass5	 	if year == 2009  & treated == 1
-	replace T2009_tclass 	= 0 if missing(T2009_tclass) & !missing(tclass5)
-	gen 	T2009_hours  	= 1*classhour5 	if year == 2009  & treated == 1
-	replace T2009_hours 	= 0 if missing(T2009_hours)  & !missing(classhour5)
-	*/
-
-	gen 	tend = 1 if year == 2007
-	replace tend = 2 if year == 2009
+	gen  	absenteeism_teachers_int5   = 				absenteeism_teachers 	  == 2 //teacher abseemteism is a big issue
+	replace absenteeism_teachers_int5   = . if missing(absenteeism_teachers)
+	gen T2009_absenteeism_teachers_int5 = T2009*absenteeism_teachers_int5
 	
+	gen  	absenteeism_teachers_int9   = 				absenteeism_teachers 	  == 2 //teacher abseemteism is a big issue
+	replace absenteeism_teachers_int9   = . if missing(absenteeism_teachers)
+	gen T2009_absenteeism_teachers_int9 = T2009*absenteeism_teachers_int9
+	
+	gen  	classrooms_similar_ages  	= criteria_classrooms  == 1
+	gen 	classrooms_het_performance  = criteria_classrooms  == 4
+	replace classrooms_similar_ages  	= . if missing(criteria_classrooms)
+	replace classrooms_het_performance  = . if missing(criteria_classrooms)
+
 	*Labels
 	* ------------------------------------------------------------------------------------------------------------------ *
 	foreach grade in 5 9 {
-		label var  tv_`grade'				"TV"
-		label var  stereo_`grade' 			"Equipamento de som"
-		label var  dvd_`grade' 				"DVD"
-		label var  refri_`grade' 			"Geladeira"
-		label var  car_`grade' 				"Carro"
-		label var  computer_`grade' 		"Computador"
-		label var  livesmother_`grade' 		"Mora com a mãe"
-		label var  motherwrites_`grade' 	"Mão escreve"
-		label var  motherreads_`grade' 		"Mãe lê"
-		label var  livesfather_`grade' 		"Mora com o pai"
-		label var  fatherwrites_`grade' 	"Pai escreve"
-		label var  fatherreads_`grade' 		"Pai lê"
-		label var  parentsincentive_`grade' "Incentivo dos pais"
-		label var  washingmachine_`grade' 	"Máquinha de lavar"
-		label var  mother_edu_`grade' 		"Mãe com ensino médio completo"
-		label var  studentwork_`grade'  	"Trabalho"
-		label var  preschool_`grade' 		"Pré-escola"
-		label var  repetition_`grade' 		"Já repetiu"
-		label var  dropout_`grade' 			"Já abandonou"
-		label var  maid_`grade'				"Empregada doméstica"		
-		label var  nrepetition_`grade'		"Número de reprovações"
-		label var  ndropout_`grade' 		"Número de abandono" 
-		label var  privateschool_`grade'    "Já estudou em escola particular"
-		label var  SIncentive1_`grade'      "Comparecimento à reunião de pais"
-		label var  SIncentive2_`grade'      "Incentivo a estudar"
-		label var  SIncentive3_`grade'      "Incentivo a fazer o dever de casa"
-		label var  SIncentive4_`grade'      "Incentivo a ler"
-		label var  SIncentive5_`grade'      "Incentivo a ir às aulas"
-		label var  SIncentive6_`grade'      "Conversa sobre acontecimentos na escola "
-		label var  female_`grade'			"Meninas"
-		label var  white_`grade'			"Brancos"	
-		label var  timetv1_`grade'			"Uma hora ou menos de TV por dia"
-		label var  timetv2_`grade'			"Duas horas de TV por dia"
-		label var  timetv3_`grade'			"Três horas de TV por dia"
-		label var  timetv4_`grade'			"Quatro horas ou mais de TV por dia"
-		label var  cleanhouse1_`grade'		"Não ajuda nos afazeres domésticos"
-		label var  cleanhouse2_`grade'		"Uma hora com afazeres domésticos"
-		label var  cleanhouse3_`grade'		"Duas horas com afazeres domésticos"
-		label var  cleanhouse4_`grade'		"Três horas com afazeres domésticos"
-		label var  cleanhouse5_`grade'		"Quatro horas com afazeres domésticos"
-		label var  portlesson1_`grade'		"Não faz o dever de português"
-		label var  portlesson2_`grade'		"Sempre ou quase sempre faz o dever de português"
-		label var  portlesson3_`grade'		"De vez em quando faz o dever de português"
-		label var  mathlesson1_`grade'		"Não faz o dever de matemática"
-		label var  mathlesson2_`grade'		"Sempre ou quase sempre faz o dever de matemática"
-		label var  mathlesson3_`grade'		"De vez em quando faz o dever de matemática"
+		label var  tv`grade'						"TV"
+		label var  dvd`grade' 						"DVD"
+		label var  fridge`grade' 					"Geladeira"
+		label var  car`grade' 						"Carro"
+		label var  computer`grade' 					"Computador"
+		label var  live_mother`grade' 				"Mora com a mãe"
+		label var  mother_literate`grade' 			"Mão escreve"
+		label var  mother_reads`grade' 				"Mãe lê"
+		label var  live_father`grade' 				"Mora com o pai"
+		label var  father_literate`grade' 			"Pai escreve"
+		label var  father_reads`grade' 				"Pai lê"
+		label var  wash_mash`grade' 				"Máquinha de lavar"
+		label var  mother_edu_highschool`grade' 	"Mãe com ensino médio completo"
+		label var  work`grade'  					"Trabalho"
+		label var  preschool`grade' 				"Pré-escola"
+		label var  ever_repeated`grade' 			"Já repetiu"
+		label var  ever_dropped`grade' 				"Já abandonou"
+		label var  maid`grade'						"Empregada doméstica"		
+		label var  number_repetitions`grade'		"Número de reprovações"
+		label var  private_school`grade'    		"Já estudou em escola particular"
+		label var  incentive_study`grade'      		"Incentivo a estudar"
+		label var  incentive_homework`grade'       	"Incentivo a fazer o dever de casa"
+		label var  incentive_read`grade'      		"Incentivo a ler"
+		label var  incentive_school`grade'       	"Incentivo a ir às aulas"
+		label var  incentive_talk`grade'      		"Conversa sobre acontecimentos na escola "
+		label var  male`grade'						"Meninos"
+		label var  white`grade'						"Brancos"
+		
 	}
 	
 	foreach x in 5 9 {
-		label var math`x'        			"Matemática, `x'o ano"
-		label var port`x' 		 			"Português, `x'o ano"
-		label var padr_math`x' 	 			"Matemática padronizada, `x'o ano"
-		label var padr_port`x'	 			"Português padronizada, `x'o ano"
-		*label var padr_repetition`x' 	 	"Reprovação padronizada, `x'o ano"
-		*label var padr_dropout`x'	 		"Abandono padronizada, `x'o ano"
-		*label var padr_approval`x'	 		"Aprovação padronizada, `x'o ano"
-		label var def_math`x'	 			"Matemática em t-2, `x'o ano"
-		label var def_port`x'	 			"Português em t-2, `x'o ano"
-		*label var def_repetition`x'	 	"Reprovação em t-1, `x'o ano"
-		*label var def_dropout`x'	 		"Abandono em t-1, `x'o ano"
-		*label var def_approval`x'	 		"Aprovação em t-1, `x'o ano"		
+		label var math`x'        "Matemática, `x'o ano"
+		label var port`x' 		 "Português, `x'o ano"
 	}
 	
 	foreach x in EF1 EF2 {
 		label var ideb`x'   	  	 		"IDEB `x'"
-		label var padr_ideb`x'    	 		"IDEB padronizado `x'"
-		label var def_ideb`x'     	 		"IDEB t-2 `x'"
 	}
 	
 	foreach x in EF EF1 EF2  {
@@ -429,8 +375,6 @@
 	}
 
 		label var r_ind_49 					"Investimento educacional por aluno do EF, em R$ de 2018"
-		label var meso_regiao 				"Mesoregião"
-		label var micro_regiao 				"Microregião"
 		label var codschool					"Código INEP da Escola"
 		label var year 						"Ano"
 		label var network 					"=3, escolas municipais"
@@ -449,23 +393,24 @@
 		label var mes_fim_letivo			"Mês em que terminou o ano letivo"
 		
 		**Labels em ingles
-		label var math5 					"Proficiency in Math [SAEB scale 0 to 350] " 
-		label var port5 					"Proficiency in Portuguese [SAEB scale 0 to 325]" 
+		label var math5						"Proficiency in Math [SAEB scale 0 to 350] " 
+		label var port5						"Proficiency in Portuguese [SAEB scale 0 to 325]" 
 		label var repetition5 				"Repetition rate" 
 		label var dropout5 					"Dropout rate" 
 		label var approval5 				"Approval rate" 
-		label var SIncentive2_5 			"% of students whose parents incentive to study" 
-		label var SIncentive3_5				"% of students whose parents incentive to do the homework" 
-		label var SIncentive4_5 			"% of students whose parents incentive to read"
-		label var SIncentive5_5 			"% of students whose parents incentive to go to school"
-		label var white_5 					"% of white students" 
-		label var livesmother_5 			"% that lives with their mothers" 
-		label var computer_5 				"% with computer at home" 
-		label var mother_edu_5 				"% of mothers with high school degree" 
-		label var preschool_5 				"% students that did preschool"
-		label var repetition_5 				"% students that already repeated one grade"
-		label var dropout_5 				"% students that already dropout school before"
-		label var studentwork_5 			"% students that work"
+		label var incentive_study5 			"% of students whose parents incentive to study" 
+		label var incentive_homework5		"% of students whose parents incentive to do the homework" 
+		label var incentive_read5			"% of students whose parents incentive to read"
+		label var incentive_school5 		"% of students whose parents incentive to go to school"
+		label var white5 					"% of white students" 
+		label var male5 					"% of boys" 
+		label var live_mother5 				"% that lives with their mothers" 
+		label var computer5 				"% with computer at home" 
+		label var mother_edu_highschool5 	"% of mothers with high school degree" 
+		label var preschool5 				"% students that did preschool"
+		label var ever_repeated5 			"% students that already repeated one grade"
+		label var ever_dropped5 			"% students that already dropout school before"
+		label var work5 					"% students that work"
 		label var ComputerLab 				"% of schools with computer lab"
 		label var ScienceLab 				"% of schools with science lab"
 		label var Library 					"% of schools with library"
@@ -476,11 +421,35 @@
 		label var tclass5 					"Students per class"
 		label var pop						"Population of the municipality, in thousands"
 		label var pib_pcap					"GDP per capita of the municipality, in 2019 BRL"
-		
+		label var enrollmentTotal			"Total enrollment"
+		label var teacher_more10yearsexp5 	"% teachers with more than 10 years of experience"
+		label var teacher_college_degree5 	"% teachers with Tertiary Education"
+		label var teacher_tenure5 			"% teachers with tenure"
+		label var teacher_less_40years5 	"% teachers with less than 40 years old"
+		label var principal_effort_index5 	"Principal Effort Index according to teacher's perspective"
+		label var student_effort_index5 	"Student Effort Index according to teacher's perspective"
+		label var violence_index5 			"Violence in the school according to teacher's perspective"
+		label var almost_all_finish_grade95 "% teachers that believe almost all students will finish 9th grade"
+		label var almost_all_finish_highschool5 "% teachers that believe almost all students will finish high school"
+		label var almost_all_get_college5 		"% teachers that believe almost all students will get to college"
+		label var covered_curricula45 			"% teachers that covered more than 80% of the curricula"
+		label var participation_decisions45 	"% teachers that always participate in the decisions regarding their work"
+		label var share_students_books55 		"% schools in which all the students have the textbooks"
+		label var quality_books45 				"% schools in which teachers classify textbooks as great"
+		label var principal_college_degree 		"% principals with Tertiary Education"
+		label var teachers_training4 			"% schools in which more than half of the teachers participated of training"
+		label var principal_selection_work4 	"% schools in which the principal was appointed without a  selection criteria"
+		label var absenteeism_teachers3		    "% schools in which teacher absenteeism is a moderate/big issue"
+		label var absenteeism_students3 		"% schools in which student absenteeism is a moderate/big issue"
+		label var classrooms_similar_ages 		"% schools in which classrooms are formed based on age"
+		label var classrooms_het_performance	"% schools in which classrooms are formed based on performance heterogeneity"
+		label var teachers_turnover3			"% schools in which teacher turnover is a moderate/big issue"		
+		label var lack_books					"% schools with lack of textbooks" 
+		label var org_training 					"% schools with teacher's training"
+				
 		label var T2007 "2007 versus 2005"
 		label var T2009 "2009 versus 2007"
 		
-		drop 	regiao  n_munic CICLOS operation def_idebEF1 padr_idebEF1 padr_idebEF2 def_idebEF2 school location
 		sort 	codschool year
 		xtset 	codschool year 	
 		compress

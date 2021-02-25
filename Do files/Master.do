@@ -41,7 +41,7 @@
 	   **These datasets are
 	   global educationdata		"/Users/vivianamorim/OneDrive/Data Analysis"
 	   global ideb         		"$educationdata/IDEB/DataWork/Datasets/3. Final"
-	   global provabrasil       "$educationdata/Prova Brasil/DataWork/Datasets/3. Final"
+	   global provabrasil       "$educationdata/Prova Brasil/Output"
 	   global censoescolar      "$educationdata/Censo Escolar/DataWork/Datasets/3. Final" 
 	   global rendimento        "$educationdata/Rendimento/DataWork/Datasets/3. Final" 
 	   global fnde        		"$educationdata/Gasto_FNDE/DataWork/Datasets/3. Final" 
@@ -62,8 +62,6 @@
    global final            	"$datasets/3. Final" 
    global figures          	"$output/Figures"
    global tables           	"$output/Tables"
-   global descriptives      "$tables/Descriptives"
-   global results           "$tables/Results"
    global inep 				"$raw/INEP"
    global geocodes			"$raw/GeoCodes"
    global ibge				"$raw/IBGE"
