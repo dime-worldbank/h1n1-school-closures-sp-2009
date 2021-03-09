@@ -1,4 +1,5 @@
 
+
 **SCHOOL DATASET		
 *------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------*
@@ -84,8 +85,18 @@
 	tempfile    class_size
 	save       `class_size'	
 	
+		
+*7* 
+*Students per teacher																		
+*------------------------------------------------------------------------------------------------------------------------*
+    *use 	   "$censoescolar/Students per teacher at school level.dta"  if uf == "SP" & (network == 3 | network == 2) & !missing(codschool), clear
+    *save 	   "$inter/Students per teacher at school level.dta" , replace
+	use 	    spt_5grade spt_9grade 	  year codschool 	    using "$inter/Students per teacher at school level.dta", clear
+	tempfile    students_teacher
+	save       `students_teacher'	
+		
 	
-*7*
+*8*
 *Expenditure per student																						
 *------------------------------------------------------------------------------------------------------------------------*
    *use 	   "$fnde/FNDE Indicators.dta"  if (network == 3 | network == 2) & coduf == 35, clear
@@ -95,7 +106,7 @@
 	save       `expenditure'	
 	
 
-*8* 
+*9* 
 *IDEB school level
 *------------------------------------------------------------------------------------------------------------------------*
    *use 		"$ideb/IDEB at school level.dta" if uf == "SP" & (network == 3 | network == 2) & !missing(codschool), clear   *
@@ -113,7 +124,7 @@
 	tempfile data
 	save 	`data'
 	
-*9* 
+*10* 
 *Teachers
 *------------------------------------------------------------------------------------------------------------------------*
 	use "$provabrasil/Teachers.dta" if !missing(grade) & grade < 12, clear
@@ -126,7 +137,7 @@
 	save	`teachers'
 	
 
-*10* 
+*11* 
 *Principals
 *------------------------------------------------------------------------------------------------------------------------*
 	use  "$provabrasil/Principals.dta", clear
@@ -137,7 +148,7 @@
 	save	`principals'
 
 	
-*11* 
+*12* 
 *Performance + school infrastructure + socioeconomic characteristics + GeoCodes + pib per capita + expenditure per student	
 *------------------------------------------------------------------------------------------------------------------------*
 	use 	`flow_index', clear
@@ -145,6 +156,7 @@
 	merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentTotal)
 	merge   1:1 codschool year using `class_hours'	 			, nogen keepusing(classhour5grade classhour9grade)
 	merge   1:1 codschool year using `class_size'	 			, nogen keepusing(tclass5grade tclass9grade)
+	merge   1:1 codschool year using `students_teacher'	 		, nogen keepusing(spt_5grade spt_9grade)
 	merge 	1:1 codschool year using `ideb'						, nogen
 	merge 	1:1 codschool year using `socio_economic'			, nogen 
 	merge 	1:1 codschool year using `teachers'					, nogen 
@@ -287,27 +299,38 @@
 	gen beta6  = G*D
 	gen beta7  = E*G*D  //triple dif coefficient
 	
-	clonevar enrollmentTotal5 = enrollmentTotal
-	clonevar enrollmentTotal9 = enrollmentTotal
-	
-	foreach variable in tclass mother_edu_highschool principal_effort_index teacher_tenure enrollmentTotal teacher_more10yearsexp {
-		if "`variable'" == "tclass" 					local name = "class_int"
+	foreach variable in spt_ principal_effort_index teacher_tenure  { //principal_effort_index teacher_tenure 
 		if "`variable'" == "principal_effort_index"		local name = "principal_int"
-		if "`variable'" == "mother_edu_highschool" 		local name = "mother_int"
 		if "`variable'" == "teacher_tenure" 			local name = "teacher_tenure_int"
-		if "`variable'" == "enrollmentTotal"			local name = "enrollment_int"
-		if "`variable'" == "teacher_more10yearsexp"	    local name = "teacher_exp_int"
+		if "`variable'" == "spt_"						local name = "spt_int"
 		
-		foreach grade in 5 9 {
-			gen `name'`grade'  = 0						  if 												   !missing(`variable'`grade')
-				forvalues year = 2005(2)2009 {
-					su 		`variable'`grade' 	  		  if year == `year', detail
-					replace `name'`grade' = 1			  if year == `year' 	& `variable'`grade' >= r(p50) & !missing(`variable'`grade')	
+		foreach grade in 5 9{
+			gen `name'`grade'  = 0						  	if 												    						     	!missing(`variable'`grade')
+			gen `name'`grade'q = 0 					      	if 												    						     	!missing(`variable'`grade')	
+				
+				forvalues year = 2007(2)2009 {
+					su 		`variable'`grade' 	  		  	if year == `year', detail
+					replace `name'`grade'  = 1			  	if year == `year' 	& `variable'`grade' >= r(p50) & 							 	!missing(`variable'`grade')	
+					replace `name'`grade'q = 1			  	if year == `year' 	& `variable'`grade' <= r(p25) & 							 	!missing(`variable'`grade')	
+					replace `name'`grade'q = 2			  	if year == `year' 	& `variable'`grade' >  r(p25) & `variable'`grade' <=  r(p50) & 	!missing(`variable'`grade')	
+					replace `name'`grade'q = 3			  	if year == `year' 	& `variable'`grade' >  r(p50) & `variable'`grade' <=  r(p75) & 	!missing(`variable'`grade')	
+					replace `name'`grade'q = 4			  	if year == `year' 	& `variable'`grade' >  r(p75) &								  	!missing(`variable'`grade')	
 				}
-			gen T2009_`name'`grade' = T2009*`name'`grade'
+				
+			gen 	T2009_`name'`grade'   = T2009*`name'`grade'
+			
+			gen 	T2009_`name'`grade'q1 = 1 			  	if `name'`grade'q == 1 & treated == 1 & year == 2009
+			gen 	T2009_`name'`grade'q2 = 1			  	if `name'`grade'q == 2 & treated == 1 & year == 2009
+			gen 	T2009_`name'`grade'q3 = 1            	if `name'`grade'q == 3 & treated == 1 & year == 2009
+			gen	 	T2009_`name'`grade'q4 = 1			  	if `name'`grade'q == 4 & treated == 1 & year == 2009 
+			 
+			replace T2009_`name'`grade'q1 = 0 				if	missing(T2009_`name'`grade'q1) & 											 	!missing(`variable'`grade')	
+			replace T2009_`name'`grade'q2 = 0 				if	missing(T2009_`name'`grade'q2) & 											 	!missing(`variable'`grade')	
+			replace T2009_`name'`grade'q3 = 0 				if	missing(T2009_`name'`grade'q3) & 											 	!missing(`variable'`grade')	
+			replace T2009_`name'`grade'q4 = 0 				if	missing(T2009_`name'`grade'q4) & 											 	!missing(`variable'`grade')	
 		}
 	}
-	
+
 	gen  	absenteeism_teachers_int5   = 				absenteeism_teachers 	  == 2 //teacher abseemteism is a big issue
 	replace absenteeism_teachers_int5   = . if missing(absenteeism_teachers)
 	gen T2009_absenteeism_teachers_int5 = T2009*absenteeism_teachers_int5
@@ -324,129 +347,136 @@
 	*Labels
 	* ------------------------------------------------------------------------------------------------------------------ *
 	foreach grade in 5 9 {
-		label var  tv`grade'						"TV"
-		label var  dvd`grade' 						"DVD"
-		label var  fridge`grade' 					"Geladeira"
-		label var  car`grade' 						"Carro"
-		label var  computer`grade' 					"Computador"
-		label var  live_mother`grade' 				"Mora com a mãe"
-		label var  mother_literate`grade' 			"Mão escreve"
-		label var  mother_reads`grade' 				"Mãe lê"
-		label var  live_father`grade' 				"Mora com o pai"
-		label var  father_literate`grade' 			"Pai escreve"
-		label var  father_reads`grade' 				"Pai lê"
-		label var  wash_mash`grade' 				"Máquinha de lavar"
-		label var  mother_edu_highschool`grade' 	"Mãe com ensino médio completo"
-		label var  work`grade'  					"Trabalho"
-		label var  preschool`grade' 				"Pré-escola"
-		label var  ever_repeated`grade' 			"Já repetiu"
-		label var  ever_dropped`grade' 				"Já abandonou"
-		label var  maid`grade'						"Empregada doméstica"		
-		label var  number_repetitions`grade'		"Número de reprovações"
-		label var  private_school`grade'    		"Já estudou em escola particular"
-		label var  incentive_study`grade'      		"Incentivo a estudar"
-		label var  incentive_homework`grade'       	"Incentivo a fazer o dever de casa"
-		label var  incentive_read`grade'      		"Incentivo a ler"
-		label var  incentive_school`grade'       	"Incentivo a ir às aulas"
-		label var  incentive_talk`grade'      		"Conversa sobre acontecimentos na escola "
-		label var  male`grade'						"Meninos"
-		label var  white`grade'						"Brancos"
+		label var  tv`grade'							"TV"
+		label var  dvd`grade' 							"DVD"
+		label var  fridge`grade' 						"Geladeira"
+		label var  car`grade' 							"Carro"
+		label var  computer`grade' 						"Computador"
+		label var  live_mother`grade' 					"Mora com a mãe"
+		label var  mother_literate`grade' 				"Mão escreve"
+		label var  mother_reads`grade' 					"Mãe lê"
+		label var  live_father`grade' 					"Mora com o pai"
+		label var  father_literate`grade' 				"Pai escreve"
+		label var  father_reads`grade' 					"Pai lê"
+		label var  wash_mash`grade' 					"Máquinha de lavar"
+		label var  mother_edu_highschool`grade' 		"Mãe com ensino médio completo"
+		label var  work`grade'  						"Trabalho"
+		label var  preschool`grade' 					"Pré-escola"
+		label var  ever_repeated`grade' 				"Já repetiu"
+		label var  ever_dropped`grade' 					"Já abandonou"
+		label var  maid`grade'							"Empregada doméstica"		
+		label var  number_repetitions`grade'			"Número de reprovações"
+		label var  private_school`grade'    			"Já estudou em escola particular"
+		label var  incentive_study`grade'      			"Incentivo a estudar"
+		label var  incentive_homework`grade'       		"Incentivo a fazer o dever de casa"
+		label var  incentive_read`grade'      			"Incentivo a ler"
+		label var  incentive_school`grade'       		"Incentivo a ir às aulas"
+		label var  incentive_talk`grade'      			"Conversa sobre acontecimentos na escola "
+		label var  male`grade'							"Meninos"
+		label var  white`grade'							"Brancos"
 		
 	}
 	
 	foreach x in 5 9 {
-		label var math`x'        "Matemática, `x'o ano"
-		label var port`x' 		 "Português, `x'o ano"
+		label var math`x'        						"Matemática, `x'o ano"
+		label var port`x' 		 						"Português, `x'o ano"
 	}
 	
 	foreach x in EF1 EF2 {
-		label var ideb`x'   	  	 		"IDEB `x'"
+		label var ideb`x'   	  	 					"IDEB `x'"
 	}
 	
 	foreach x in EF EF1 EF2  {
-		label var repetition`x' 	 		"Reprovação no `x'"
-		label var dropout`x' 		 		"Abandono no `x'"
+		label var repetition`x' 	 					"Reprovação no `x'"
+		label var dropout`x' 		 					"Abandono no `x'"
 	}
 	
 	forvalues x = 1/9 {
-		label var approval`x'	 			"Aprovação no `x'o ano"
-		label var repetition`x' 			"Reprovação no  `x'o ano"
-		label var dropout`x'	 			"Abandono no `x'o ano"
+		label var approval`x'	 						"Aprovação no `x'o ano"
+		label var repetition`x' 						"Reprovação no  `x'o ano"
+		label var dropout`x'	 						"Abandono no `x'o ano"
 	}
 
-		label var r_ind_49 					"Investimento educacional por aluno do EF, em R$ de 2018"
-		label var codschool					"Código INEP da Escola"
-		label var year 						"Ano"
-		label var network 					"=3, escolas municipais"
-		label var location					"1 se urbana e 2 se rural"
-		label var treated 					"1 para municípios que adiaram o retorno às aulas"
-		label var coduf 					"Código da UF"
-		label var uf 						"Sigla da UF"
-		label var codmunic					"Código do município"
-		label var codmunic2 				"Código do município, 6 digitos"
-		label var pop 						"População"
-		label var n_munic					"Nome do município"
-		label var operation 				"1 escolas em atividade em t, 2 escolas fora de atividade, 3 escolas extintas e 4 escolas extintas no ano anterior"
-		label var cinicio_letivo 			"Início do ano letivo"
-		label var cfim_letivo 				"Fim do ano letivo"
-		label var dia_fim_letivo 			"Dia em que terminou o ano letivo"
-		label var mes_fim_letivo			"Mês em que terminou o ano letivo"
+		label var r_ind_49 								"Investimento educacional por aluno do EF, em R$ de 2018"
+		label var codschool								"Código INEP da Escola"
+		label var year 									"Ano"
+		label var network 								"=3, escolas municipais"
+		label var location								"1 se urbana e 2 se rural"
+		label var treated 								"1 para municípios que adiaram o retorno às aulas"
+		label var coduf 								"Código da UF"
+		label var uf 									"Sigla da UF"
+		label var codmunic								"Código do município"
+		label var codmunic2 							"Código do município, 6 digitos"
+		label var pop 									"População"
+		label var n_munic								"Nome do município"
+		label var operation 							"1 escolas em atividade em t, 2 escolas fora de atividade, 3 escolas extintas e 4 escolas extintas no ano anterior"
+		label var cinicio_letivo 						"Início do ano letivo"
+		label var cfim_letivo 							"Fim do ano letivo"
+		label var dia_fim_letivo 						"Dia em que terminou o ano letivo"
+		label var mes_fim_letivo						"Mês em que terminou o ano letivo"
 		
 		**Labels em ingles
-		label var math5						"Proficiency in Math [SAEB scale 0 to 350] " 
-		label var port5						"Proficiency in Portuguese [SAEB scale 0 to 325]" 
-		label var repetition5 				"Repetition rate" 
-		label var dropout5 					"Dropout rate" 
-		label var approval5 				"Approval rate" 
-		label var incentive_study5 			"% of students whose parents incentive to study" 
-		label var incentive_homework5		"% of students whose parents incentive to do the homework" 
-		label var incentive_read5			"% of students whose parents incentive to read"
-		label var incentive_school5 		"% of students whose parents incentive to go to school"
-		label var white5 					"% of white students" 
-		label var male5 					"% of boys" 
-		label var live_mother5 				"% that lives with their mothers" 
-		label var computer5 				"% with computer at home" 
-		label var mother_edu_highschool5 	"% of mothers with high school degree" 
-		label var preschool5 				"% students that did preschool"
-		label var ever_repeated5 			"% students that already repeated one grade"
-		label var ever_dropped5 			"% students that already dropout school before"
-		label var work5 					"% students that work"
-		label var ComputerLab 				"% of schools with computer lab"
-		label var ScienceLab 				"% of schools with science lab"
-		label var Library 					"% of schools with library"
-		label var InternetAccess 			"% of schools internet access"
-		label var SportCourt 				"% of schools sport court"
-		label var enrollment5 				"Enrollment at school level"
-		label var classhour5 				"Class hours per day"
-		label var tclass5 					"Students per class"
-		label var pop						"Population of the municipality, in thousands"
-		label var pib_pcap					"GDP per capita of the municipality, in 2019 BRL"
-		label var enrollmentTotal			"Total enrollment"
-		label var teacher_more10yearsexp5 	"% teachers with more than 10 years of experience"
-		label var teacher_college_degree5 	"% teachers with Tertiary Education"
-		label var teacher_tenure5 			"% teachers with tenure"
-		label var teacher_less_40years5 	"% teachers with less than 40 years old"
-		label var principal_effort_index5 	"Principal Effort Index according to teacher's perspective"
-		label var student_effort_index5 	"Student Effort Index according to teacher's perspective"
-		label var violence_index5 			"Violence in the school according to teacher's perspective"
-		label var almost_all_finish_grade95 "% teachers that believe almost all students will finish 9th grade"
-		label var almost_all_finish_highschool5 "% teachers that believe almost all students will finish high school"
-		label var almost_all_get_college5 		"% teachers that believe almost all students will get to college"
-		label var covered_curricula45 			"% teachers that covered more than 80% of the curricula"
-		label var participation_decisions45 	"% teachers that always participate in the decisions regarding their work"
-		label var share_students_books55 		"% schools in which all the students have the textbooks"
-		label var quality_books45 				"% schools in which teachers classify textbooks as great"
-		label var principal_college_degree 		"% principals with Tertiary Education"
-		label var teachers_training4 			"% schools in which more than half of the teachers participated of training"
-		label var principal_selection_work4 	"% schools in which the principal was appointed without a  selection criteria"
-		label var absenteeism_teachers3		    "% schools in which teacher absenteeism is a moderate/big issue"
-		label var absenteeism_students3 		"% schools in which student absenteeism is a moderate/big issue"
-		label var classrooms_similar_ages 		"% schools in which classrooms are formed based on age"
-		label var classrooms_het_performance	"% schools in which classrooms are formed based on performance heterogeneity"
-		label var teachers_turnover3			"% schools in which teacher turnover is a moderate/big issue"		
-		label var lack_books					"% schools with lack of textbooks" 
-		label var org_training 					"% schools with teacher's training"
+		label var math5									"Proficiency in Math [SAEB scale 0 to 350] " 
+		label var port5									"Proficiency in Portuguese [SAEB scale 0 to 325]" 
+		label var repetition5 							"Repetition rate" 
+		label var dropout5 								"Dropout rate" 
+		label var approval5 							"Approval rate" 
+		label var incentive_study5 						"% of students whose parents incentive to study" 
+		label var incentive_homework5					"% of students whose parents incentive to do the homework" 
+		label var incentive_read5						"% of students whose parents incentive to read"
+		label var incentive_school5 					"% of students whose parents incentive to go to school"
+		label var white5 								"% of white students" 
+		label var male5 								"% of boys" 
+		label var live_mother5 							"% that lives with their mothers" 
+		label var computer5 							"% with computer at home" 
+		label var mother_edu_highschool5 				"% of mothers with high school degree" 
+		label var preschool5 							"% students that did preschool"
+		label var ever_repeated5 						"% students that already repeated one grade"
+		label var ever_dropped5 						"% students that already dropout school before"
+		label var work5 								"% students that work"
+		label var ComputerLab 							"% of schools with computer lab"
+		label var ScienceLab 							"% of schools with science lab"
+		label var Library 								"% of schools with library"
+		label var InternetAccess 						"% of schools internet access"
+		label var SportCourt 							"% of schools sport court"
+		label var enrollment5 							"Enrollment at school level"
+		label var classhour5 							"Class hours per day"
+		label var tclass5 								"Students per class"
+		label var pop									"Population of the municipality, in thousands"
+		label var pib_pcap								"GDP per capita of the municipality, in 2019 BRL"
+		label var enrollmentTotal						"Total enrollment"
+		label var teacher_more10yearsexp5 				"% teachers with more than 10 years of experience"
+		label var teacher_college_degree5 				"% teachers with Tertiary Education"
+		label var teacher_tenure5 						"% teachers with tenure"
+		label var teacher_less_40years5 				"% teachers with less than 40 years old"
+		label var principal_effort_index5 				"Principal Effort Index according to teacher's perspective"
+		label var student_effort_index5 				"Student Effort Index according to teacher's perspective"
+		label var violence_index5 						"Violence in the school according to teacher's perspective"
+		label var almost_all_finish_grade95 			"% teachers that believe almost all students will finish 9th grade"
+		label var almost_all_finish_highschool5 		"% teachers that believe almost all students will finish high school"
+		label var almost_all_get_college5 				"% teachers that believe almost all students will get to college"
+		label var covered_curricula45 					"% teachers that covered more than 80% of the curricula"
+		label var participation_decisions45 			"% teachers that always participate in the decisions regarding their work"
+		label var share_students_books55 				"% schools in which all the students have the textbooks"
+		label var quality_books45 						"% schools in which teachers classify textbooks as great"
+		label var principal_college_degree 				"% principals with Tertiary Education"
+		label var teachers_training4 					"% schools in which more than half of the teachers participated of training"
+		label var principal_selection_work4 			"% schools in which the principal was appointed without a  selection criteria"
+		label var absenteeism_teachers3		    		"% schools in which teacher absenteeism is a moderate/big issue"
+		label var absenteeism_students3 				"% schools in which student absenteeism is a moderate/big issue"
+		label var classrooms_similar_ages 				"% schools in which classrooms are formed based on age"
+		label var classrooms_het_performance			"% schools in which classrooms are formed based on performance heterogeneity"
+		label var teachers_turnover3					"% schools in which teacher turnover is a moderate/big issue"		
+		label var lack_books							"% schools with lack of textbooks" 
+		label var org_training 							"% schools with teacher's training"
 				
+		foreach grade in 5 9 {
+		label var T2009_principal_int`grade'			"Shutdown versus mother's education"
+		label var T2009_teacher_tenure_int`grade' 		"Shutdown versus teacher's tenure"
+		label var T2009_absenteeism_teachers_int`grade'	"Shutdown versus teacher's absenteeism"
+		label var T2009_spt_int`grade'					"Shutdown versus students per teacher"
+		}	
+
 		label var T2007 "2007 versus 2005"
 		label var T2009 "2009 versus 2007"
 		

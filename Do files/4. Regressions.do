@@ -64,15 +64,21 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 	estimates clear
 	matrix 	results 	= (0,0,0,0,0,0,0)		//matrix to store the model tested (column 1), depende variable (column 2), the ATT (column 3), lower bound (column 4), 
 	matrix  ri      	= (0,0,0)				//matrix to store the model tested (column 1), the dependent variable (column 2) and the p-value calculated by on Randomization Inference. 
+	postfile table2 str10 ATT lowerb upperb pvalue space1 obs r2 space2 media sd space3 mediaT sdT space mediaC sdC using mytable2, replace
+
+	
+	
 	
 	cap program drop mat_res
 	program define   mat_res
 	syntax, model(integer) sub(integer) var(varlist) dep_var(varlist) grade(integer) //model(number of model tested - 1, 2 or 3 ); sub (code of the dependent variable - 1, 2, 3, 4 and 5);
 																	   //var(treatment dummy - T2007 or T2009); dep_var(dependent variable - math5, portuguese5, sp5, port_insuf_5 and math_insuf_5).																   
 		*Average treatment effect
-		scalar ATT =  el(r(table),1,1)	
-		scalar obs =  e(N)
-		scalar r2a =  e(r2_a)
+		scalar ATT  = el(r(table),1,1)	
+		local  obs  = string(e(N)   , "%5.0f")
+		local  r2a  = string(e(r2_a), "%5.2fc")
+		local  ATTs = string(ATT    , "%5.2fc")
+				
 		
 		*Confidence Interval 
 		if `model' >= 20 { //dif in dif models, model > 20 triple dif
@@ -89,41 +95,37 @@ We establish a code (sub) for each one of our dependent variables (in order to s
 			matrix results = results \ (`model', `sub', ATT, lowerb, upperb, 0, `grade')								
 		}
 		
-		*Mean of the dependent variable and standard deviation
+		local pvalues = string(pvalue, "%10.3fc")
+		local lowerbs = string(lowerb, "%10.2fc")
+		local upperbs = string(upperb, "%10.2fc")
+		
+		*Mean of the dependent variable and standard  deviation
 			**Pooled sample
 			su 		`dep_var' if year == 2007 & e(sample) == 1 
-			scalar 	 media = r(mean)
-			scalar   sd    = r(sd)
-		
+			local 	 media = string(`r(mean)', "%10.2fc")
+			local 	 sd    = string(`r(sd)'  , "%10.2fc")
+
 			**Treatment group
 			su 		`dep_var' if year == 2007 & e(sample) == 1 & treated == 1
-			scalar 	 mediaT = r(mean)
-			scalar   sdT    = r(sd)
+			local 	 mediaT = string(`r(mean)', "%10.2fc")
+			local 	 sdT    = string(`r(sd)'  , "%10.2fc")
 
 			*Comparison group
 			su 		`dep_var' if year == 2007 & e(sample) == 1 & treated == 0
-			scalar 	 mediaC = r(mean)
-			scalar   sdC    = r(sd)
-			
-		*We use estout to export regression results. Besides the coefficients, we export pvalues, confidence interval, mean and standard deviation of the dependent variable.
-			estadd scalar pvalue  = pvalue: model`model'`sub'`grade'
-			estadd scalar lowerb  = lowerb: model`model'`sub'`grade'
-			estadd scalar upperb  = upperb: model`model'`sub'`grade'
-			estadd scalar media   = media: 	model`model'`sub'`grade'
-			estadd scalar sd      = sd:		model`model'`sub'`grade'
-			estadd scalar mediaT  = mediaT: model`model'`sub'`grade'
-			estadd scalar sdT     = sdT: 	model`model'`sub'`grade'
-			estadd scalar mediaC  = mediaC: model`model'`sub'`grade'
-			estadd scalar sdC     = sdC: 	model`model'`sub'`grade'
-			
-		*
-		
+			local 	 mediaC = string(`r(mean)', "%10.2fc")
+			local 	 sdC    = string(`r(sd)'  , "%10.2fc")
+
 		if `model' == 1 | `model' == 2 | `model' == 20 {
-			matrix table2 = table2 \ (ATT, lowerb, upperb, pvalue, 0, obs, r2a, 0, media, sd, 0, mediaT, sdT, 0, mediaC, sdC)
+			post 	 table2	 ("`ATTs'") ("`lowerb'") ("`upperb'") ("0") ("`obs'")  ("`r2a'") ("0") ("`media'") ("`sd'") ("0") ("`mediaT'") ("`sdT'") ("0") ("`mediaC'") ("`sdC'") ("0")\
+			
+
 		}
 		
 	end
 	
+	
+	*postclose summary
+	*use mytable2, clear
 
 *Regressions // 
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*

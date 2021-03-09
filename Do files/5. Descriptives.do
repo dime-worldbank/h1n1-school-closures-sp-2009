@@ -1,4 +1,93 @@
 
+
+*Enrollments and number of schools
+*----------------------------------------------------------------------------------------------------------------------------*
+		use 	"$inter/Enrollments at school level.dta" if year == 2009 & (network == 2 | network == 3), clear
+		gen treated = 0
+			foreach munic in $treated_municipalities {
+			replace treated = 1 if codmunic == `munic'
+		}
+	
+		egen 	mat    = rowtotal(enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal)
+		gen 	escola = school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1
+		gen 	affected = (treated == 1 | network == 2) & escola == 1
+		keep if escola == 1
+		
+		collapse (sum) mat enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal school_*, by(affected network)
+		drop mat school_EF
+		sort affected network 
+		export excel "$tables/Table1.xlsx", replace
+
+		
+*Number of municipalities and schools in our sample
+*----------------------------------------------------------------------------------------------------------------------------*
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
+		codebook codmunic  if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of municipalities (among the ones that did not extend the winter break) with at lest one state school
+		codebook codschool if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of state schools in the municipalities that opted to not extend the winter break
+		codebook codschool if id_13_mun == 0 & network == 3 & !missing(math5) & mun_escolas_estaduais_ef1 == 1  //number of municipal schools in the municipalities that opted to not extend the winter break
+	
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
+		duplicates drop codmunic, force
+		gen ind = 1
+		collapse (sum) ind , by (id_13_mun tipo_municipio_ef1)													//number of municipalities in each one of our group
+		
+		
+		
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
+		duplicates drop codmunic, force
+		gen ind = 1
+		collapse (sum) ind , by (id_13_mun tipo_municipio_ef2)
+		
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2005,  clear
+		gen ind_estadual  = 1 if network == 2 & !missing(math5)
+		gen ind_municipal = 1 if network == 3 & !missing(math5)
+		collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef1)	
+		
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
+		gen ind_estadual  = 1 if network == 2 & !missing(math9)
+		gen ind_municipal = 1 if network == 3 & !missing(math9)
+		collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef2)
+		
+		
+	export excel "$tables/TableA2.xlsx", replace
+	export excel "$tables/TableA3.xlsx", replace
+		
+		
+		
+*Balance tests
+*----------------------------------------------------------------------------------------------------------------------------*
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & network == 3, clear
+	iebaltab  $balance_students5  $matching_schools enrollmentTotal pib_pcap, format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA3") 	    rowvarlabels replace 
+
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & id_M == 1, clear
+	iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap, format(%12.2fc) grpvar(state_network) savetex("$tables/TableA4") 		rowvarlabels replace 
+
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & id_M == 0, clear
+	iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap, format(%12.2fc) grpvar(state_network) savetex("$tables/TableA5") 		rowvarlabels replace 
+
+	
+
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+	foreach var of varlist $balance_teachers $balance_principals {
+		replace `var' = `var'*100
+		format  `var' %4.2fc
+	}
+	
+	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3, 	format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA6")   	rowvarlabels replace 
+	
+	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & network == 3, 	format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA7")   	rowvarlabels replace 
+
+	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & id_M == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA8")      rowvarlabels replace 
+	
+	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & id_M == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA9")      rowvarlabels replace 
+	
+	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & id_M == 0, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA10")      rowvarlabels replace 
+	
+	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & id_M == 0,     	format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA11")      rowvarlabels replace 
+	
+	
+		
+						
 *
 *IDEB estimate after Covid
 *----------------------------------------------------------------------------------------------------------------------------*
@@ -417,87 +506,6 @@
 	legend(order(1 "Extended winter break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(large) position(6))													///
 	note("Source: School Census INEP 2009.", span color(black) fcolor(background) pos(7) size(vsmall))
 	graph export "$figures/school_infra.pdf", as(pdf) replace	
-
-	
-*Rede de São Paulo
-*----------------------------------------------------------------------------------------------------------------------------*
-		use 	"$inter/Enrollments at school level.dta" if year == 2009 & (network == 2 | network == 3), clear
-		gen treated = 0
-			foreach munic in $treated_municipalities {
-			replace treated = 1 if codmunic == `munic'
-		}
-	
-		egen 	mat    = rowtotal(enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal)
-		gen 	escola = school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1
-		gen 	affected = (treated == 1 | network == 2) & escola == 1
-		keep if escola == 1
-		
-		collapse (sum) mat enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal school_*, by(affected network)
-		sort network
-		
-		
-*Numero de escolas
-*----------------------------------------------------------------------------------------------------------------------------*
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
-		codebook codmunic  if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of municipalities (among the ones that did not extend the winter break) with at lest one state school
-		codebook codschool if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of state schools in the municipalities that opted to not extend the winter break
-		codebook codschool if id_13_mun == 0 & network == 3 & !missing(math5) & mun_escolas_estaduais_ef1 == 1  //number of municipal schools in the municipalities that opted to not extend the winter break
-	
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
-		duplicates drop codmunic, force
-		gen ind = 1
-		collapse (sum) ind , by (id_13_mun tipo_municipio_ef1)
-		
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
-		duplicates drop codmunic, force
-		gen ind = 1
-		collapse (sum) ind , by (id_13_mun tipo_municipio_ef2)
-		
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2005,  clear
-		gen ind_estadual  = 1 if network == 2 & !missing(math5)
-		gen ind_municipal = 1 if network == 3 & !missing(math5)
-		collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef1)	
-		
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
-		gen ind_estadual  = 1 if network == 2 & !missing(math9)
-		gen ind_municipal = 1 if network == 3 & !missing(math9)
-		collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef2)	
-							
-			
-*Balance test
-*----------------------------------------------------------------------------------------------------------------------------*
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & network == 3, clear
-	iebaltab  $balance_students5  $matching_schools enrollmentTotal pib_pcap, format(%12.2fc) grpvar(treated) 		savetex("$tables/Students & Schools_municipal networks_2009"			) 	    rowvarlabels replace 
-	iebaltab  $balance_students5  $matching_schools enrollmentTotal pib_pcap, format(%12.2fc) grpvar(treated) 		save("$tables/Students & Schools_municipal networks_2009"				)   	rowvarlabels replace 
-
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & id_M == 1, clear
-	iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap, format(%12.2fc) grpvar(state_network) savetex("$tables/Students & Schools_state and municipal networks G1_2009"	) 		rowvarlabels replace 
-	iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap, format(%12.2fc) grpvar(state_network) save("$tables/Students & Schools_state and municipal networks G1_2009"		) 		rowvarlabels replace 
-
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & id_M == 0, clear
-	iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap, format(%12.2fc) grpvar(state_network) savetex("$tables/Students & Schools_state and municipal networks G0_2009"	) 		rowvarlabels replace 
-	iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap, format(%12.2fc) grpvar(state_network) save("$tables/Students & Schools_state and municipal networks G0_2009"		) 		rowvarlabels replace 
-
-	
-
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-	foreach var of varlist $balance_teachers $balance_principals {
-		replace `var' = `var'*100
-		format  `var' %4.2fc
-	}
-	
-	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3, 	format(%12.2fc) grpvar(treated) 		savetex("$tables/Teachers & Principals_municipal networks_2009")   			 			rowvarlabels replace 
-	
-	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & network == 3, 	format(%12.2fc) grpvar(treated) 		savetex("$tables/Teachers & Principals_municipal networks_2007")   			 		rowvarlabels replace 
-
-	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & id_M == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/Teachers & Principals_state and municipal networks G1_2009")      rowvarlabels replace 
-	
-	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & id_M == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/Teachers & Principals_state and municipal networks G1_2007")      rowvarlabels replace 
-	
-	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & id_M == 0, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/Teachers & Principals_state and municipal networks G0_2009")      rowvarlabels replace 
-	
-	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & id_M == 0,     	format(%12.2fc) grpvar(state_network) 	savetex("$tables/Teachers & Principals_state and municipal networks G0_2007")      rowvarlabels replace 
-	
 
 		
 *Size of affected municipalities		

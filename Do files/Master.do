@@ -39,7 +39,7 @@
 	   
 	   *If you want access to Education Data folder, please ask, for running as a second user, you do not need access to these folders. 
 	   **These datasets are
-	   global educationdata		"/Users/vivianamorim/OneDrive/Data Analysis"
+	   global educationdata		"/Users/vivianamorim/OneDrive/Data_analysis"
 	   global ideb         		"$educationdata/IDEB/DataWork/Datasets/3. Final"
 	   global provabrasil       "$educationdata/Prova Brasil/Output"
 	   global censoescolar      "$educationdata/Censo Escolar/DataWork/Datasets/3. Final" 
