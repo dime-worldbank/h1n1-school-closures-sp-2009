@@ -30,9 +30,7 @@
 		duplicates drop codmunic, force
 		gen ind = 1
 		collapse (sum) ind , by (id_13_mun tipo_municipio_ef1)													//number of municipalities in each one of our group
-		
-		
-		
+				
 	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009,  clear
 		duplicates drop codmunic, force
 		gen ind = 1
@@ -47,8 +45,6 @@
 		gen ind_estadual  = 1 if network == 2 & !missing(math9)
 		gen ind_municipal = 1 if network == 3 & !missing(math9)
 		collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef2)
-		
-		
 	export excel "$tables/TableA2.xlsx", replace
 	export excel "$tables/TableA3.xlsx", replace
 		
@@ -59,13 +55,11 @@
 	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & network == 3, clear
 	iebaltab  $balance_students5  $matching_schools enrollmentTotal pib_pcap, format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA3") 	    rowvarlabels replace 
 
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & id_M == 1, clear
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & id_M == 1 & tipo_municipio_ef1 == 1, clear
 	iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap, format(%12.2fc) grpvar(state_network) savetex("$tables/TableA4") 		rowvarlabels replace 
 
-	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & id_M == 0, clear
+	use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2009 & !missing(math5) & id_M == 0 & tipo_municipio_ef1 == 1, clear
 	iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap, format(%12.2fc) grpvar(state_network) savetex("$tables/TableA5") 		rowvarlabels replace 
-
-	
 
 	use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
 	foreach var of varlist $balance_teachers $balance_principals {
@@ -73,17 +67,17 @@
 		format  `var' %4.2fc
 	}
 	
-	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3, 	format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA6")   	rowvarlabels replace 
+	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3					   , 		format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA6")   	rowvarlabels replace 
 	
-	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & network == 3, 	format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA7")   	rowvarlabels replace 
+	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & network == 3					   , 		format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA7")   	rowvarlabels replace 
 
-	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & id_M == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA8")      rowvarlabels replace 
+	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & id_M == 1 & tipo_municipio_ef1 == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA8")      rowvarlabels replace 
 	
-	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & id_M == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA9")      rowvarlabels replace 
+	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & id_M == 1 & tipo_municipio_ef1 == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA9")      rowvarlabels replace 
 	
-	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & id_M == 0, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA10")      rowvarlabels replace 
+	iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & id_M == 0 & tipo_municipio_ef1 == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA10")      rowvarlabels replace 
 	
-	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & id_M == 0,     	format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA11")      rowvarlabels replace 
+	iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & id_M == 0 & tipo_municipio_ef1 == 1,     	format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA11")      rowvarlabels replace 
 	
 	
 		
@@ -134,14 +128,16 @@
 *Triple Dif -> Checking parallel trends prior to 2009
 *----------------------------------------------------------------------------------------------------------------------------*
 *	
-	use 			tipo_municipio_ef1 codmunic year  using "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-	duplicates drop tipo_municipio_ef1 codmunic year, force
+	estimates clear
+	use 			tipo_municipio_ef1 tipo_municipio_ef2 codmunic year  using "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+	duplicates drop codmunic year, force
 	tempfile tipo
 	save 	`tipo'
 	
 	*Regression
 		use "$ideb/IDEB at municipal level.dta" if uf == "SP" & (network == 2 | network == 3) & year < 2009, clear
 		merge m:1 codmunic year using `tipo', nogen keep(3)
+		
 		gen id_M    = 1
 		gen id_13_M = 0
 
@@ -153,14 +149,29 @@
 		gen D = (year == 2007)
 		gen G = id_M == 1
 		gen E = network == 2
+		
 		gen beta1  = E
-		gen beta2  = G
-		gen beta3  = D
-		gen beta4  = E*G
-		gen beta5  = E*D
+		gen beta2  = D
+		gen beta3  = D*E
+		gen beta4  = G
+		gen beta5  = E*G
 		gen beta6  = G*D
 		gen beta7  = E*G*D 
-		reg math5 beta1-beta7			//beta 7 nao eh estatisticamente diferente de 0. 
+		
+		eststo: reg math5 beta1 beta2 beta3		 if tipo_municipio_ef1 == 1
+		eststo: reg math5 beta1-beta7			 if tipo_municipio_ef1 == 1
+	 
+		eststo: reg port5 beta1 beta2 beta3		 if tipo_municipio_ef1 == 1
+		eststo: reg port5 beta1-beta7			 if tipo_municipio_ef1 == 1
+		
+		eststo: reg math9 beta1 beta2 beta3		 if tipo_municipio_ef2 == 1
+		eststo: reg math9 beta1-beta7			 if tipo_municipio_ef2 == 1
+	
+		eststo: reg port9 beta1 beta2 beta3		 if tipo_municipio_ef2 == 1
+		eststo: reg port9 beta1-beta7		 	 if tipo_municipio_ef2 == 1
+		
+		estout * using "$tables/TableA12.csv", delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a) replace
+		
 
 
 	*Figure
@@ -193,13 +204,76 @@
 			note("", color(black) fcolor(background) pos(7) size(small)))  
 			*graph export "$figures/.pdf", as(pdf) replace
 
-						
+		use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+				
+				collapse (mean)approval5 repetition5 dropout5 [aw = enrollment5], by(year id_M network)
+			tw 	///
+			(line approval5  year if network == 2, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 												///  
+			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
+			(line approval5 year if network == 3, by(id_M) lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 								///  
+			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)																							///
+			ylabel(, labsize(small) gmax angle(horizontal) format(%4.1fc))											     												///
+			yscale( alt )  																																				///
+			title("", pos(12) size(medium) color(black))													 															///
+			xtitle("")  																																				///
+			xlabel(2007(1)2009, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
+			graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
+			plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
+			legend(order(1 "Estadual"  2 "Municipal"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 									///
+			ysize(5) xsize(5) 																										 									///
+			note("", color(black) fcolor(background) pos(7) size(small)))  
+			*graph export "$figures/.pdf", as(pdf) replace
+			
+			
+		estimates clear
+		use "$final/Performance & Socioeconomic Variables of SP schools.dta" if year == 2007 | year == 2008, clear
+		drop beta* D G E
+		gen D = (year == 2008)
+		gen G = id_M == 1
+		gen E = network == 2
+		
+		gen beta1  = E
+		gen beta2  = D
+		gen beta3  = D*E
+		gen beta4  = G
+		gen beta5  = E*G
+		gen beta6  = G*D
+		gen beta7  = E*G*D 
+		
+		
+		eststo: reg approval5 beta1 beta2 beta3		i.codmunic  if tipo_municipio_ef1 == 1
+		eststo: reg approval5 beta1-beta7			i.codmunic  if tipo_municipio_ef1 == 1
+	 
+		eststo: reg repetition5 beta1 beta2 beta3	i.codmunic if tipo_municipio_ef1 == 1
+		eststo: reg repetition5 beta1-beta7			i.codmunic if tipo_municipio_ef1 == 1
+		
+		eststo: reg dropout5 beta1 beta2 beta3		i.codmunic if tipo_municipio_ef1 == 1
+		eststo: reg dropout5 beta1-beta7			i.codmunic if tipo_municipio_ef1 == 1
+				
+		eststo: reg approval9 beta1 beta2 beta3		i.codmunic if tipo_municipio_ef2 == 1
+		eststo: reg approval9 beta1-beta7			i.codmunic if tipo_municipio_ef2 == 1
+
+		eststo: reg repetition9 beta1 beta2 beta3	i.codmunic if tipo_municipio_ef2 == 1
+		eststo: reg repetition9 beta1-beta7			i.codmunic if tipo_municipio_ef2 == 1
+	
+		eststo: reg dropout9 beta1 beta2 beta3		i.codmunic if tipo_municipio_ef2 == 1
+		eststo: reg dropout9 beta1-beta7		 	i.codmunic if tipo_municipio_ef2 == 1
+		
+		estout * using "$tables/TableA13.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a) replace
+		
+
+	
+	
+	
+	
+	
+	
 *Tendência no tempo 
 *----------------------------------------------------------------------------------------------------------------------------*
 
 	*Math
 	*------------------------------------------------------------------------------------------------------------------------*
-		use "$inter/time_trend_dif-in-dif_math5grade.dta", clear
+		use "$inter/time_trend_dif-in-dif_math5.dta", clear
 		gen 	contrafactual = math5 + 4 if treated == 1 & year == 2009
 		replace contrafactual = math5     if treated == 1 & year == 2007
 
@@ -250,7 +324,7 @@
 		 
 	*Port
 	*------------------------------------------------------------------------------------------------------------------------*
-		use "$inter/time_trend_dif-in-dif_port5grade.dta", clear
+		use "$inter/time_trend_dif-in-dif_port5.dta", clear
 		gen 	contrafactual = port5 + 1 if treated == 1 & year == 2009
 		replace contrafactual = port5 	  if treated == 1 & year == 2007
 
@@ -276,7 +350,33 @@
 						note("Source: Prova Brasil.", span color(black) fcolor(background) pos(7) size(small)))  
 						graph export "$figures/time trend for Portuguese_graph in english.pdf", as(pdf) replace
 						
-					
+				
+	*Repetition
+	*------------------------------------------------------------------------------------------------------------------------*
+		use "$inter/time_trend_dif-in-dif_repetition5.dta", clear
+
+						tw 	///
+						(line repetition5 year if treated == 1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 		 											///  
+						ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
+						(line repetition5 year if treated == 0, lwidth(0.5) color(gs12) lp(solid) connect(direct) recast(connected)  	 													///  
+						ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(3)  mlabsize(2.5)										 													///
+						ylabel(, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
+						yscale( alt )  																																				///
+						xscale(r(2007(1)2009)) 																																		///
+						yscale(r()) 																																		///
+						ytitle("%", size(small)) 																					 							///
+						xlabel(2007(1)2009, labsize(medsmall) gmax angle(horizontal) format(%4.0fc))											     								///
+						title("", pos(12) size(medium) color(black))																												///
+						xtitle("")  																																				///
+						graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///
+						plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
+						legend(order(1 "Extended winter break"  2 "Other municipalities"  3 "Contrafactual") cols(1) pos(12) size(medlarge) region(lwidth(none) color(white) fcolor(none))) ///
+						ysize(5) xsize(5) 																																			///
+						note("Source: Prova Brasil.", span color(black) fcolor(background) pos(7) size(small)))  
+			
+				
+				
+				
 *Grupos de tratamento e comparação
 *----------------------------------------------------------------------------------------------------------------------------*
 	use "$geocodes/mun_brasil.dta" if coduf == 35, clear

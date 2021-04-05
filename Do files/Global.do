@@ -23,7 +23,7 @@ global teachers 		  		  teacher_more10yearsexp  teacher_male  teacher_white  tea
 								  teacher_less3min_wages   principal_effort_index   student_effort_index  violence_index  almost_all_finish_grade9  ///
 								  almost_all_finish_highschool  almost_all_get_college covered_curricula1-quality_books4
 
-global balance_teachers 		  teacher_college_degree5 teacher_tenure5 teacher_less_40years5 ///
+global balance_teachers 		  teacher_tenure5 teacher_less_40years5 ///
 								principal_effort_index5  student_effort_index5 violence_index5 almost_all_finish_grade95   ///
 								  almost_all_finish_highschool5 covered_curricula45	participation_decisions45				///
 								  share_students_books55 quality_books45 

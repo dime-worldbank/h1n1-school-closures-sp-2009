@@ -14,8 +14,11 @@
 		gen       year = 2007
 		destring, replace
 		expand 2, gen(REP)
-		replace year = 2005 if REP == 1		
+		replace year = 2005 if REP == 1	
 		drop REP
+		expand 2 if year == 2007, gen(REP)
+		replace year = 2008 if REP == 1	
+		drop REP		
 		tempfile  pop_2007
 		save     `pop_2007'
 		
@@ -29,9 +32,9 @@
 		keep	  ano cod_munic pib pop pib_pcap munic
 		rename   (cod_munic ano) (codmunic year)
 		destring, replace
-		keep 	  if year == 2007 | year == 2009 | year == 2005
+		keep 	  if year == 2007 | year == 2009 | year == 2005 | year == 2008
 		merge 	  1:1 year codmunic using `pop_2007', nogen update 
-		replace   pib_pcap = (pib*1000)/pop     if year == 2007 | year == 2005
+		replace   pib_pcap = (pib*1000)/pop     if year == 2007 | year == 2005 | year == 2008 
 		tempfile  pib
 		save     `pib'
 		
@@ -68,7 +71,7 @@
 		local ipca2013 1.38
 		local ipca2014 1.30		//ipca2019 = 1
 
-		foreach year in 2005 2007 2009 2010 2011 2012 2013 {
+		foreach year in 2005 2007 2008 2009 2010 2011 2012 2013 {
 			su 		pib_pcap 	 					 if year == `year', detail
 			replace pib_pcap = .				 	 if year == `year' & pib_pcap > r(p99)
 			replace pib_pcap = pib_pcap*`ipca`year'' if year == `year'
