@@ -11,14 +11,13 @@
            ssc install `command'
        }
    }
-   ieboilstart, version(15)          	//Set the version number to the oldest version used by anyone in the project team
+   ieboilstart, version(16)          	//Set the version number to the oldest version used by anyone in the project team
    `r(version)'                         //This line is needed to actually set the version from the command above
 
     set matsize 11000
 	set scheme economist 
-	set seed 1
 	graph set window fontface arial
-
+	set seed 892823
 	
    * PART 1:  PREPARING FOLDER PATH GLOBALS
    * Users
@@ -34,7 +33,7 @@
    * Root folder globals
    * ---------------------
    if $user == 1 {
-       global projectfolder 	"/Users/vivianamorim/OneDrive/World Bank/Education/SP_H1N1 & School Closure"
+       global projectfolder 	"/Users/vivianamorim/OneDrive/world-bank/Education/h1n1-school-closures-sp-2009"
 	   global dofiles			"/Users/vivianamorim/Documents/GitHub/h1n1-school-closures-sp-2009/Do files"
 	   
 	   *If you want access to Education Data folder, please ask, for running as a second user, you do not need access to these folders. 

@@ -40,7 +40,7 @@
 *3*
 *School Infrastructure																									
 *------------------------------------------------------------------------------------------------------------------------*
-	*use 	   "$censoescolar/School Infrastructure at school level.dta"   if uf == "SP" & (network == 3 | network == 2) & !missing(codschool), clear
+	use 	   "$censoescolar/School Infrastructure at school level.dta"   if uf == "SP" & (network == 3 | network == 2) & !missing(codschool), clear
 	*save 	   "$inter/School Infrastructure at school level.dta", replace
 	use 	   	$matching_schools year codschool coduf uf codmunic codmunic2 operation network location cfim_letivo cinicio_letivo mes_fim_letivo dia_fim_letivo CICLOS using "$inter/School Infrastructure at school level.dta", clear
 	foreach var of varlist $matching_schools {
@@ -997,7 +997,7 @@
 		xtset 	codschool year 	
 		compress
 		replace n_munic = n_munic[_n-1] if n_munic == "" & codmunic[_n-1] == codmunic[_n] 
-		drop mun_escolas_estaduais_ef1-mun_escolas_municipais_ef2 pop* region municipality school operation  offers* CICLOS approvalEF-approval4 approval6-approval8 repetitionEF-repetition4 repetition6-repetition8 dropoutEF-dropout4 dropout6-dropout8		
+		drop mun_escolas_estaduais_ef1-mun_escolas_municipais_ef2 pop* region municipality school operation  offers* approvalEF-approval4 approval6-approval8 repetitionEF-repetition4 repetition6-repetition8 dropoutEF-dropout4 dropout6-dropout8		
 	save "$final/Performance & Socioeconomic Variables of SP schools.dta", replace
 
 
