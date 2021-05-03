@@ -1,4 +1,35 @@
 
+ use "/Users/vivianamorim/OneDrive/Data_analysis/Censo Escolar/DataWork/Datasets/2. Intermediate/III. Professores/Professores Harmonizado_2009SP.dta" if (network == 2 | network == 3) &  LTeacherEF == 1, clear
+	
+	gen treated   		= .				//1 for closed schools, 0 otherwise
+	gen id_13_mun 		= 0				//1 for the 13 municipalities that extended the winter break, 0 otherwise
+	gen id_M	  		= 1				//0 for the 13 municipalities that extended the winter break, 1 otherwise
+
+	
+	foreach munic in $treated_municipalities {
+		replace treated   = 1 if codmunic == `munic' & network == 3
+		replace id_13_mun = 1 if codmunic == `munic'
+		replace id_M	  = 0 if codmunic == `munic'
+	}		
+	
+	replace treated    = 1 if network == 2
+	replace treated    = 0 if treated == .
+
+	
+	duplicates drop codteacher codschool network, force
+	
+	keep codteacher codschool network treated id_13_mun id_M 
+	
+	bys codteacher: egen  min = min(network)
+	bys codteacher: egen  max = max(network)
+	
+	gen classes_both_networks = min == 2 & max == 3
+	
+	duplicates drop codteacher classes_both_networks, force
+	
+	bys treated: su classes_both_networks if network == 3
+	
+
 
 *Enrollments and number of schools
 *----------------------------------------------------------------------------------------------------------------------------*
@@ -172,23 +203,29 @@
 		
 		estout * using "$tables/TableA12.csv", delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a) replace
 		
-
+	estimates clear
+	use 			tipo_municipio_ef1 tipo_municipio_ef2 codmunic year  using "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+	duplicates drop codmunic year, force
+	tempfile tipo
+	save 	`tipo'
+	
 
 	*Figure
-	use "$ideb/IDEB at municipal level.dta" if uf == "SP" & (network == 2 | network == 3) & year < 2010, clear
+	use "$ideb/IDEB at municipal level.dta" if uf == "SP" & (network == 2 | network == 3) , clear
 	merge 1:1 codmunic year network using "$censoescolar/Enrollments at municipal level", nogen keep(3)
 	sort 	codmunic year
-	replace enrollment5grade = enrollment5grade[_n+1] if year[_n] == 2008 & year[_n+1] == 2009 & codmunic[_n] == codmunic[_n+1]
 	merge m:1 codmunic year using `tipo', nogen keep(3)
-		
+			keep if tipo_municipio_ef1 == 1
+
 	gen id_M = 1
 	foreach munic in $treated_municipalities {
 		replace id_M = 0 if codmunic == `munic'
 	}	
+	keep if id_M== 0
 
 	collapse (mean)math5 port5 [aw = enrollment5grade], by(year id_M network)
 			tw 	///
-			(line math5  year if network == 2, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 												///  
+			(line  math5  year if network == 2, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 												///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
 			(line math5  year if network == 3, by(id_M) lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 								///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)																							///
@@ -196,7 +233,7 @@
 			yscale( alt )  																																				///
 			title("", pos(12) size(medium) color(black))													 															///
 			xtitle("")  																																				///
-			xlabel(2005(2)2009, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
+			xlabel(2005(2)2015, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
 			graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
 			plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
 			legend(order(1 "Estadual"  2 "Municipal"  3 "Contrafactual") size(small) region(lwidth(none) color(white) fcolor(none))) 									///

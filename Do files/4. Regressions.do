@@ -239,53 +239,56 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 		}
 				
 		*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
+		use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear	//YOU NEED STATA 16 FOR LASSO 
 
-		**********************************
-		**YOU NEED STATA 16 to run LASSO**
-		**********************************
-		
-		
+			**
+			**
 			*Teacher and principal controls
 			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-			global 	teacher_principal c.teacher_more10yearsexp`grade'##c.teacher_more10yearsexp`grade' 														///
-				c.student_effort_index`grade'##c.student_effort_index`grade' 																				///
-				c.violence_index`grade'##c.violence_index`grade' c.teacher_white`grade'##c.teacher_white`grade' 											///
-				i.meetings_school_council 	i.meetings_class_council i.lack_books i.principal_gender i.principal_age_range i.principal_skincolor			///
-				i.principal_edu_level	i.org_training i.teachers_training i.criteria_teacher_classrooms i.criteria_classrooms i.support_secretary_edu  	///
-				i.support_community	i.training_last2years
+			global 	teacher_principal c.teacher_more10yearsexp`grade'##c.teacher_more10yearsexp`grade' 															///
+					c.student_effort_index`grade'##c.student_effort_index`grade' 																				///
+					c.violence_index`grade'##c.violence_index`grade' c.teacher_white`grade'##c.teacher_white`grade' 											///
+					i.meetings_school_council 	i.meetings_class_council i.lack_books i.principal_gender i.principal_age_range i.principal_skincolor			///
+					i.principal_edu_level	i.org_training i.teachers_training i.criteria_teacher_classrooms i.criteria_classrooms i.support_secretary_edu  	///
+					i.support_community	i.training_last2years
 		
 		
-			*Lasso to select controls for models in which year == 2005 or year == 2007. In 2005, we have less control options
+			**
+			**
+			*PLACEBO Model. Lasso to select the controls for models in which year == 2005 or year == 2007. There are less control variables available in 2005.
 			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-			global controls2005 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	  		///
+			global controls2005 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	  			///
 				   c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5 
 
-			if `sub' == 1 | `sub' == 2 | `sub' == 3 { //subjects that we have data for 2005 (the other dependent variables start in 2007)
+			if `sub' == 1 | `sub' == 2 | `sub' == 3 { //math, port and perfomance.  The subjects that we have data for 2005 (the other dependent variables start in 2007)
 				lasso linear `subject' $controls2005 if year == 2005, rseed(89018)						
 				global controls2005  `e(allvars_sel)'
 			}
 			
-			*Lasso to select controls for models in which year == 2007 or year == 2008. We have less control options in 2008 because there was not Prova Brasil this year
+			**
+			**
+			*PLACEBO Model. Lasso to select the controls for models in which year == 2007 or year == 2008. There are less control variables available in 2008 because there was not Prova Brasil this year
 			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-			global controls2008 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	  		///
+			global controls2008 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	  			///
 				   c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5 c.classhour5##c.classhour5 
 	
-			if `sub' == 6 | `sub' == 7 | `sub' == 8 { //subjects that we have data for 2005 (the other dependent variables start in 2007)
+			if `sub' == 6 | `sub' == 7 | `sub' == 8 { //approval, rrepetition and dropout. Outcomes that we have since 2007
 				lasso linear `subject' $controls2008 i.year i.network if year<= 2008, rseed(89018)						
 				global controls2008  `e(allvars_sel)'
 			}
 			
-			*Lasso to select controls for the remaining models
+			**
+			**
+			*Lasso to select controls for the models including the year of the treatment (2009)
 			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 			if `etapa' == 1 {
-				global controls2007 c.mother_edu_highschool5##c.mother_edu_highschool5 c.number_dropouts5##c.number_dropouts5 								///
-				c.number_repetitions5##c.number_repetitions5 c.computer5##c.computer5																		///
-				c.pib_pcap##c.pib_pcap c.work5##c.work5 						   																			///
-				c.white5##c.white5 c.male5##c.male5 c.private_school5##c.private_school5 c.live_mother5##c.live_mother5 									///
-				c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt 															///
-				c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour5##c.classhour5 c.spt_5##c.spt_5 									///
-				c.incentive_study5##c.incentive_study5 c.incentive_homework5##c.incentive_homework5 c.incentive_read5##c.incentive_read5	 				///
+				global controls2007 c.mother_edu_highschool5##c.mother_edu_highschool5 c.number_dropouts5##c.number_dropouts5 									///
+				c.number_repetitions5##c.number_repetitions5 c.computer5##c.computer5																			///
+				c.pib_pcap##c.pib_pcap c.work5##c.work5 						   																				///
+				c.white5##c.white5 c.male5##c.male5 c.private_school5##c.private_school5 c.live_mother5##c.live_mother5 										///
+				c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt 																///
+				c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour5##c.classhour5 c.spt_5##c.spt_5 											///
+				c.incentive_study5##c.incentive_study5 c.incentive_homework5##c.incentive_homework5 c.incentive_read5##c.incentive_read5	 					///
 				c.incentive_school5##c.incentive_school5 c.incentive_talk5##c.incentive_talk5 c.incentive_parents_meeting5##c.incentive_parents_meeting5	
 			
 				lasso linear `subject' $controls2007 i.year i.network if year >= 2007, rseed(22224)		
@@ -293,13 +296,13 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 			}
 					
 			if `etapa' == 2 {
-				global controls2007 c.mother_edu_highschool9##c.mother_edu_highschool9 c.number_dropouts9##c.number_dropouts9 								///
-				c.number_repetitions9##c.number_repetitions9 c.computer9##c.computer9																		///
-				c.pib_pcap##c.pib_pcap   c.work9##c.work9 						   																			///
-				c.white9##c.white9 c.male9##c.male9 c.private_school9##c.private_school9 c.live_mother9##c.live_mother9 									///
-				c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt 															///
-				c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour9##c.classhour9 c.spt_9##c.spt_9 									///
-				c.incentive_study9##c.incentive_study9 c.incentive_homework9##c.incentive_homework9 c.incentive_read9##c.incentive_read9	 				///
+				global controls2007 c.mother_edu_highschool9##c.mother_edu_highschool9 c.number_dropouts9##c.number_dropouts9 									///
+				c.number_repetitions9##c.number_repetitions9 c.computer9##c.computer9																			///
+				c.pib_pcap##c.pib_pcap   c.work9##c.work9 						   																				///
+				c.white9##c.white9 c.male9##c.male9 c.private_school9##c.private_school9 c.live_mother9##c.live_mother9 										///
+				c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt 																///
+				c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour9##c.classhour9 c.spt_9##c.spt_9 											///
+				c.incentive_study9##c.incentive_study9 c.incentive_homework9##c.incentive_homework9 c.incentive_read9##c.incentive_read9	 					///
 				c.incentive_school9##c.incentive_school9 c.incentive_talk9##c.incentive_talk9 c.incentive_parents_meeting9##c.incentive_parents_meeting9									
 						
 				if `sub' != 5 {	 //The model does not converge when sub == 5, so in sub = 5 we use the same controls as sub = 4
@@ -316,7 +319,7 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 			
 			if `etapa' == 1 {
 					
-				*2007 versus 2005
+				*PLACEBO Models. 2007 versus 2005, or 2008 versus 2007.
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 				local model = 1
 					

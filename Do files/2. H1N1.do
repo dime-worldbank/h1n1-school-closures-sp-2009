@@ -13,14 +13,10 @@
 	 
 	
 	*Average number of hospitalizations
-		
 		su hosp_h1n1 if treated == 1 & year == 2009
 		su hosp_h1n1 if treated == 0 & year == 2009
-		
 		sort hosp_h1n1 
 		
-	
-
 	*Hospitalizations at municipal level
 	
 		use "$geocodes/mun_brasil.dta", clear
