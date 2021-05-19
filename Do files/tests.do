@@ -1,4 +1,120 @@
 
+
+	
+	use 	"$inter/IDEB by municipality.dta" if (network == 3 | network == 2) & G == 1  , clear
+		
+	keep 	codmunic network year math5 port5 idebEF1 T
+	
+	reshape wide math5 port5 idebEF1, i(codmunic T network) j(year)
+	
+	keep	if math52007 != .
+	
+	
+	bys codmunic: gen total = _N
+	
+	keep if total == 2
+	
+	sort codmunic T 
+	
+	gen portdif =  port52007 - port52005 
+	
+	
+	psmatch2 T portdif , common ties 
+
+
+		
+	keep if _support  == 1
+	
+	*tw (histogram math52007 if network == 3, fcolor(none) lcolor(blue)) || (histogram math52007 if network == 2, fcolor(none) lcolor(red))
+		
+	gen peso = _pscore/(1-_pscore)
+	
+	
+											tw kdensity _pscore if T == 1 [aw = peso],  lw(thick) lp(dash) color(emidblue) 					///
+										///
+										|| kdensity _pscore if T == 0 [aw = peso],  lw(thick) lp(dash) color(gs12) 						///
+											graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 	///
+											plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 	///
+											ylabel(, labsize(small) angle(horizontal) format(%2.1fc)) 											///
+											xlabel(, labsize(small) gmax angle(horizontal)) 													///
+											ytitle("", size(medsmall))			 																///
+											xtitle("Propensity score", size(medsmall)) 															///
+											title("", pos(12) size(medsmall)) 																	///
+											subtitle(, pos(12) size(medsmall)) 																	
+
+				drop total-peso
+			
+	
+	reshape long port5 math5 idebEF1, i(codmunic network T) j(year)
+		keep if year < 2011
+	collapse (mean)port5, by(year T)
+	
+	tw line port5 year if T == 1, lcolor(red) || line port5 year if T == 0, lcolor(blue)
+	
+									
+											
+											
+	duplicates drop codmunic, force
+	keep codmunic
+
+	tempfile munic
+	save `munic' 
+	
+	
+	
+	
+	
+	
+	use  "$final/h1n1-school-closures-sp-2009.dta" if year == 2007 | year == 2009, clear
+	
+	merge m:1 codmunic using `munic', keep (3)
+											
+	collapse (mean)	port5 math5 idebEF1 [aw = enrollment5], by(year T)
+	
+		tw line port5 year if T == 1, lcolor(red) || line port5 year if T == 0, lcolor(blue)
+
+											
+											
+											
+	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009) & G == 1 & tipo_municipio_ef1 == 1, clear
+											
+		reg math5  i.codmunic $controls2007 beta1-beta7 [aw = enrollment5] , cluster(codmunic)
+									
+		reg port5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] , cluster(codmunic)
+
+	
+	
+	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009) & G == 0, clear
+	
+		reg math5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] , cluster(codmunic)
+
+	
+	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009) & G == 0, clear
+	
+		gen M = network == 3
+		
+		drop beta*
+		
+		gen beta1 = T*M
+		gen beta2 = T*D
+		gen beta3 = M*D
+		
+		
+		reg math5  i.codmunic $controls2007 i.T i.M i.D beta3 [aw = enrollment5] , cluster(codmunic)
+	
+		reg port5  i.codmunic $controls2007 i.T i.M i.D beta3 [aw = enrollment5] , cluster(codmunic)
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
 				global controls2007 c.mother_edu_highschool5##c.mother_edu_highschool5 c.number_dropouts5##c.number_dropouts5 									///
 				c.number_repetitions5##c.number_repetitions5 c.computer5##c.computer5																			///
 				c.pib_pcap##c.pib_pcap c.work5##c.work5 						   																				///
@@ -11,24 +127,66 @@
 
 				
 				
-			*Dif in Dif
-			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-			use "$final/Performance & Socioeconomic Variables of SP schools.dta", clear
-			*drop if codmunic == 3509502 | codmunic == 3520509 | codmunic == 3548807 	
-			sort 	codschool year
+			use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009) & tipo_municipio_ef1 == 1 , clear
 			
-			egen group = group(codmunic network)
-			*Triple dif in dif
-			* ------------------------------------------------------------------------------------------------------------------ *
-			drop beta*
-			gen beta1    = E
-			gen beta2    = T
-			gen beta3    = D
-			gen beta5    = E*D
-			gen beta6  	 = T*D
-			gen beta7    = E*D*T 				 //triple dif coefficient
-
 			gen M = network == 3
+
+
+			gen beta8 = id_13_mun*D*M
+
+			reg 	math5  i.codmunic $controls2007  beta1-beta6 beta8 [aw = enrollment5]  if year == 2007 | year == 2009, cluster(codmunic)
+			reg 	port5  i.codmunic $controls2007  beta1-beta6 beta8 [aw = enrollment5]  if year == 2007 | year == 2009, cluster(codmunic)
+			
+			
+			
+			
+			
+			use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009) &  network == 3 , clear
+			drop
+			
+			
+			
+			reg 	math5  i.codmunic $controls2007  i.T i.year T2009  [aw = enrollment5], cluster(codmunic)
+			
+			boottest T2009,  reps(1000)  boottype(wild) seed(102846) level(95) bootcluster(codmunic) quietly		//Standard errors using bootstrap. We do this in our dif-in-dif models as we have a few number of 
+
+			
+			
+			
+			use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009) &  network == 3 , clear
+			
+			reg 	math5  i.codmunic $controls2007  i.T i.year T2009  [aw = enrollment5], cluster(codmunic)
+			
+			boottest T2009,  reps(1000)  boottype(wild) seed(102846) level(95) bootcluster(codmunic) quietly		//Standard errors using bootstrap. We do this in our dif-in-dif models as we have a few number of 
+
+			reg 	port5 i.codmunic $controls2007  i.T i.year T2009  [aw = enrollment5], cluster(codmunic)
+			
+			boottest T2009,  reps(1000)  boottype(wild) seed(102846) level(95) bootcluster(codmunic) quietly		//Standard errors using bootstrap. We do this in our dif-in-dif models as we have a few number of 
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			drop beta*
+	
+			gen beta1    = E*G
+			gen beta2  	 = E*D
+			gen beta3    = G*D	
+	
+			gen beta4    = E*T*D
+			gen beta5    = M*T*D
+		
+			
+			
+			reg port5 E G D T $controls2007 i.codmunic beta1-beta5  if tipo_municipio_ef1 == 1
+			
 			
 			gen beta8 = M*D*T
 
@@ -42,7 +200,12 @@
 					
 					
 					
-					
+								*drop if codmunic == 3509502 | codmunic == 3520509 | codmunic == 3548807 	
+			sort 	codschool year
+			
+			egen group = group(codmunic network)
+			
+
 					
 			eststo: reg math5  $controls2007  i.codmunic##i.network i.treated  i.year  T2009 [aw = enrollment5] if (year == 2007 | year == 2009)			  , cluster(codmunic)
 					
@@ -133,7 +296,7 @@
 				
 		estout * using "$tables/Table2.csv"  , delimiter(";") keep(T2009*) 	label cells(b se) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a, fmt(%9.0g %9.3f %9.2f)) replace
 
-		
+		 
 		
 		
 		
@@ -186,7 +349,9 @@
 		
 		
 		
-		
+		tw ///
+		line math5 year if uf == "SP", lcolor(red) || line math5 year if uf == "ES", lcolor(blue) || ///
+		line		math5 year if uf == "MG", lcolor(green) || line math5 year  if uf == "RJ", lcolor(black)
 		
 		
 		
