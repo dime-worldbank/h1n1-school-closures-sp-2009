@@ -986,7 +986,7 @@
 			label variable performance_basic				"Basic performance in Math and Portuguese"
 			label variable performance_adequ				"Adequate performance in Math and Portuguese"
 			label variable male								"Male student"
-			label variable white 							"White student"
+			label variable white 							"White students"
 			label variable coduf 							"State ID"
 			label variable codmunic 						"Municipality ID"
 			label variable codschool 						"School ID"
@@ -1070,7 +1070,7 @@
 			label variable homework_corrected_math_always 	"Teacher always corrects the homework"
 			label variable homework_corrected_both_always 	"Teacher always corrects the homework"
 			label variable private_school 					"Already attended Private School"
-			label variable preschool						"Children did preschool"
+			label variable preschool						"Student did preschool"
 			compress
 			save "$inter/Students - Prova Brasil.dta", replace
 			
@@ -1339,7 +1339,7 @@
 			foreach var of varlist principal_motivation-my_ideas{
 				recode `var' (1=0) (2=0.33) (3=0.66) (4=1), gen(II_`var')
 			}
-			egen principal_effort_index   = rowmean(II_*) if temp1 < 4
+			egen principal_effort = rowmean(II_*) if temp1 < 4
 			drop II_* temp1
 			
 			**
@@ -1411,7 +1411,7 @@
 			
 			*Labels
 			*------------------------------------------------------------------------------------------------------------------------*
-			label variable principal_effort_index			"Principal's effort from teacher's perspective"
+			label variable principal_effort					"Principal effort from teacher perspective"
 			label variable teacher_effort_index 			"Teacher's effort based on the use of news and literature books" 	
 			label variable parents_effort_index 			"1 if parents support children (from teacher's perspective) and 0, otherwise"
 			label variable student_effort_index				"Student's effort from teacher's perspective"
@@ -1494,6 +1494,11 @@
 			label variable teacher_tenure					"Teacher with tenure"
 			label variable teacher_less_40years				"Teacher with less than 40 years old"
 			label variable teacher_less3min_wages			"Teacher's salary is less than 3 minimum wage"
+			label variable covered_curricula4				"Teachers covered more than 80% of the curricula"	
+			label variable participation_decisions4			"Teachers always participate of the work decisions"								
+			label variable share_students_books5 			"Teachers say that all the students have textbooks"
+			label variable quality_books4 					"Teachers classify the textbooks as great"
+		
 			compress
 			save "$inter/Teachers - Prova Brasil.dta", replace
 					
@@ -1895,7 +1900,7 @@
 			label variable finantial_resourses_state 		"School receives finantial resources from State Government "
 			label variable finantial_resources_municipal 	"School receives finantial resources from Municipal Government"
 			label variable books_since_beg_year 			"Textbooks arrived in the begginning of the school year"
-			label variable lack_books 						"There is lack of textbook"
+			label variable lack_books 						"Lack of textbooks according to principals"
 			label variable books_received 					"Textbooks arrived in the school"
 			label variable principal_college_degree			"Principal has a college degreee"
 			label variable book_choice						"Principal does not know. 2: external choice. 3: internal choice"
@@ -1903,8 +1908,10 @@
 			label variable school_council_students 			"Students participate of the school council"
 			label variable school_council_staff				"School staff participate of the school council "
 			label variable school_council_parents			"Parents participate of the school council"
+			label variable principal_selection_work4		"Principal was appointed for the position"
+			label variable absenteeism_teachers3 			"Teacher abseenteism as a big issue"									
+			label variable absenteeism_students3			"Student abseenteism as a big issue"	
 			compress
-			
 			rename (male white) (principal_male principal_white)
 			save "$inter/Principals - Prova Brasil.dta", replace
 

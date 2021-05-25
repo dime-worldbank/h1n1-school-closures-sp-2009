@@ -4,29 +4,27 @@
 	use 	"$inter/IDEB by municipality.dta" if (network == 3 | network == 2) & G == 1  , clear
 		
 	keep 	codmunic network year math5 port5 idebEF1 T
-	
+
+
 	reshape wide math5 port5 idebEF1, i(codmunic T network) j(year)
-	
-	keep	if math52007 != .
-	
-	
-	bys codmunic: gen total = _N
-	
-	keep if total == 2
-	
-	sort codmunic T 
-	
+
 	gen portdif =  port52007 - port52005 
+	gen mathdif =  math52007 - math52005 
 	
+*	keep *dif codmunic network
 	
-	psmatch2 T portdif , common ties 
+	*reshape wide portdif mathdif, i(codmunic) j(network)
+	
+	psmatch2 T mathdif , common ties 
 
-
-		
 	keep if _support  == 1
 	
-	*tw (histogram math52007 if network == 3, fcolor(none) lcolor(blue)) || (histogram math52007 if network == 2, fcolor(none) lcolor(red))
-		
+	
+	tw (histogram math52007 if network == 3, fcolor(none) lcolor(blue)) || (histogram math52007 if network == 2, fcolor(none) lcolor(red))
+	
+	
+	
+	
 	gen peso = _pscore/(1-_pscore)
 	
 	
@@ -42,14 +40,14 @@
 											title("", pos(12) size(medsmall)) 																	///
 											subtitle(, pos(12) size(medsmall)) 																	
 
-				drop total-peso
+				*drop total-peso
 			
 	
 	reshape long port5 math5 idebEF1, i(codmunic network T) j(year)
 		keep if year < 2011
-	collapse (mean)port5, by(year T)
+	collapse (mean)port5 math5, by(year T)
 	
-	tw line port5 year if T == 1, lcolor(red) || line port5 year if T == 0, lcolor(blue)
+	tw line math5 year if T == 1, lcolor(red) || line math5 year if T == 0, lcolor(blue)
 	
 									
 											
@@ -67,7 +65,7 @@
 	
 	use  "$final/h1n1-school-closures-sp-2009.dta" if year == 2007 | year == 2009, clear
 	
-	merge m:1 codmunic using `munic', keep (3)
+	*merge m:1 codmunic using `munic', keep (3)
 											
 	collapse (mean)	port5 math5 idebEF1 [aw = enrollment5], by(year T)
 	
@@ -76,7 +74,18 @@
 											
 											
 											
-	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009) & G == 1 & tipo_municipio_ef1 == 1, clear
+	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007) & G == 1 & tipo_municipio_ef1 == 1, clear
+	
+	keep codmunic network math5 port5 
+	
+	gsort -port5
+	
+	br port5 if network == 2
+	
+	gsort -math5
+	
+	
+	
 											
 		reg math5  i.codmunic $controls2007 beta1-beta7 [aw = enrollment5] , cluster(codmunic)
 									

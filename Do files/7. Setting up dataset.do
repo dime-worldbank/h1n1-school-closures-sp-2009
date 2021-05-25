@@ -42,8 +42,8 @@
 			local new = 2
 			}
 			local z = substr("`v'", 1,length("`v'")-1)
-			if `new' == 1 label var `v' "`l`z'5', 5th grade - %" 
-			if `new' == 2 label var `v' "`l`z'9', 9th grade - %" 
+			if `new' == 1 label var `v' "`l`z'5' - %" 
+			if `new' == 2 label var `v' "`l`z'9' - %" 
 		}
 		tempfile    socio_economic
 		save       `socio_economic'
@@ -105,7 +105,7 @@
 	*Students per teacher																					
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
-		use 	    spt_5grade spt_9grade 	  		 year codschool network	using "$inter/Students per teacher.dta" if network == 2 | network == 3, clear
+		use 	    spt5grade spt9grade 	  		 year codschool network	using "$inter/Students per teacher.dta" if network == 2 | network == 3, clear
 		tempfile    students_teacher
 		save       `students_teacher'	
 		
@@ -166,8 +166,8 @@
 			local new = 2
 			}
 			local z = substr("`v'", 1,length("`v'")-1)
-			if `new' == 1 label var `v' "`l`z'5', 5th grade - %" 
-			if `new' == 2 label var `v' "`l`z'9', 9th grade %" 
+			if `new' == 1 label var `v' "`l`z'5' - %" 
+			if `new' == 2 label var `v' "`l`z'9' - %" 
 		}
 		
 		format teacher_more10yearsexp5-quality_books49 %4.2fc
@@ -194,7 +194,7 @@
 		merge   1:1 codschool year using `enrollments'	 			, nogen keepusing(enrollment5grade enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentTotal)
 		merge   1:1 codschool year using `class_hours'	 			, nogen keepusing(classhour5grade classhour9grade)
 		merge   1:1 codschool year using `class_size'	 			, nogen keepusing(tclass5grade tclass9grade)
-		merge   1:1 codschool year using `students_teacher'	 		, nogen keepusing(spt_5grade spt_9grade)
+		merge   1:1 codschool year using `students_teacher'	 		, nogen keepusing(spt5grade spt9grade)
 		merge 	1:1 codschool year using `ideb'						, nogen
 		merge 	1:1 codschool year using `socio_economic'			, nogen 
 		merge 	1:1 codschool year using `teachers'					, nogen 
@@ -217,7 +217,10 @@
 		drop school
 		replace n_munic = n_munic[_n-1] if codmunic[_n] == codmunic[_n-1] & n_munic[_n] == "" & n_munic[_n-1] != ""
 		replace n_munic = n_munic[_n+1] if codmunic[_n] == codmunic[_n+1] & n_munic[_n] == "" & n_munic[_n+1] != ""
-		order year-codmunic2 n_munic location codschool-CICLOS
+		
+		gen school_year = cfim_letivo - cinicio_letivo
+		
+		order year-codmunic2 n_munic location codschool-mes_fim_letivo school_year CICLOS
 
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
@@ -241,31 +244,31 @@
 		label var math5									"Proficiency in Math [SAEB scale 0 to 350] " 
 		label var port5									"Proficiency in Portuguese [SAEB scale 0 to 325]" 
 		label var sp5									"Performance in Math and Portuguese [0 to 10]" 
-		label var repetition5 							"Repetition rate" 
-		label var dropout5 								"Dropout rate" 
-		label var approval5								"Approval rate" 
-		label var repetition9 							"Repetition rate" 
-		label var dropout9 								"Dropout rate" 
-		label var approval9								"Approval rate" 
-		label var ComputerLab 							"% of schools with computer lab"
-		label var ScienceLab 							"% of schools with science lab"
-		label var Library 								"% of schools with library"
-		label var InternetAccess 						"% of schools internet access"
-		label var SportCourt 							"% of schools sport court"
+		label var repetition5 							"Repetition - %" 
+		label var dropout5 								"Dropout - %" 
+		label var approval5								"Approval - %" 
+		label var repetition9 							"Repetition - %" 
+		label var dropout9 								"Dropout - %" 
+		label var approval9								"Approval - %" 
+		label var ComputerLab 							"Schools with computer lab - %" 
+		label var ScienceLab 							"Schools with science lab - %" 
+		label var Library 								"Schools with library - %" 
+		label var InternetAccess 						"Schools internet access - %" 
+		label var SportCourt 							"Schools sport court - %"
 		label var enrollment5 							"Enrollments 5th grade"
 		label var enrollment9 							"Enrollments 9th grade"
-		label var classhour5 							"Class hours 5th grade"
-		label var tclass5 								"Students per class 5th grade"
-		label var classhour9 							"Class hours per day 9th grade"
-		label var tclass9								"Students per class 9th grade"
+		label var classhour5 							"Class hours per day"
+		label var tclass5 								"Students per class"
+		label var classhour9 							"Class hours per day"
+		label var tclass9								"Students per class"
 		label var pop									"Population of the municipality, in thousands"
 		label var pib_pcap								"GDP per capita of the municipality, in 2019 BRL"
-		label var spt_5									"Students per teacher"
-		label var spt_9									"Students per teacher"
+		label var spt5									"Students per teacher"
+		label var spt9									"Students per teacher"
 		foreach x in 5 9 {
 		label var math`x'        						"Math, `x'th grade"
-		label var port`x' 		 						"Portuguese, `x'grade"
-		label var sp`x'									"Standardized Performance, `x'grade"
+		label var port`x' 		 						"Portuguese, `x'th grade"
+		label var sp`x'									"Standardized Performance, `x'th grade"
 		}
 		foreach x in EF1 EF2 {
 		label var ideb`x'   	  	 					"IDEB `x'"
@@ -273,6 +276,12 @@
 		}
 		label var porte									"Size of the municipality"
 		label var CICLOS								"Schools with automatic approval" 
+		label var enrollmentTotal						"Total enrollment, all grades"
+		label var school_year							"Length of the school year (days)"
+		
+
+		
+		
 		
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
@@ -305,8 +314,12 @@
 		
 		label define id_13_mun 0 "Locally-managed schools without winter break extended" 1 "Locally-managed schools with winter break extended" 
 		label define G		   1 "Locally-managed schools without winter break extended" 0 "Locally-managed schools with winter break extended" 
+		label define T		   0 "Comparison Group" 1 "Treatment Group"
+		label define E		   0 "Locally-managed" 1 "State-managed"
 		label val id_13_mun id_13_mun
 		label val G         G
+		label val T 		T
+		label val E			E
 	
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
@@ -450,108 +463,59 @@
 		label var DP2 "2008"
 		
 		foreach var of varlist beta1* {
-		label var `var' "State-managed schools"
+		label var `var' "State-managed"
 		}
 		foreach var of varlist beta2* {
-		label var `var' "Municipalities that did not extend the winter-break of their locally-managed schools"
+		label var `var' "G = 1"
 		}
-		foreach var of varlist beta3* {
-		label var `var' "Post-treatment year"
-		}	
 		foreach var of varlist beta4* {
-		label var `var' "State-managed schools interacted with G = 1"
+		label var `var' "State-managed versus G = 1"
 		}	
 		foreach var of varlist beta5* {
-		label var `var' "State-managed schools interacted with post-treatment year" 
+		label var `var' "State-managed versus post-treament" 
 		}	
 		foreach var of varlist beta6* {
-		label var `var' "Post-treatment interacted with G = 1" 
+		label var `var' "Post-treatment versus with G = 1" 
 		}	
 		foreach var of varlist beta7* {
 		label var `var' "Triple difference in differences"
 		}	
-		
+		label var beta3		"Post-treatment year (2009)"
+		label var beta3P1	"Post-treatment year (2007)"
+		label var beta3P2	"Post-treatment year (2008)"
 		
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
 	*Interactions
-	*-------------------------------------------------------------------------------------------------------------------------------*	
-		sort codschool year
-		
+	*-------------------------------------------------------------------------------------------------------------------------------*			
 		**
-		*Treatment status versus students per teacher, principal effort and teacher tenure
-		foreach variable in spt_ principal_effort_index teacher_tenure  { 				//students per teacher, principal_effort_index teacher_tenure 
-			if "`variable'" == "principal_effort_index"		local name = "principal_int"
-			if "`variable'" == "teacher_tenure" 			local name = "tenure_int"
-			if "`variable'" == "spt_"						local name = "spt_int"
-			
+		*Treatment status versus students per ttab eacher, principal effort and teacher tenure
+		foreach variable in spt principal_effort teacher_tenure { 				//students per teacher, principal_effort_index teacher_tenure 
 			foreach grade in 5 9 {
-				gen 	`name'`grade'    = 0					if 												 !missing(`variable'`grade')
-					
-				su 		`variable'`grade' 	  		  			if year == 2009, detail
-				replace `name'`grade' 	 = 1					if year == 2009  & `variable'`grade' >= r(p50) & !missing(`variable'`grade')	
-					
-				replace `name'`grade'    = `name'`grade'[_n+1] 	if codschool[_n] == codschool[_n+1] & year[_n] == 2007 & year[_n+1] == 2009
-				
-					
-				gen 	T2009_`name'`grade'   = T2009*`name'`grade'				//interaction with 1 or 0 
-				gen 	T2009_`name'A`grade'  = T2009*`variable'`grade'			//interaction with the value assumed by the variable
-				gen 	`name'A`grade'		  =`variable'`grade'
-				format  `name'A`grade' %12.2fc
+				gen 	T2009_`variable'`grade'   = T2009*`variable'`grade'	
 			}
 		}
 
 		**
 		*Treatment status versus teacher absenteeism
-		sort 	codschool year
-		gen  	absenteeism_int5   = 			  absenteeism_teachers == 2 & year == 2009			//teacher abseemteism is a big issue
-		gen  	absenteeism_int9   = 			  absenteeism_teachers == 2 & year == 2009	 
-		replace absenteeism_int5   = . if missing(absenteeism_teachers)		& year == 2009	
-		replace absenteeism_int9   = . if missing(absenteeism_teachers)		& year == 2009	 
-		
-		replace absenteeism_int5   = absenteeism_int5[_n+1] if codschool[_n] == codschool[_n+1] & year[_n] == 2007 & year[_n+1] == 2009
-		replace absenteeism_int9   = absenteeism_int9[_n+1] if codschool[_n] == codschool[_n+1] & year[_n] == 2007 & year[_n+1] == 2009
-		
-		gen 	T2009_absenteeism_int5 = T2009*absenteeism_int5
-		gen 	T2009_absenteeism_int9 = T2009*absenteeism_int9
-		
+		clonevar  absenteeism_issue5 = absenteeism_teachers3 
+		clonevar  absenteeism_issue9 = absenteeism_teachers3 
+		gen T2009_absenteeism_issue5 = T2009*absenteeism_issue5
+		gen T2009_absenteeism_issue9 = T2009*absenteeism_issue9
+
 		**
 		*Labels
-		label var T2009_spt_int5  		 "2009 interated with schools where students per teacher > median" 
-		label var T2009_spt_intA5 		 "2009 interated with students per teacher" 
-		label var spt_int5		  		 "School with students per teacher > median"
-		label var spt_intA5		  		 "Students per teacher"
+		label var T2009_spt5  			 	"ATT versus students per teacher" 
+		label var T2009_spt9  			 	"ATT versus students per teacher" 
+		label var T2009_principal_effort5   "ATT versus principal effort" 
+		label var T2009_principal_effort9  	"ATT versus principal effort" 
+		label var T2009_teacher_tenure5  	"ATT versus % teachers with tenure" 
+		label var T2009_teacher_tenure9  	"ATT versus % teachers with tenure"
+		label var T2009_absenteeism_issue5 	"ATT versus teacher absenteeism" 
+		label var T2009_absenteeism_issue9 	"ATT versus teacher absenteeism"  
 		
-		label var T2009_spt_int9  		 "2009 interated with schools where students per teacher > median" 
-		label var T2009_spt_intA9 		 "2009 interated with students per teacher" 
-		label var spt_int9		  		 "School with students per teacher > median"
-		label var spt_intA9		  		 "Students per teacher"	
+		format T2009_* %4.2fc
 		
-		label var T2009_principal_int5   "2009 interated with schools where principal effort > median" 
-		label var T2009_principal_intA5  "2009 interated with principal effort" 
-		label var principal_int5		 "School with principal effort > median"
-		label var principal_intA5	     "Principal Effort Index"
-		
-		label var T2009_principal_int9   "2009 interated with schools where principal effort > median" 
-		label var T2009_principal_intA9  "2009 interated with principal effort" 
-		label var principal_int9		 "School with principal effort > median"
-		label var principal_intA9		 "Principal Effort Index"
-				
-		label var T2009_tenure_int5   	 "2009 interated with schools where teacher's tenure  > median" 
-		label var T2009_tenure_intA5  	 "2009 interated with % teachers with tenure" 
-		label var tenure_int5		 	 "School with teacher's tenure > median"
-		label var tenure_intA5		 	 "% teachers with tenure"
-		
-		label var T2009_tenure_int9   	 "2009 interated with schools where teacher's tenure  > median" 
-		label var T2009_tenure_intA9  	 "2009 interated with % teachers with tenure" 
-		label var tenure_int9			 "School with teacher's tenure > median"
-		label var tenure_intA9		 	 "% teachers with tenure"
-				
-		label var absenteeism_int5		 "Schoos where abseenteism is a big issue" 
-		label var absenteeism_int9		 "Schoos where abseenteism is a big issue" 
-		label var T2009_absenteeism_int5 "2009 interacted with schools where abseenteism is a big issue" 
-		label var T2009_absenteeism_int9 "2009 interacted with schools where abseenteism is a big issue" 
-
 		
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**

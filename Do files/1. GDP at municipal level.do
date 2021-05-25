@@ -117,7 +117,7 @@
 			destring codmunic2, replace
 			order year codmunic codmunic2 pib_pcap pop porte treated
 			compress
-			keep if year == 2005 | year == 2007 | year == 2009
+			keep if year == 2005 | year == 2007 | year == 2009 | year == 2008
 			save   "$inter/GDP per capita.dta", replace
 
 

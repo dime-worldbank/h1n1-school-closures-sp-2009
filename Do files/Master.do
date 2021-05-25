@@ -135,7 +135,7 @@
 					
 						-> Number of hospitalizations due to H1N1
 					
-							The name of the file is 'A132420189_28_143_208.csv'
+							The name of the file is 'A161451189_28_143_208.csv'
 							
 							To download: http://www2.datasus.gov.br/DATASUS/index.php. 
 							Choose Informações de Saúde (TABNET) -> 
@@ -150,7 +150,8 @@
 								Choose 2009 
 							
 							On the screen: SELEÇÕES DISPONÍVEIS
-								Choose 'Município de notificação' and select all
+								Choose 'Município de residência' and select all
+								Choose 'Classif. Final' and select 'confirmado'
 							
 							On the screen: Click on 'MOSTRA' after all sections. Go to the end of the page and click: 'COPIA COMO .CSV"
 						

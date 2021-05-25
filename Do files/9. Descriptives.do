@@ -12,14 +12,14 @@
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		use 	"$inter/Enrollments.dta" if year == 2009 & (network == 2 | network == 3), clear
-		gen treated = 0
+		gen T = 0
 			foreach munic in $treated_municipalities {											//13 municipalities that opted to extend the winter break in their schools
-			replace treated = 1 if codmunic == `munic'
+			replace T = 1 if codmunic == `munic'
 		}
 	
 		egen 	mat    = rowtotal(enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal)	//total enrollment at school level	
 		gen 	escola = school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1	
-		gen 	affected = (treated == 1 | network == 2) & escola == 1							//affected network by winter break extention -> 
+		gen 	affected = (T ==1 | network == 2) & escola == 1							//affected network by winter break extention -> 
 																								//locally managed schools in the 13 municipalities that opted to extend the winter break
 																								// + state-state managed schools in all municipalities of the state of Sao Paulo. 
 																								
@@ -28,7 +28,37 @@
 		collapse (sum) mat enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal school_*, by(affected network) //total number of schools and enrollment by state and local networks, affected and non-affected by the shutdowns
 		drop 	mat school_EF
 		sort 	affected network 
-		drop    order
+		
+		set obs 6
+		
+		gen 	network2 = "Local" if network == 3
+		replace network2 = "State" if network == 2
+		
+		replace network2 = "Affected"   in 4
+		replace network2 = "Unaffected" in 5
+		
+		foreach var of varlist * {
+			tostring `var', replace
+		}
+		
+		replace enrollmentEI  		= "Pre-K" 				in 6
+		replace enrollmentEF1 		= "Elementary"  		in 6
+		replace enrollmentEF2 		= "Lower sec" 			in 6
+		replace enrollmentEMtotal 	= "High School"  		in 6
+		replace school_EI  			= "Pre-K"				in 6
+		replace school_EF1 			= "Elementary"  		in 6
+		replace school_EF2 			= "Lower sec"  			in 6
+		replace school_EM 			= "High School"  		in 6
+		
+		gen 	order = 1 in 6
+		replace order = 2 in 5
+		replace order = 3 in 1
+		replace order = 4 in 4
+		sort order 
+		
+		drop 	network affected order
+		order 	network*
+
 		export 	excel "$tables/Table1.xlsx", replace
 		
 		
@@ -99,7 +129,7 @@
 			replace `var' = `var' + " - local" in 2
 			}			
 			
-			set obs 4
+			set obs 5
 			replace A1  = "13 municipalities in which " 		in 3
 			replace A2  = "the local governments"  				in 3
 			replace A3  = "extended the winter break" 			in 3
@@ -114,15 +144,17 @@
 			replace A5  = "and local schools" 					in 4 
 			replace A6  = "Only with local schools" 			in 4 
 			replace A7  = "Only with state schools " 			in 4 	
-
+			replace A1  = "" 									in 5
+			
 			order name 
 			gen 	order = 1 in 3
 			replace order = 2 in 4
 			replace order = 3 in 1
-			replace order = 4 in 2
+			replace order = 4 in 5
+			replace order = 5 in 2
 			sort 	order
 			drop    order
-			export excel "$tables/TableA2.xlsx", replace
+			export excel "$tables/TableA1.xlsx", replace
 	
 	
 		*===========>
@@ -164,7 +196,7 @@
 			replace `var' = `var' + " - local" in 2
 			}			
 			
-			set obs 4
+			set obs 5
 			replace A1  = "13 municipalities in which " 		in 3
 			replace A2  = "the local governments"  				in 3
 			replace A3  = "extended the winter break" 			in 3
@@ -179,17 +211,18 @@
 			replace A5  = "and local schools" 					in 4 
 			replace A6  = "Only with local schools" 			in 4 
 			replace A7  = "Only with state schools " 			in 4 	
-
+			replace A1  = "" 									in 5
 			order name 
 			gen 	order = 1 in 3
 			replace order = 2 in 4
 			replace order = 3 in 1
-			replace order = 4 in 2
+			replace order = 5 in 2
+			replace order = 4 in 5			
 			sort 	order
-			
-			export excel "$tables/TableA3.xlsx", replace
+			drop order 
+			export excel "$tables/TableA2.xlsx", replace
 		
-		
+	
 		
 	*--------------------------------------------------------------------------------------------------------------------------------*
 	**
@@ -204,53 +237,52 @@
 
 		
 		*=============> Locally-managed schools in treated versus non-treated municipalities 
-		iebaltab  $balance_students5  $matching_schools enrollmentTotal pib_pcap if network == 3					, format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA3") 	    rowvarlabels replace 
+		iebaltab  $balance_students5  $matching_schools school_year enrollmentTotal pib_pcap if network == 3					, format(%12.2fc) grpvar(T) savetex("$tables/TableA3") 	rowvarlabels replace 
 
 		
 		*=============> Locally-managed schools versus state managed schools across all municipalities that did not extend the winter break of their local schools
-		iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap if G == 1 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(state_network) savetex("$tables/TableA4") 		rowvarlabels replace 
+		iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 1 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(E) savetex("$tables/TableA4") 	rowvarlabels replace 
 
 		
 		*=============> Locally-managed schools versus state managed schools across all municipalities that did extend the winter break of their local schools
-		iebaltab  $balance_students5 $matching_schools  enrollmentTotal pib_pcap if G == 0 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(state_network) savetex("$tables/TableA5") 		rowvarlabels replace 
+		iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 0 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(E) savetex("$tables/TableA5") 	rowvarlabels replace 
 
 		
 		*=============> State managed schools in G = 1 and G = 0
-		iebaltab  $balance_students5 $matching_schools enrollmentTotal pib_pcap if network == 2						, format(%12.2fc) grpvar(G)			    save("$tables/teste1.xls") 		rowvarlabels replace 
+		label drop G
+		label define G 0 "State-managed in G = 0" 1 "State-managed in G = 1"
+		label val    G G
+		iebaltab  $balance_students5 $matching_schools school_year enrollmentTotal pib_pcap if network == 2						, format(%12.2fc) grpvar(G)	savetex("$tables/TableA6") 	rowvarlabels replace 
 		
 		
 		*=============> Teachers and principals
 		use "$final/h1n1-school-closures-sp-2009.dta", clear
-		foreach var of varlist $balance_principals {
-			replace `var' = `var'*100
-			format  `var' %4.2fc
+		foreach v of varlist $balance_principals {
+			replace   `v' = `v'*100
+			format    `v' %4.2fc
+			local    l`v' : variable label `v'
+			label var `v' "`l`v'', %"
 		}
-		
-		*=============> Locally-managed schools in treated versus non-treated municipalities 
-		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3				    , 		format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA6")   	rowvarlabels replace 
-		
-		iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & network == 3					, 		format(%12.2fc) grpvar(treated) 		savetex("$tables/TableA7")   	rowvarlabels replace 
 
-		
+		*=============> Locally-managed schools in treated versus non-treated municipalities 
+		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3				    	, format(%12.2fc) grpvar(T) savetex("$tables/TableA7")   rowvarlabels replace 
+			
+	
 		*=============> Locally-managed schools versus state managed schools across all municipalities that did not extend the winter break of their local schools
-		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 1 & tipo_municipio_ef1 == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA8")      rowvarlabels replace 
-		
-		iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & G == 1 & tipo_municipio_ef1 == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA9")      rowvarlabels replace 
-		
+		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 1 & tipo_municipio_ef1 == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA8")   rowvarlabels replace 
+				
 		
 		*=============> Locally-managed schools versus state managed schools across all municipalities that did extend the winter break of their local schools
-		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 0 & tipo_municipio_ef1 == 1, 		format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA10")      rowvarlabels replace 
-		
-		iebaltab  $balance_teachers $balance_principals if year == 2007 & !missing(math5) & G == 0 & tipo_municipio_ef1 == 1,     	format(%12.2fc) grpvar(state_network) 	savetex("$tables/TableA11")      rowvarlabels replace 
-		
-		
-		
+		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 0 & tipo_municipio_ef1 == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA9")   rowvarlabels replace 
+				
+				
 		*=============> State managed schools in G = 1 and G = 0
-		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 2					, 		format(%12.2fc) grpvar(G) 	save("$tables/teste2")      rowvarlabels replace 
+		label drop G
+		label define G 0 "State-managed, G=0" 1 "State-managed, G=1"
+		label val    G G
+		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 2						, format(%12.2fc) grpvar(G) savetex("$tables/TableA10")  rowvarlabels replace 
 				
-				
-				
-				
+
 				
 	*--------------------------------------------------------------------------------------------------------------------------------*
 	**
@@ -263,8 +295,8 @@
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
 		use "$inter/time_trend_dif-in-dif_math5.dta", clear
-		gen 	contrafactual = math5 + 4 if treated == 1 & year == 2009
-		replace contrafactual = math5     if treated == 1 & year == 2007
+		gen 	contrafactual = math5 + 4 if T == 1 & year == 2009
+		replace contrafactual = math5     if T == 1 & year == 2007
 
 		foreach language in english {
 
@@ -284,11 +316,11 @@
 			}
 					
 			tw 	///
-			(line math5 year if treated == 1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 												///  
+			(line math5 year if T == 1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 													///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
-			(line math5 year if treated == 0, lwidth(0.5) color(gs12) lp(solid) connect(direct) recast(connected)  	 												 	///  
+			(line math5 year if T == 0, lwidth(0.5) color(gs12) lp(solid) connect(direct) recast(connected)  	 												 		///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(3)  mlabsize(2.5)) 										 													///
-			(line contrafactual year if treated == 1 & (year == 2007 | year == 2009), lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 	///  
+			(line contrafactual year if T == 1 & (year == 2007 | year == 2009), lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 		///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)																							///
 			ylabel(, labsize(small) gmax angle(horizontal) format(%4.0fc))											     												///
 			yscale( alt )  																																				///
@@ -303,7 +335,8 @@
 			legend(order(1 "`legend1'"  2 "`legend2'"  3 "Contrafactual") pos(12) cols(1) size(medlarge) region(lwidth(none) color(white) fcolor(none))) 				///
 			ysize(5) xsize(5) 																										 									///
 			note("`note'", span color(black) fcolor(background) pos(7) size(small)))  
-			graph export "$figures/time trend for Math_graph in `language'.pdf", as(pdf) replace
+			graph export "$figures/time-trend-math.pdf", as(pdf) replace
+			*graph export "$figures/time-trend-math_graph-`language'.pdf", as(pdf) replace
 		}
 		 
 		**
@@ -311,15 +344,15 @@
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
 		use "$inter/time_trend_dif-in-dif_port5.dta", clear
-		gen 	contrafactual = port5 + 1 if treated == 1 & year == 2009
-		replace contrafactual = port5 	  if treated == 1 & year == 2007
+		gen 	contrafactual = port5 + 1 if T ==1 & year == 2009
+		replace contrafactual = port5 	  if T ==1 & year == 2007
 
 			tw 	///
-			(line port5 year if treated == 1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 		 											///  
+			(line port5 year if T ==1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 		 													///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
-			(line port5 year if treated == 0, lwidth(0.5) color(gs12) lp(solid) connect(direct) recast(connected)  	 													///  
+			(line port5 year if T ==0, lwidth(0.5) color(gs12) lp(solid) connect(direct) recast(connected)  	 														///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(3)  mlabsize(2.5)) 										 													///
-			(line contrafactual year if treated == 1 & (year == 2007 | year == 2009), lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 	///  
+			(line contrafactual year if T ==1 & (year == 2007 | year == 2009), lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 		///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)																							///
 			ylabel(170(10)200, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
 			yscale( alt )  																																				///
@@ -334,7 +367,7 @@
 			legend(order(1 "Extended winter break"  2 "Other municipalities"  3 "Contrafactual") cols(1) pos(12) size(medlarge) region(lwidth(none) color(white) fcolor(none))) ///
 			ysize(5) xsize(5) 																																			///
 			note("Source: Prova Brasil.", span color(black) fcolor(background) pos(7) size(small)))  
-			graph export "$figures/time trend for Portuguese_graph in english.pdf", as(pdf) replace
+			graph export "$figures/time-trend_port.pdf", as(pdf) replace
 						
 		**
 		*Repetition =============>
@@ -343,15 +376,15 @@
 		use "$inter/time_trend_dif-in-dif_repetition5.dta", clear
 
 			tw 	///
-			(line repetition5 year if treated == 1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 		 											///  
+			(line repetition5 year if T ==1, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 		 											///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
-			(line repetition5 year if treated == 0, lwidth(0.5) color(gs12) lp(solid) connect(direct) recast(connected)  	 													///  
+			(line repetition5 year if T ==0, lwidth(0.5) color(gs12) lp(solid) connect(direct) recast(connected)  	 													///  
 		    ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(3)  mlabsize(2.5)										 													///
-			ylabel(, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
+			ylabel(, labsize(small) gmax angle(horizontal) format(%4.0fc))											     												///
 			yscale( alt )  																																				///
 			xscale(r(2007(1)2009)) 																																		///
-			yscale(r()) 																																		///
-			ytitle("%", size(small)) 																					 							///
+			yscale(r()) 																																				///
+			ytitle("%", size(small)) 																					 												///
 			xlabel(2007(1)2009, labsize(medsmall) gmax angle(horizontal) format(%4.0fc))											     								///
 			title("", pos(12) size(medium) color(black))																												///
 			xtitle("")  																																				///
@@ -385,11 +418,6 @@
 		*Parameters for triple dif
 		gen D = (year == 2007)
 		gen E = network == 2
-		gen G = 1
-
-		foreach munic in $treated_municipalities {
-			replace G       = 0 if codmunic == `munic'
-		}
 
 		gen beta1  = E
 		gen beta2  = D
@@ -398,6 +426,13 @@
 		gen beta5  = E*G
 		gen beta6  = G*D
 		gen beta7  = E*G*D 
+		label var beta1 "State-managed"
+		label var beta2 "Post-treament year (2007)" 
+		label var beta3 "State-managed versus post-treament" 
+		label var beta4 "G = 1"
+		label var beta5 "State-managed versus G = 1"
+		label var beta6 "Post-treatment versus with G = 1" 
+		label var beta7 "Triple difference in differences"
 		
 		/*
 		1st -> we run a dif-in-dif comparing local and state-managed schools in G = 1 (that is, municipalities that did not extend the winter break of their
@@ -412,8 +447,8 @@
 		
 		**
 		*Regressions
-		eststo: reg math5 beta1 beta2 beta3		 if tipo_municipio_ef1 == 1	& G == 1	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
-		eststo: reg math5 beta1-beta7			 if tipo_municipio_ef1 == 1				//triple dif-in-dif
+		eststo: reg math5 beta1 beta2 beta3	 	 if tipo_municipio_ef1 == 1	& G == 1	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		eststo: reg math5 beta1-beta7		 	 if tipo_municipio_ef1 == 1				//triple dif-in-dif
 	 
 		eststo: reg port5 beta1 beta2 beta3		 if tipo_municipio_ef1 == 1 & G == 1
 		eststo: reg port5 beta1-beta7			 if tipo_municipio_ef1 == 1
@@ -424,7 +459,7 @@
 		eststo: reg port9 beta1 beta2 beta3		 if tipo_municipio_ef2 == 1 & G == 1
 		eststo: reg port9 beta1-beta7		 	 if tipo_municipio_ef2 == 1
 		
-		estout * using "$tables/TableA12.csv", delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a) replace
+		estout * using "$tables/TableA11.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a, fmt(%9.0g %9.3f)) replace
 		
 		
 		
@@ -436,41 +471,28 @@
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		estimates clear
 		use"$final/h1n1-school-closures-sp-2009.dta" if year == 2007 | year == 2008, clear
-	
-		drop beta* D
-		gen  D = (year == 2008)		//for approval, repetition and dropout we have data starting in 2007. 
-									//we will check if treatment and comparison groups had parallel trends before 2009
-	
-		**Triple dif parameters
-		gen beta1  = E
-		gen beta2  = D
-		gen beta3  = D*E
-		gen beta4  = G
-		gen beta5  = E*G
-		gen beta6  = G*D
-		gen beta7  = E*G*D 
-			
+				
 		**
 		*Regressions
-		eststo: reg approval5 	beta1 beta2 beta3	i.codmunic  if tipo_municipio_ef1 == 1 & G == 1 //dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
-		eststo: reg approval5 	beta1-beta7			i.codmunic  if tipo_municipio_ef1 == 1			//triple dif-in-dif
+		eststo: reg approval5 	beta1P2 beta3P2 beta5P2 i.codmunic  if tipo_municipio_ef1 == 1 & G == 1 //dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		eststo: reg approval5 	beta1P2-beta7P2			i.codmunic  if tipo_municipio_ef1 == 1			//triple dif-in-dif
 		 
-		eststo: reg repetition5 beta1 beta2 beta3	i.codmunic if tipo_municipio_ef1 == 1 & G == 1
-		eststo: reg repetition5 beta1-beta7			i.codmunic if tipo_municipio_ef1 == 1
+		eststo: reg repetition5 beta1P2 beta3P2 beta5P2 i.codmunic if tipo_municipio_ef1 == 1 & G == 1
+		eststo: reg repetition5 beta1P2-beta7P2			i.codmunic if tipo_municipio_ef1 == 1
 			
-		eststo: reg dropout5 	beta1 beta2 beta3	i.codmunic if tipo_municipio_ef1 == 1 & G == 1
-		eststo: reg dropout5 	beta1-beta7			i.codmunic if tipo_municipio_ef1 == 1
+		eststo: reg dropout5 	beta1P2 beta3P2 beta5P2 i.codmunic if tipo_municipio_ef1 == 1 & G == 1
+		eststo: reg dropout5 	beta1P2-beta7P2 		i.codmunic if tipo_municipio_ef1 == 1
 					
-		eststo: reg approval9 	beta1 beta2 beta3	i.codmunic if tipo_municipio_ef2 == 1 & G == 1
-		eststo: reg approval9 	beta1-beta7			i.codmunic if tipo_municipio_ef2 == 1
+		eststo: reg approval9 	beta1P2 beta3P2 beta5P2 i.codmunic if tipo_municipio_ef2 == 1 & G == 1
+		eststo: reg approval9 	beta1P2-beta7P2			i.codmunic if tipo_municipio_ef2 == 1
 
-		eststo: reg repetition9 beta1 beta2 beta3	i.codmunic if tipo_municipio_ef2 == 1 & G == 1
-		eststo: reg repetition9 beta1-beta7			i.codmunic if tipo_municipio_ef2 == 1
+		eststo: reg repetition9 beta1P2 beta3P2 beta5P2 i.codmunic if tipo_municipio_ef2 == 1 & G == 1
+		eststo: reg repetition9 beta1P2-beta7P2			i.codmunic if tipo_municipio_ef2 == 1
 		
-		eetsto: reg dropout9 	beta1 beta2 beta3	i.codmunic if tipo_municipio_ef2 == 1 & G == 1
-		eststo: reg dropout9 	beta1-beta7		 	i.codmunic if tipo_municipio_ef2 == 1
+		eststo: reg dropout9 	beta1P2 beta3P2 beta5P2 i.codmunic if tipo_municipio_ef2 == 1 & G == 1
+		eststo: reg dropout9 	beta1P2-beta7P2	 		i.codmunic if tipo_municipio_ef2 == 1
 			
-		estout * using "$tables/TableA13.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a) replace
+		estout * using "$tables/TableA12.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a, fmt(%9.0g %9.3f)) replace
 		
 		
 	*--------------------------------------------------------------------------------------------------------------------------------*
@@ -552,9 +574,9 @@
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		use "$inter/IDEB by municipality.dta" if network == 3, clear
-		gen treated = 0
+		gen T = 0
 		foreach munic in $treated_municipalities {
-			replace treated = 1 if codmunic == `munic'
+			replace T = 1 if codmunic == `munic'
 		}
 
 		keep if treated
@@ -595,26 +617,26 @@
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		use "$raw/Geocodes/mun_brasil.dta" if coduf == 35, clear
-		gen treated = 0
+		gen T = 0
 		foreach munic in $treated_municipalities {
-			replace treated = 1 if codmunic == `munic'
+			replace T = 1 if codmunic == `munic'
 		}
 		rename id _ID
-		gen 	grupo = 1 if treated == 1
-		replace grupo = 2 if treated == 0
+		gen 	grupo = 1 if T ==1
+		replace grupo = 2 if T ==0
 
 		spmap  grupo using "$raw/Geocodes/mun_coord.dta", id(_ID) 																///
 		clmethod(custom) clbreaks(-1 1 2)																						///
 		fcolor(cranberry*0.8 gs12 ) 																							///
 		legorder(lohi) 																											///
-		legend(order(2 "Extended winter break" 3 "Other municipalities") size(vlarge)) saving (distance_`distance', replace)
-		graph export "$figures/treament-comparison.pdf", as(pdf) replace
+		legend(order(2 "Extended winter break" 3 "Other municipalities") size(vlarge)) 
+		graph export "$figures/treatment-comparison.pdf", as(pdf) replace
 		
 		spmap  grupo using "$raw/Geocodes/mun_coord.dta", id(_ID) 																///
 		clmethod(custom) clbreaks(-1 1 2)																						///
 		fcolor(cranberry*0.8 gs12 ) 																							///
 		legorder(lohi) 																											///
-		legend(order(2 "Adiamento das aulas" 3 "Outros municípios") size(medium)) saving (distance_`distance', replace)
+		legend(order(2 "Adiamento das aulas" 3 "Outros municípios") size(medium))
 		
 		
 	*--------------------------------------------------------------------------------------------------------------------------------*
@@ -623,11 +645,11 @@
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		use 	"$inter/Enrollments.dta" if year == 2009 & (network == 3 | network == 2), clear
-		gen treated = 0
+		gen T = 0
 		foreach munic in $treated_municipalities {
-			replace treated = 1 if codmunic == `munic'
+			replace T = 1 if codmunic == `munic'
 		}
-			replace treated = 1 if network == 2
+			replace T = 1 if network == 2
 		
 		collapse 	(sum)enrollmentEF, by (codschool treated)
 		gen 		var1 = 1 if enrollmentEF > 0 & !missing(enrollmentEF)  //1 if the school offers EF
@@ -725,10 +747,10 @@
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		use "$inter/FNDE Indicators.dta" if year == 2008 & network == 3, clear		
-		gen treated = .
+		gen T = .
 		
 		foreach munic in $treated_municipalities2 {
-			replace treated = 1 if codmunic2 == `munic' 
+			replace T = 1 if codmunic2 == `munic' 
 			su ind_49 if codmunic2 == `munic'
 			local pos`munic' = r(mean)
 		}
@@ -768,10 +790,9 @@
 	*Hospitalizations due to H1N1
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
-		use "$inter/H1N1.dta", clear
+		use week_16-week_31 hosp_h1n1 treated codmunic2 using "$inter/H1N1.dta", clear
 
 		foreach munic in $treated_municipalities2 {
-			replace treated = 1 if codmunic2 == `munic' 
 			su hosp_h1n1  if codmunic2 == `munic'
 			local pos`munic' = r(mean)
 		}
@@ -797,17 +818,39 @@
 		text(11 `pos353440' "{bf:Osasco}"    			 , size(vsmall) color(cranberry*0.8)) ///
 		text(10 `pos354870' "{bf:São Bernardo do Campo}" , size(vsmall) color(cranberry*0.8)) ///
 		text(9  `pos354780' "{bf:Santo André}" 		 	 , size(vsmall) color(cranberry*0.8)) ///
-		text(15 `pos354880' "{bf:São Caetano do Sul}" 	 , size(vsmall) color(cranberry*0.8)) ///
+		text(13 `pos354880' "{bf:São Caetano do Sul}" 	 , size(vsmall) color(cranberry*0.8)) ///
 		text(18 `pos355240' "{bf:Sumaré}" 				 , size(vsmall) color(cranberry*0.8)) ///
 		text(16 `pos354340' "{bf:Ribeirão Preto}" 		 , size(vsmall) color(cranberry*0.8)) ///
-		text(15 `pos355280' "{bf:Taboão da Serra}" 		 , size(vsmall) color(cranberry*0.8)) ///
+		text(14 `pos355280' "{bf:Taboão da Serra}" 		 , size(vsmall) color(cranberry*0.8)) ///
 		text(17 `pos351500' "{bf:Embu das Artes}" 		 , size(vsmall) color(cranberry*0.8)) ///
 		text(25  0.55		"{bf: Average number of hospitalizations}" 			 , size(medsmall) color(cranberry*1.2)) 			///
 		legend(order(1 "poi"))																										///
 		ysize(5) xsize(7) 																											///
 		xline(`mean', lcolor(cranberry) lpattern(dash)) ///
 		note("Source: DATASUS, 2009.", span color(black) fcolor(background) pos(7) size(small)) 
+		*graph export "$figures/hospitalizations-h1n1.pdf", as(pdf) replace	
+	
+	    drop hosp_h1n1
+	    reshape long week_, i(codmunic2 treated) j(week)
+		replace week_ = 0 if week_ == .
+		drop if week_ == 0 
+
+		twoway (histogram week_  if treated == 1,  bin(10) fcolor(emidblue) lcolor(black)      percent) 								///
+			   (histogram week_  if treated == 0,  bin(40) fcolor(none)     lcolor(cranberry)  percent    								///
+		title("", pos(12) size(medium) color(black))																					///
+		subtitle("" , pos(12) size(medsmall) color(black))  																			///
+		ylabel(, labsize(small)) xlabel(, format (%12.3fc) labsize(small) gmax angle(horizontal)) 										///
+		yscale(alt) 																													///
+		xtitle("Hospitalization per 1.000 inhabitants", size(medsmall) color(black))  													///
+		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 								///
+		plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 								///
+		ysize(5) xsize(7) 																												///
+		fcolor(none) lcolor(black)), legend(order(1 "Extended winter break" 2 "Other municipalities") region(lwidth(none) color(white) fcolor(none)) cols(4) size(large) position(6)) ///
+		note("Source: DATASUS.", span color(black) fcolor(background) pos(7) size(small)) 
 		graph export "$figures/hospitalizations-h1n1.pdf", as(pdf) replace	
+	
+
+		
 	
 	
 	*--------------------------------------------------------------------------------------------------------------------------------*

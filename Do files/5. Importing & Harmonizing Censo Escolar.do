@@ -241,7 +241,6 @@
 				save "$inter/School Infrastructure.dta", replace
 
 
-
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**Harmonizing Classrooms Data
@@ -278,7 +277,8 @@
 		egen enrollment5grade = rowtotal(DE9F11G NE9F11G DEF11F  NEF11F )			//o 5o ano aqui eh equivalente a 4a serie 
 		gen  tclass5grade 	  = enrollment5grade/turmas5				//alunos por turma
 		destring, replace
-		keep year network coduf codmunic codschool tclass5grade
+		formatting	
+		keep year network coduf uf codmunic codmunic2 codschool tclass5grade 
 		save "$inter/Turmas2005.dta", replace
 
 		
@@ -343,9 +343,9 @@
 		**
 		**-> Appending
 		*----------------------------------------------------------------------------------------------------------------------------*
-		foreach year in 2005 2007 2008 2009 {		
+		foreach year in 2007 2008 2009 {		
 				append using "$inter/Turmas`year'.dta"
-				erase  		 "$inter/Turmas`year'.dta"
+				*erase  		 "$inter/Turmas`year'.dta"
 		}
 		compress
 		formatting	
@@ -363,7 +363,6 @@
 		*Data by school
 		*----------------------------------------------------------------------------------------------------------------------------*
 			preserve
-				drop if year == 2005
 				collapse (mean) classhour* [aw = enrollments], by (year network coduf uf codmunic codmunic2 codschool)			//matrícula por turma foi utilizada como ponderador, de modo que turmas com mais alunos pesam mais na média da escola
 				order year coduf uf codmunic codmunic2 codschool network
 				format classhour* %4.2fc
@@ -372,11 +371,13 @@
 			restore
 			
 			preserve
-				collapse (mean) tclass*	   [aw = enrollments], by (year network coduf uf codmunic codmunic2 codschool)			//tamanho médio das turmas
+				collapse (mean) tclass*	   					 , by (year network coduf uf codmunic codmunic2 codschool)			//tamanho médio das turmas
 				order year coduf uf codmunic codmunic2 codschool network
 				format tclass* %4.2fc
 				sort codschool year
-				save "$inter/Class-Size.dta", replace
+				append using "$inter/Turmas2005.dta"
+				save 		 "$inter/Class-Size.dta", replace
+				erase 		 "$inter/Turmas2005.dta"
 			restore
 			
 			
@@ -641,9 +642,9 @@
 				merge 1:1 codschool year using "$inter/Enrollments.dta", keep (3) nogen
 				
 				foreach name in EF 5grade 9grade {
-					gen 	spt_`name' = enrollment`name'/Teacher`name' 					//students per teacher
-					su 		spt_`name', detail
-					replace spt_`name' = . if spt_`name' <= r(p1) | spt_`name' >= r(p99)
+					gen 	spt`name' = enrollment`name'/Teacher`name' 					//students per teacher
+					su 		spt`name', detail
+					*replace spt`name' = . if spt_`name' <= r(p1) | spt_`name' >= r(p99)
 				}
 				format spt* %4.2fc
 				keep year uf codschool spt* network
