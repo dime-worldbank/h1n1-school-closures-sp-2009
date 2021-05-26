@@ -64,7 +64,7 @@
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
 		use 	   	$matching_schools year codschool coduf uf codmunic codmunic2 operation network cfim_letivo cinicio_letivo  location ///
-		mes_fim_letivo dia_fim_letivo CICLOS using "$inter/School Infrastructure.dta"  if (network == 3 | network == 2), clear
+		mes_fim_letivo dia_fim_letivo CICLOS using "$inter/School Infrastructure.dta"  if (network == 3 | network == 2) & codschool!= ., clear
 		tempfile    school_infra
 		save       `school_infra'
 	
@@ -87,7 +87,7 @@
 	*Class hours																								
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
-		use 		classhour5grade classhour9grade  year codschool network using "$inter/Class-Hours.dta" 			if network == 2 | network == 3, clear
+		use 		classhour5grade classhour9grade  year codschool network using "$inter/Class-Hours.dta" 			if (network == 2 | network == 3) & codschool !=., clear
 		tempfile    class_hours
 		save       `class_hours'	
 	
@@ -96,7 +96,7 @@
 	*Students per class																							
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
-		use 	    tclass5grade tclass9grade 		 year codschool network using "$inter/Class-Size.dta" 			if network == 2 | network == 3, clear
+		use 	    tclass5grade tclass9grade 		 year codschool network using "$inter/Class-Size.dta" 			if (network == 2 | network == 3) & codschool !=., clear
 		tempfile    class_size
 		save       `class_size'	
 	
@@ -105,7 +105,7 @@
 	*Students per teacher																					
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
-		use 	    spt5grade spt9grade 	  		 year codschool network	using "$inter/Students per teacher.dta" if network == 2 | network == 3, clear
+		use 	    spt5grade spt9grade 	  		 year codschool network	using "$inter/Students per teacher.dta" if (network == 2 | network == 3) & codschool !=., clear
 		tempfile    students_teacher
 		save       `students_teacher'	
 		
@@ -114,7 +114,7 @@
 	*IDEB																						
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
-		use 		"$inter/IDEB by school.dta" if (year == 2005 | year == 2007 | year == 2009) & (network == 2 | network == 3), clear
+		use 		"$inter/IDEB by school.dta" if (year == 2005 | year == 2007 | year == 2009) & (network == 2 | network == 3) & codschool !=., clear
 		rename 		(spEF1 spEF2) (sp5 sp9)
 		drop 		flowindexEF* target* approval*
 		tempfile    ideb
@@ -135,7 +135,7 @@
 	*Teachers																				
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
-		use  "$inter/Teachers - Prova Brasil.dta" 	if (network == 2 | network == 3) & (year == 2007 | year == 2009), replace
+		use  "$inter/Teachers - Prova Brasil.dta" 	if (network == 2 | network == 3) & (year == 2007 | year == 2009) & codschool !=. & grade != ., replace
 		foreach v of var * {
 		local l`v' : variable label `v'
 			if `"`l`v''"' == "" {
@@ -179,7 +179,7 @@
 	*Principals																				
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
-		use  "$inter/Principals - Prova Brasil.dta" if (network == 2 | network == 3) & (year == 2007 | year == 2009), clear
+		use  "$inter/Principals - Prova Brasil.dta" if (network == 2 | network == 3) & (year == 2007 | year == 2009) & codschool !=. , clear
 		keep codschool year $principals
 		tempfile principals
 		save	`principals'
@@ -315,11 +315,11 @@
 		label define id_13_mun 0 "Locally-managed schools without winter break extended" 1 "Locally-managed schools with winter break extended" 
 		label define G		   1 "Locally-managed schools without winter break extended" 0 "Locally-managed schools with winter break extended" 
 		label define T		   0 "Comparison Group" 1 "Treatment Group"
-		label define E		   0 "Locally-managed" 1 "State-managed"
+		label define E		   0 "Locally-managed"  1 "State-managed"
 		label val id_13_mun id_13_mun
-		label val G         G
-		label val T 		T
-		label val E			E
+		label val G G
+		label val T T
+		label val E	E
 	
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**

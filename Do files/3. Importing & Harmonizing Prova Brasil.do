@@ -126,7 +126,7 @@
 			merge 1:1 ID_ALUNO using `geral_2007', nogen 
 			destring ID_* CO* NU* PK*, replace
 			*================================>
-			keep if SIGLA_UF == "SP"
+			*keep if SIGLA_UF == "SP"
 			*================================>
 			compress
 			save "$inter/Prova Brasil Questionnaire_2007.dta", replace
@@ -165,7 +165,7 @@
 			merge 1:1 id_aluno using `geral_2009', nogen 
 			destring id_* co* nu* pk*, replace
 			*================================>
-			keep if sigla_uf == "SP"
+			*keep if sigla_uf == "SP"
 			*================================>
 			compress
 		save "$inter/Prova Brasil Questionnaire_2009.dta", replace
@@ -327,7 +327,7 @@
 				str Q131 211-211
 			using "$raw/Prova Brasil/2007/DADOS/TS_QUEST_PROFESSOR.txt";
 			*================================>
-			keep if SIGLA_UF == "SP";
+			*keep if SIGLA_UF == "SP";
 			*================================>
 			compress;
 			save  "$inter/Teachers_2007.dta", replace;
@@ -345,7 +345,7 @@
 			}
 			drop tx_resp_questionario
 			*================================>
-			keep if sigla_uf == "SP"
+			*keep if sigla_uf == "SP"
 			*================================>
 			compress
 			save  "$inter/Teachers_2009.dta", replace
@@ -534,7 +534,7 @@
 				str Q161 232-232
 			using "$raw/Prova Brasil/2007/DADOS/TS_QUEST_DIRETOR.txt";
 			*================================>
-			keep if SIGLA_UF == "SP";
+			*keep if SIGLA_UF == "SP";
 			*================================>
 			compress;
 			save  "$inter/Principals_2007.dta", replace;
@@ -553,7 +553,7 @@
 			}
 			drop tx_resp_questionario
 			*================================>
-			keep if sigla_uf == "SP"
+			*keep if sigla_uf == "SP"
 			*================================>
 			compress
 			save  "$inter/Principals_2009.dta", replace

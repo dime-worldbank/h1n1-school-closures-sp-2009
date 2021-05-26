@@ -106,7 +106,7 @@
 		gen 	coduf 	 = substr(codmunic,1,2)
 		
 		*=====================>
-		keep if coduf == "35"   			//Sao Paulo
+		*keep if coduf == "35"   			//Sao Paulo
 		*=====================>
 		
 		drop MASCARA CODMUNIC DE9F11G-NE9F117
@@ -183,7 +183,7 @@
 			}
 			
 			*=====================>
-			keep if coduf == 35  				//Sao Paulo
+			*keep if coduf == 35  				//Sao Paulo
 			*=====================>
 
 				gen 	Computer 		    = (NumberComputer >  0 & !missing(NumberComputer))
@@ -257,7 +257,7 @@
 		gen 	coduf 	 = substr(codmunic,1,2)
 		
 		*=====================>
-		keep if coduf == "35"   			//Sao Paulo
+		*keep if coduf == "35"   			//Sao Paulo
 		*=====================>
 		
 		keep    ANO DEP LOC DE9F11G-NE9F117 codmunic codschool coduf
@@ -297,7 +297,7 @@
 			destring, replace 
 			
 			*=====================>
-			keep if coduf == 35   			//Sao Paulo
+			*keep if coduf == 35   			//Sao Paulo
 			*=====================>
 
 			gen 	tclassEI        = 1 if  FK_COD_ETAPA_ENSINO == 1   | FK_COD_ETAPA_ENSINO  == 2   | FK_COD_ETAPA_ENSINO == 3
@@ -397,7 +397,7 @@
 		gen 	coduf 	 = substr(codmunic,1,2)
 		
 		*=====================>
-		keep if coduf == "35"   			//Sao Paulo
+		*keep if coduf == "35"   			//Sao Paulo
 		*=====================>
 		
 		keep    ANO DEP LOC DE9F11G-NE9F117 codmunic codschool coduf
@@ -428,7 +428,7 @@
 		**
 		forvalues year = 2007/2009 {
 		
-			foreach region in SP {
+			foreach region in RO AC AM RR PA AP TO MA PI CE RN PB PE AL SE BA MG ES RJ SP PR SC RS MS MT GO DF {
 			
 			use "$inter/Matrículas`year'`region'.dta", clear
 			
@@ -503,7 +503,7 @@
 		**
 		clear 
 		foreach year in 2007 2008 2009 {		
-			foreach region in SP {
+			foreach region in RO AC AM RR PA AP TO MA PI CE RN PB PE AL SE BA MG ES RJ SP PR SC RS MS MT GO DF {
 				append using "$inter/Matrículas`year'`region'.dta"
 				erase   	 "$inter/Matrículas`year'`region'.dta"
 			}
@@ -531,6 +531,7 @@
 		label val `var' yesno
 		}
 		compress
+		replace location = 2 if location == 0 & year == 2005
 		save 		"$inter/Enrollments", replace
 		erase 		"$inter/CensoEscolar2005.dta"
 		erase		"$inter/Máscara2005.dta"
@@ -543,7 +544,7 @@
 	*________________________________________________________________________________________________________________________________* 
 		foreach year in 2007 2008 2009 {
 			
-			foreach region in SP {
+			foreach region in RO AC AM RR PA AP TO MA PI CE RN PB PE AL SE BA MG ES RJ SP PR SC RS MS MT GO DF {
 			
 			use "$inter/Professores`year'`region'.dta", clear
 
@@ -625,7 +626,7 @@
 		*----------------------------------------------------------------------------------------------------------------------------*
 			clear
 			foreach year in 2007 2008 2009 { 
-				foreach region in SP {
+				foreach region in RO AC AM RR PA AP TO MA PI CE RN PB PE AL SE BA MG ES RJ SP PR SC RS MS MT GO DF {
 					append using "$inter/Professores por escola_`year'`region'.dta",
 					erase 		 "$inter/Professores por escola_`year'`region'.dta"
 				}

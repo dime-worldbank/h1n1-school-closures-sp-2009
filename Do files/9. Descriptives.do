@@ -523,12 +523,7 @@
 		sort 	codmunic year
 		merge	m:1 codmunic year using `tipo', nogen keep(3)
 		
-		keep if tipo_municipio_ef1 == 1
-
-		gen G = 1
-		foreach munic in $treated_municipalities {
-			replace G = 0 if codmunic == `munic'
-		}	
+		keep if tipo_municipio_ef1 == 1	
 
 		collapse (mean)math5 port5 [aw = enrollment5grade], by(year G network)
 			tw 	///

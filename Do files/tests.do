@@ -1,5 +1,138 @@
 
 
+
+
+use  "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP" & G == 1 & tipo_municipio_ef1 == 1 & (year == 2007 | year == 2009), clear
+gen 	has_value = 1 if math5 !=.
+bys 	codschool: egen sum_value = sum(has_value)
+keep if sum_value == 2
+
+tsset    codschool year
+levelsof codschool if network == 2, local(levels) 
+
+	
+foreach school of local levels {
+	preserve
+	keep if codschool == `school' | T == 0 
+	synth math5 preschool5(2007), trunit(`school') trperiod(2009) keep("`school'")  replace
+	restore
+}
+
+
+
+	  synth math5 incentive_study5(2007)  covered_curricula45(2007) absenteeism_issue55(2007) incentive_homework5(2007)  incentive_read5(2007)  incentive_school(2007)  ///
+	  incentive_talk5(2007)  parents_sch_meetings5(2007)  male5(2007)  white5(2007)  private_school5(2007)  live_mother5(2007)  computer5(2007)  ///
+	  mother_edu_highschool5(2007)  preschool5(2007)  ever_repeated5(2007)  ever_dropped5(2007)  work5(2007)  tv5(2007)  dvd5(2007)  fridge5(2007)  car5(2007)  ///
+	  bath5(2007)  maid5(2007) , trunit(`school') trperiod(2009)  keep ("`school'") replace
+
+clear
+foreach school of local levels {
+append using "`school'", clear
+
+}
+keep if _Y_treated !=. 
+
+
+/*
+use  "$inter/Students per teacher.dta", clear
+
+merge 1:1 codschool year using "$inter/Enrollments.dta", nogen
+
+keep if network == 2
+
+collapse (mean)spt5grade [aw = enrollment5grade], by(coduf year)
+
+tempfile a1
+save `a1' 
+
+
+use  "$inter/Class-Hours.dta", clear
+merge 1:1 codschool year using "$inter/Enrollments.dta", nogen
+
+keep if network == 2
+
+collapse (mean)classhour5grade [aw = enrollment5grade], by(coduf year)
+
+tempfile a2
+save `a2' 
+
+use "$inter/School Infrastructure.dta" if network == 2, clear
+collapse (mean)$matching_schools, by(coduf year)
+
+tempfile a3
+save `a3' 
+
+
+use "$inter/Teachers - Prova Brasil.dta" if grade == 5 & network == 2, clear
+
+collapse (mean)  teacher_tenure teacher_less_40years ///
+				 principal_effort student_effort_index violence_index   					 				///
+				almost_all_finish_highschool covered_curricula4	participation_decisions4											///
+				 share_students_books5 quality_books4, by(coduf year)
+tempfile a4
+save `a4' 
+				 
+				 
+				 
+use "$inter/Principals - Prova Brasil.dta" if network == 2, clear
+
+collapse (mean) org_training lack_books principal_selection_work4 absenteeism_teachers3 											///
+								  absenteeism_students3, by (coduf year)
+
+
+tempfile a5
+save `a5' 
+
+
+
+
+use "$inter/IDEB by state.dta" if network == 2, clear
+
+merge 1:1 uf year using "students.dta", nogen
+
+merge 1:1 coduf year using `a1', nogen
+merge 1:1 coduf year using `a2', nogen
+merge 1:1 coduf year using `a3', nogen
+merge 1:1 coduf year using `a4', nogen
+merge 1:1 coduf year using `a5', nogen
+
+		
+gen 	treated_state = 1 if uf == "SP" | uf == "PR" | uf == "RJ" | uf == "RS" | uf == "MG" 
+		replace treated_state = 0 if treated_state == .
+
+
+drop if year == 2008
+keep if (treated_state == 1 & uf == "SP") | treated_state == 0
+
+tsset coduf year
+
+
+keep if year < 2011
+
+  synth math5 spt5grade(2007) classhour5grade(2007) ComputerLab(2007) ScienceLab(2007) SportCourt(2007) Library(2007) ///
+  InternetAccess(2007) ///
+  approvalEF1(2005 2007) incentive_study(2007)  incentive_homework(2007)  incentive_read(2007)  incentive_school(2007)  ///
+  incentive_talk(2007)  parents_sch_meetings(2007)  male(2007)  white(2007)  private_school(2007)  live_mother(2007)  computer(2007)  ///
+  mother_edu_highschool(2007)  preschool(2007)  ever_repeated(2007)  ever_dropped(2007)  work(2007)  tv(2007)  dvd(2007)  fridge(2007)  car(2007)  ///
+  bath(2007)  maid(2007)  mother_literate(2007)  mother_reads(2007) , trunit(35) trperiod(2009)  keep ("sp") replace
+
+
+		
+		* Plot the baseline estimation
+		use  "sp", clear
+		twoway (line _Y_treated _time, lcolor(black)) (line _Y_synthetic _time, lpattern(dash) lcolor(black)), ///
+			ytitle("index - number of completed transactions") xtitle("Time") 
+			
+			
+/*
+			xline(`=tq(2018q2)', lpattern(shortdash) lcolor(black)) ///
+			xla(`=tq(2014q2)'(2)`=tq(2019q4)', format(%tq) angle(45))
+			
+
+
+
+/*
+
 	
 	use 	"$inter/IDEB by municipality.dta" if (network == 3 | network == 2) & G == 1  , clear
 		

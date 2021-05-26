@@ -293,8 +293,11 @@
 						YOU CAN ALSO WRITE TO US AND WE CAN SHARE THE VERSION WE DOWNLOAD FROM THE WEBSITE. 
 						
 							To download: https://www.gov.br/inep/pt-br
-							Choose: Áreas de atuação -> Pesquisas Estatícias e Indicadores Educacionais -> IDEB -> Resultados 	
+							Choose: Áreas de atuação -> Pesquisas Estatísticas e Indicadores Educacionais -> IDEB -> Resultados 	
 								Then you have two options 'Municípios' and 'Escolas'
+								
+							Download: Regiões e estados
+									  Ensino Fundamental Regular e Médio. File 'divulgacao_regioes_ufs_ideb_2019'
 							
 							Download: Municípios
 									  Ensino Fundamental Regular - Anos Iniciais. File 'divulgacao_anos_iniciais_municipios_2019'
@@ -473,8 +476,8 @@
 		do "$dofiles/1. GDP at municipal level.do"
 		do "$dofiles/2. H1N1.do"
 		do "$dofiles/3. Importing & Harmonizing Prova Brasil.do"
-		do "$dofiles/4. Importing & Harmonizing Flow Indicators.do"
 		do "$dofiles/5. Importing & Harmonizing Censo Escolar.do"	 
+		do "$dofiles/4. Importing & Harmonizing Flow Indicators.do"
 		do "$dofiles/6. Importing & Harmonizing IDEB.do"
 		do "$dofiles/7. Setting up dataset.do"
 		do "$dofiles/8. Descriptives.do"
