@@ -30,10 +30,9 @@
 		merge   1:1 codmunic2 year using "$inter/GDP per capita.dta", nogen keepusing(pop T)
 		keep if year == 2009
 		drop in 1	
-				
 		foreach var of varlist week_* hosp_h1n1 {
 			replace `var' = 0 if `var' == .
-			replace `var' = `var'/pop
+			replace `var' = `var'/(pop/100)
 		}		
 		format week* hosp_h1n1 %5.2fc
 		drop v1

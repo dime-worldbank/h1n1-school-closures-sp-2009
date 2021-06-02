@@ -229,7 +229,7 @@
 	*Balance test
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
-		use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & !missing(math5), clear
+		use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & !missing(math5) & uf == "SP", clear
 		
 		foreach var of varlist $matching_schools	{
 			replace `var' = `var'*100
@@ -256,7 +256,7 @@
 		
 		
 		*=============> Teachers and principals
-		use "$final/h1n1-school-closures-sp-2009.dta", clear
+		use "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP", clear
 		foreach v of varlist $balance_principals {
 			replace   `v' = `v'*100
 			format    `v' %4.2fc
@@ -427,8 +427,8 @@
 		gen beta6  = G*D
 		gen beta7  = E*G*D 
 		label var beta1 "State-managed"
-		label var beta2 "Post-treament year (2007)" 
-		label var beta3 "State-managed versus post-treament" 
+		label var beta2 "Post-treatment year (2007)" 
+		label var beta3 "State-managed versus post-treatment" 
 		label var beta4 "G = 1"
 		label var beta5 "State-managed versus G = 1"
 		label var beta6 "Post-treatment versus with G = 1" 
@@ -493,6 +493,55 @@
 		eststo: reg dropout9 	beta1P2-beta7P2	 		i.codmunic if tipo_municipio_ef2 == 1
 			
 		estout * using "$tables/TableA12.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a, fmt(%9.0g %9.3f)) replace
+		
+		
+		
+	*--------------------------------------------------------------------------------------------------------------------------------*
+	**
+	*OLS, 2007 at municipalily level, probability of closing schools according to  characteristics of the municipalities
+	**
+	*--------------------------------------------------------------------------------------------------------------------------------*
+		use "$inter/H1N1.dta" if substr(string(codmunic2), 1,2) == "35", clear
+		egen hosp_h1n1_july = rsum(week*)
+		
+		bys T: su hosp_h1n1
+		
+		use  "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP" & network == 3 & year == 2007, clear
+		foreach v of var * {
+		local l`v' : variable label `v'
+			if `"`l`v''"' == "" {
+			local l`v' "`v'"
+			}
+		}
+	
+		*collapse (mean) spt5 $balance_students5 $balance_teachers $balance_principals [aw = enrollment5], by (T codmunic year)
+		foreach v of var * {
+			label var `v' "`l`v''"
+		}
+		foreach var of varlist $balance_principals {
+			replace `var' = `var'*100
+		}
+		
+		merge m:1  codmunic year using "$inter/GDP per capita.dta", keep(1 3) nogen
+		
+		merge m:1  codmunic2 	 using "$inter/H1N1.dta"		  , keep(1 3) nogen keepusing(week_16 week_31) 
+		egen  hosp_h1n1_july = rsum(week*)
+
+		
+
+		label var hosp_h1n1_july  "H1N1 cases per 1.000 inhabitants (Late July 2009)"
+		label var pop 		"Population"
+		label var pib_pcap  "GDP per capita"
+
+
+		estimates clear
+		eststo: reg T math5 port5 repetition5 dropout5 ///
+		classhour5 spt5 lack_books quality_books45 ///
+		share_students_books55 covered_curricula45 ///
+		student_effort_index5 principal_effort5 teacher_tenure5 absenteeism_students3 ///
+		absenteeism_teachers3 classrooms_similar_ages pib_pcap pop  hosp_h1n1_july 
+
+		estout * using "$tables/TableA13.csv",  delimiter(";") label varlabels(_cons Constant) cells(b(star fmt(3))  se(fmt(3))) stats(N r2_a, labels ("Obs" "Adj. R-squared") fmt(%9.0g %9.4f)) replace
 		
 		
 	*--------------------------------------------------------------------------------------------------------------------------------*

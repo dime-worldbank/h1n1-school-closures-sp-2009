@@ -461,25 +461,23 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 	//dif-in-dif, tiple dif
 	//subs 4 and 5
 	//grade 5
-	estout model245 model2045 model255 model2055 			  							 										using "$results/TableA13.csv", delimiter(";") keep( 	  T2009*) 	label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
+	estout model245 model2045 model255 model2055 			  							 										using "$results/TableA14.csv", delimiter(";") keep( 	  T2009*) 	label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
 		
 	//Dif in dif, models 2 and 3.
 	//subs 1, 2 and 3.
 	//grade 5
-	estout model215 model315 model225 model325 model235 model335  								  							 	using "$results/TableA14.csv", delimiter(";") keep( 	  T2009*)   label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
+	estout model215 model315 model225 model325 model235 model335  								  							 	using "$results/TableA15.csv", delimiter(";") keep( 	  T2009*)   label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
 		
 	//Placebo, placebo triple dif, dif in dif, triple dif.
 	//subs 6, 6 and 8
 	//grade 5
-	estout model165 model2565 model265 model2065 model175 model2575 model275 model2075 model185 model2585 model285 model2085  	using "$results/TableA15.csv", delimiter(";") keep(T2008  T2009*)	label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
+	estout model165 model2565 model265 model2065 model175 model2575 model275 model2075 model185 model2585 model285 model2085  	using "$results/TableA16.csv", delimiter(";") keep(T2008  T2009*)	label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
 	
 	//triple dif
 	//subs 1, 2 and 3
 	//grade 9
-	estout  model2019 model2029 model2039   																					using "$results/TableA16.csv", delimiter(";") keep(		  T2009*)   label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
-	
-	
-	/*
+	estout  model2019 model2029 model2039   																					using "$results/TableA17.csv", delimiter(";") keep(		  T2009*)   label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
+
 	//		
 	estout  model2135 model2235 model2335				 					 													using "$results/TableA18.csv", delimiter(";") keep( 	  T2009*)   label cells(b(star 					   fmt(3)) p		  ) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
 	

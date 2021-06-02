@@ -1414,7 +1414,7 @@
 			label variable principal_effort					"Principal effort from teacher perspective"
 			label variable teacher_effort_index 			"Teacher's effort based on the use of news and literature books" 	
 			label variable parents_effort_index 			"1 if parents support children (from teacher's perspective) and 0, otherwise"
-			label variable student_effort_index				"Student's effort from teacher's perspective"
+			label variable student_effort_index				"Student effort from teacher perspective"
 			label variable violence_index					"Index for the violence the teacher faces in the school"
 			label variable almost_all_finish_grade9			"Teacher expects that almost all students will finish 9th grade"
 			label variable almost_all_finish_highschool		"Teacher expects that almost all students will finish high school "
@@ -1494,7 +1494,7 @@
 			label variable teacher_tenure					"Teacher with tenure"
 			label variable teacher_less_40years				"Teacher with less than 40 years old"
 			label variable teacher_less3min_wages			"Teacher's salary is less than 3 minimum wage"
-			label variable covered_curricula4				"Teachers covered more than 80% of the curricula"	
+			label variable covered_curricula4				"Teachers covered more than 80 percent of the curricula"	
 			label variable participation_decisions4			"Teachers always participate of the work decisions"								
 			label variable share_students_books5 			"Teachers say that all the students have textbooks"
 			label variable quality_books4 					"Teachers classify the textbooks as great"
@@ -1909,8 +1909,8 @@
 			label variable school_council_staff				"School staff participate of the school council "
 			label variable school_council_parents			"Parents participate of the school council"
 			label variable principal_selection_work4		"Principal was appointed for the position"
-			label variable absenteeism_teachers3 			"Teacher abseenteism as a big issue"									
-			label variable absenteeism_students3			"Student abseenteism as a big issue"	
+			label variable absenteeism_teachers3 			"Teacher absenteeism as a big issue"									
+			label variable absenteeism_students3			"Student absenteeism as a big issue"	
 			compress
 			rename (male white) (principal_male principal_white)
 			save "$inter/Principals - Prova Brasil.dta", replace
