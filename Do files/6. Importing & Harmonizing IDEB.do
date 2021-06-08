@@ -264,6 +264,12 @@
 		}		
 		replace T    			= 1 		if network == 2
 		replace T    			= 0 		if T == .
+		
+		label define G		   1 "Local authorities did not extend winter break" 0 "Local authoritied extend winter break"
+		label define T		   0 "Comparison Group" 1 "Treatment Group"
+
+		label val G G
+		label var T T 
 		save "$inter/IDEB by municipality.dta", replace
 		
 		

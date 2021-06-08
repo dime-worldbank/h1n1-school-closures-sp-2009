@@ -411,7 +411,7 @@
 	
 		**
 		**IDEB at municipal level for state and locally-managed schools
-		use "$inter/IDEB by municipality.dta" if uf == "SP" & (network == 2 | network == 3) & year < 2009, clear
+		use "$inter/IDEB by municipality.dta" if uf == "SP" & (network == 2 | network == 3) & year <2009, clear
 		merge m:1 codmunic year using `tipo', nogen keep(3)
 
 		**
@@ -461,6 +461,21 @@
 		
 		estout * using "$tables/TableA11.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a, fmt(%9.0g %9.3f)) replace
 		
+		**
+		**Regressions in G = 1 and G = 0
+		label var beta4 "G"
+		label var beta5 "State-managed versus G"
+		label var beta6 "Post-treatment versus with G" 
+		eststo: reg math5 beta1 beta2 beta3	 	 if tipo_municipio_ef1 == 1	& G == 1	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		eststo: reg math5 beta1 beta2 beta3	 	 if tipo_municipio_ef1 == 1	& G == 0	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		eststo: reg port5 beta1 beta2 beta3	 	 if tipo_municipio_ef1 == 1	& G == 1	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		eststo: reg port5 beta1 beta2 beta3	 	 if tipo_municipio_ef1 == 1	& G == 0	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		eststo: reg math9 beta1 beta2 beta3	 	 if tipo_municipio_ef1 == 1	& G == 1	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		eststo: reg math9 beta1 beta2 beta3	 	 if tipo_municipio_ef1 == 1	& G == 0	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		eststo: reg port9 beta1 beta2 beta3	 	 if tipo_municipio_ef1 == 1	& G == 1	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		eststo: reg port9 beta1 beta2 beta3	 	 if tipo_municipio_ef1 == 1	& G == 0	//dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
+		estout * using "$tables/dif-dif-g1-g0.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a, fmt(%9.0g %9.3f)) replace
+		
 		
 		
 	*--------------------------------------------------------------------------------------------------------------------------------*
@@ -493,7 +508,6 @@
 		eststo: reg dropout9 	beta1P2-beta7P2	 		i.codmunic if tipo_municipio_ef2 == 1
 			
 		estout * using "$tables/TableA12.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a, fmt(%9.0g %9.3f)) replace
-		
 		
 		
 	*--------------------------------------------------------------------------------------------------------------------------------*
@@ -551,6 +565,17 @@
 	*--------------------------------------------------------------------------------------------------------------------------------*
 
 		**
+		use math5 network port5 math9 port9 uf year using "$inter/IDEB by state.dta" if uf == "SP" & (network == 2 | network == 3), clear //agregado para a rede ESTADUAL e PUBLICA
+	
+		**
+		*Performance in Portuguese and Math
+		use 	"$inter/IDEB by school.dta" if uf == "SP" & (network == 2 | network == 3) , clear //urbana
+		merge 	1:1 codschool year network using "$inter/Enrollments.dta", nogen keep(3)
+		keep	if location == 1
+		sort 	codschool  year
+		collapse (mean)math5 port5 [aw = enrollment5grade], by(year network)
+
+		**
 		*Enrollment by municipality
 		use 	"$inter/Enrollments.dta", clear
 		collapse (sum)enrollment*, by(year codmunic network)
@@ -566,7 +591,7 @@
 		save 	`tipo'
 	
 		**
-		*Performance in Math
+		*Performance in Portuguese and Math
 		use 	"$inter/IDEB by municipality.dta" if uf == "SP" & (network == 2 | network == 3) , clear
 		merge 	1:1 codmunic year network using `enrollments', nogen keep(3)
 		sort 	codmunic year
@@ -574,23 +599,45 @@
 		
 		keep if tipo_municipio_ef1 == 1	
 
+		set scheme s1mono
+		preserve
 		collapse (mean)math5 port5 [aw = enrollment5grade], by(year G network)
+		tempfile 5grade
+		save	`5grade'
+		restore
+		
+		collapse (mean)math9 port9 [aw = enrollment9grade], by(year G network)
+		merge 1:1 network G year using `5grade'
+		
+		
+		label define G		   1 "G = 1" 0 "G = 0"
+		label val G  G
+
+		foreach var in math5 port5 math9 port9 {
+		
+		if "`var'" == "math5" local title = "Math performance, fifth-graders"
+		if "`var'" == "port5" local title = "Math performance, fifth-graders"
+		if "`var'" == "math9" local title = "Math performance, ninth-graders"
+		if "`var'" == "port9" local title = "Math performance, ninth-graders"
+				
 			tw 	///
-			(line  math5  year if network == 2, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 											///  
-			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
-			(line math5  year if network == 3, by(G) lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 									///  
-			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)																							///
-			ylabel(, labsize(small) gmax angle(horizontal) format(%4.1fc))											     												///
-			yscale( alt )  																																				///
-			title("", pos(12) size(medium) color(black))													 															///
+			(line  `var' year if network == 2, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 												///  
+			ml(`var') mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																					///
+			(line `var'  year if network == 3, by(G, note("")) lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 						///  
+			ml(`var') mlabcolor(gs2) msize(1) ms(o) mlabposition(6)  mlabsize(2.5)																						///
+			ylabel(, grid labcolor(white)) 																													///
+			ytitle("`title'", size(medium) color(black))													 															///
 			xtitle("")  																																				///
 			xlabel(2005(2)2009, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
 			graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
 			plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-			legend(order(1 "Estadual"  2 "Municipal" ) size(small) region(lwidth(none) color(white) fcolor(none))) 														///
-			ysize(5) xsize(5) 																										 									///
+			legend(order(1 "State-managed"  2 "Locally-managed" ) size(medsmall) region(lwidth(none) color(white) fcolor(none))) 										///
+			ysize(5) xsize(6) 																										 									///
 			note("", color(black) fcolor(background) pos(7) size(small)))  
-
+			graph export "$figures/`var'grade_g0_g1.pdf", as(pdf) replace
+		}
+		
+		
 		**
 		*Aproval rates
 		use"$final/h1n1-school-closures-sp-2009.dta" if year > 2005, clear
@@ -600,7 +647,7 @@
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
 			(line approval5 year if network == 3, by(G) lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 								///  
 			ml() mlabcolor(gs2) msize(1) ms(o) mlabposition(12)  mlabsize(2.5)																							///
-			ylabel(80(5)100, labsize(small) gmax angle(horizontal) format(%4.1fc))											     										///
+			ylabel(80(5)100,  grid labsize(small) gmax angle(horizontal) format(%4.1fc))											     										///
 			yscale( alt )  																																				///
 			title("", pos(12) size(medium) color(black))													 															///
 			xtitle("")  																																				///

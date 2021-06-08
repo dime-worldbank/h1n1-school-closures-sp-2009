@@ -313,7 +313,7 @@
 		
 		
 		label define id_13_mun 0 "Locally-managed schools without winter break extended" 1 "Locally-managed schools with winter break extended" 
-		label define G		   1 "Locally-managed schools without winter break extended" 0 "Locally-managed schools with winter break extended" 
+		label define G		   1 "Local authorities did not extend winter break" 0 "Local authoritied extend winter break"
 		label define T		   0 "Comparison Group" 1 "Treatment Group"
 		label define E		   0 "Locally-managed"  1 "State-managed"
 		label val id_13_mun id_13_mun

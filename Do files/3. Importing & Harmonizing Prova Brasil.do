@@ -4,14 +4,121 @@
 	**
 	*________________________________________________________________________________________________________________________________* 
 
-	
-	
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**Importing Student Data
 	**
 	*________________________________________________________________________________________________________________________________* 
 
+			**
+		clear
+		#delimit;
+		infix
+	str MASCARA 1-8
+	str ANO_MASCARA 9-16
+	str ANO 17-20
+	str SERIE 21-22
+	str DISC 23-23
+	str TURMA 24-25
+	str ALUNO 26-28
+	str ESTRATO 29-40
+	str UPA 41-52
+	str DEP_ADM 53-60
+	str LOCAL 61-68
+	str REDE 69-76
+	str UF 77-84
+	str UFSUD 85-92
+	str REGIAO 93-100
+	str TAM_MUNIC 101-108
+	str REG_METROP 109-116
+	str TAM_CID 117-124
+	str TUR_BE 125-132
+	str ALU_BE 133-140
+	str PESO_AC 141-148
+	str CADERNO 149-156
+	str BLOCO1 157-164
+	str BLOCO2 165-172
+	str BLOCO3 173-180
+	str RESP_BL1 181-193
+	str RESP_BL2 194-206
+	str RESP_BL3 207-219
+	str GAB_BL1 220-232
+	str GAB_BL2 233-245
+	str GAB_BL3 246-258
+	str PROFIC 259-270
+	str ESTAGIO 271-285
+			using "$raw/SAEB/2003/DADOS/ALUNOS/MATEMATICA_04SERIE.txt";
+		tempfile  socioeconomic_2003 ;
+		save	 `socioeconomic_2003';
+		clear;	
+		#delimit cr		
+
+		
+		use  `socioeconomic_2003', clear
+		gen year = 2003
+		rename (DEP_ADM UF) (network coduf)
+		destring, replace
+		
+		collapse (mean)PROFIC [aw = PESO_AC], by(year network coduf DISC)
+		keep if coduf == 35
+
+		
+	
+		**
+		*2005*
+		*----------------------------------------------------------------------------------------------------------------------------*
+		**
+		clear
+		#delimit;
+		infix
+		str MASCARA 1-8
+		str ANO_MASCARA 9-16
+		str ANO 17-24
+		str SERIE 25-26
+		str DISC 27-27
+		str TURMA 28-30
+		str NOMETURMA 31-53
+		str TURMA_APLI 54-56
+		str EXTRA 57-57
+		str ALUNO 58-60
+		str ALUNO_VALI 61-63
+		str ESTRATO 64-69
+		str DEP_ADM 70-72
+		str LOCAL 73-75
+		str REDE 76-78
+		str COD_UF 79-80
+		str REGIAO 81-81
+		str CAPITAL 82-84
+		str PESO_AT 85-96
+		str PESO_AC 97-108
+		str PESO_EC 109-120
+		str PESO_TC 121-132
+		str PROFIC_250 223-234
+		str PROFIC_SAE 235-246
+		using "$raw/SAEB/2005/DADOS/ALUNOS/MATEMATICA_04SERIE.txt";
+		tempfile  socioeconomic_2005 ;
+		save	 `socioeconomic_2005';
+		clear;	
+		#delimit cr		
+		
+use  `socioeconomic_2005', clear
+
+
+merge m:1 MASCARA using  "$inter/Máscara2005.dta", nogen keep(3)
+destring codschool, replace 
+gen year = 2005
+rename (DEP_ADM COD_UF) (network coduf)
+merge m:1 codschool year using  "$inter/Enrollments.dta", nogen keep(3) keepusing(codmunic)
+destring, replace
+collapse (mean)PROFIC_250 [aw = PESO_TC], by(year network coduf)
+keep if coduf == 35
+
+merge 1:1 coduf year network using "$inter/IDEB by state.dta", 
+drop if year > 2005
+/*
+
+
+	
 		**
 		*2007*
 		*----------------------------------------------------------------------------------------------------------------------------*

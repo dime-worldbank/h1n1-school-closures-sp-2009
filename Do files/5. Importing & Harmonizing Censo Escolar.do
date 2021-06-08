@@ -413,8 +413,8 @@
 
 		destring, replace
 		
-		egen enrollment5grade = rowtotal(DE9F11G NE9F11G DEF11F  NEF11F )			//o 5o ano aqui eh equivalente a 4a serie 
-		egen enrollment9grade = rowtotal(DE9F11N NE9F11L DEF11J NEF11J)	//o 5o ano aqui eh equivalente a 4a serie 
+		egen enrollment5grade = rowtotal(DE9F11G NE9F11G DEF11F NEF11F)			//o 5o ano aqui eh equivalente a 4a serie 
+		egen enrollment9grade = rowtotal(DE9F11N NE9F11L DEF11J NEF11J)			//o 5o ano aqui eh equivalente a 4a serie 
 
 		
 		destring, replace
@@ -532,6 +532,11 @@
 		}
 		compress
 		replace location = 2 if location == 0 & year == 2005
+		
+		foreach var of varlist enrollment* {
+			replace `var' = . if `var' == 0
+		}
+		
 		save 		"$inter/Enrollments", replace
 		erase 		"$inter/CensoEscolar2005.dta"
 		erase		"$inter/Máscara2005.dta"
@@ -652,7 +657,7 @@
 				sort codschool year
 				compress
 			save  "$inter/Students per teacher.dta", replace
-			erase "$inter/Teachers.dta"
+			*erase "$inter/Teachers.dta"
 
 		
 		

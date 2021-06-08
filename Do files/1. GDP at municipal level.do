@@ -115,6 +115,8 @@
 			order year codmunic codmunic2 pib_pcap pop porte T
 			compress
 			keep if year == 2005 | year == 2007 | year == 2009 | year == 2008
+			gen 	 coduf = substr(string(codmunic), 1,2)
+			destring coduf, replace
 			save   "$inter/GDP per capita.dta", replace
 
 

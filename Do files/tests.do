@@ -1,23 +1,86 @@
 
-use  "$inter/Students per teacher.dta" if (network == 2 | network == 3), clear
+global controls2007 c.mother_edu_highschool5##c.mother_edu_highschool5 c.number_dropouts5##c.number_dropouts5 									///
+				c.number_repetitions5##c.number_repetitions5 c.computer5##c.computer5																			///
+				c.pib_pcap##c.pib_pcap c.work5##c.work5 						   																				///
+				c.white5##c.white5 c.male5##c.male5 c.private_school5##c.private_school5 c.live_mother5##c.live_mother5 										///
+				c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt 																///
+				c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour5##c.classhour5 c.spt5##c.spt5 												///
+				c.incentive_study5##c.incentive_study5 c.incentive_homework5##c.incentive_homework5 c.incentive_read5##c.incentive_read5	 					///
+				c.incentive_school5##c.incentive_school5 c.incentive_talk5##c.incentive_talk5 c.incentive_parents_meeting5##c.incentive_parents_meeting5	
+
+	
+	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009), clear
+	
+		reg math5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 1 & tipo_municipio_ef1 == 1, cluster(codmunic)
+		reg port5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 1 & tipo_municipio_ef1 == 1, cluster(codmunic)
+		
+		replace T 	  = 0 if network == 3
+		replace T2009 = 0 if network == 3 
+		
+		reg math5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 0 & tipo_municipio_ef1 == 1, cluster(codmunic)
+		reg port5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 0 & tipo_municipio_ef1 == 1, cluster(codmunic)
+	
+	
+		drop 	 T2009
+		clonevar T2009 = beta7
+		reg 	 math5 beta1-beta6 i.codmunic $controls2007 T2009 	[aw = enrollment5] if year == 2007 | year == 2009, cluster(codmunic)
+		reg 	 port5 beta1-beta6 i.codmunic $controls2007 T2009 	[aw = enrollment5] if year == 2007 | year == 2009, cluster(codmunic)
+
+
+
+
+
+
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+/*
+
+
+
+
+
+use  "$inter/Class-Size.dta" if (network == 2 | network == 3) & uf == "SP", clear
 merge 1:1 codschool year using "$inter/Enrollments.dta",  keep(3) nogen
-collapse (mean)spt5grade 		 [aw = enrollment5grade], by(coduf codmunic network year)
+collapse (mean)tclass5grade 		 [aw = enrollment5grade], by(coduf codmunic network year)
 tempfile a1
 save 	`a1' 
 
-use  "$inter/Class-Hours.dta"		   if (network == 2 | network == 3) & year > 2005, clear
-merge 1:1 codschool year using "$inter/Enrollments.dta", keep(3) nogen
+use  "$inter/Class-Hours.dta"		   if (network == 2 | network == 3) & uf == "SP", clear
+merge 1:1 codschool year using "$inter/Enrollments.dta",  nogen keep(3)
 collapse (mean)classhour5grade   [aw = enrollment5grade], by(coduf codmunic network year)
 tempfile a2
 save 	`a2' 
 
-use "$inter/School Infrastructure.dta" if (network == 2 | network == 3) & codschool !=., clear
-merge 1:1 codschool year using "$inter/Enrollments.dta", keep(3) nogen
+use "$inter/School Infrastructure.dta" if (network == 2 | network == 3) & uf == "SP", clear
+merge 1:1 codschool year using "$inter/Enrollments.dta", nogen keep(3)
 collapse (mean)$matching_schools [aw = enrollment5grade], by(coduf codmunic network year)
 tempfile a3
 save 	`a3' 
 
-use "$inter/Teachers - Prova Brasil.dta" if grade == 5, clear
+use "$inter/Teachers - Prova Brasil.dta" if  (network == 2 | network == 3) & grade == 5 & coduf == 35, clear
 collapse (mean)  teacher_tenure teacher_less_40years ///
 				 principal_effort student_effort_index violence_index   					 			///
 				almost_all_finish_highschool covered_curricula4	participation_decisions4				///
@@ -25,44 +88,117 @@ collapse (mean)  teacher_tenure teacher_less_40years ///
 tempfile a4
 save 	`a4' 
 				 
-use "$inter/Principals - Prova Brasil.dta", clear
+use "$inter/Principals - Prova Brasil.dta" if (network == 2 | network == 3) & coduf == 35, clear
 collapse (mean) org_training lack_books principal_selection_work4 absenteeism_teachers3 				///
 								  absenteeism_students3, by (coduf codmunic network year)
 tempfile a5
 save 	`a5' 
 
-use 	   "$inter/Students - Prova Brasil.dta", clear
+use 	   "$inter/Students - Prova Brasil.dta"  if (network == 2 | network == 3) & coduf == 35, clear
+merge m:1 codschool year using "$inter/Enrollments.dta", keep(3)
 collapse   (mean) $socioeco_variables  number_dropouts number_repetitions, by(grade year network codmunic)
 keep if grade == 5
 tempfile a6
 save    `a6'
 	
 		
-use "$inter/IDEB by municipality.dta", clear
+use "$inter/IDEB by municipality.dta" if uf == "SP" & year < 2011, clear
 merge 1:1 codmunic network year using `a1', nogen
 merge 1:1 codmunic network year using `a2', nogen
 merge 1:1 codmunic network year using `a3', nogen
 merge 1:1 codmunic network year using `a4', nogen
 merge 1:1 codmunic network year using `a5', nogen
 merge 1:1 codmunic network year using `a6', nogen
-merge 1:1 codmunic 		   year using "$inter/GDP per capita.dta", 
-	
-	
+merge m:1 codmunic 		   year using "$inter/GDP per capita.dta", nogen 
+keep if coduf == 35
+keep if network == 2 | network == 3
 
-tsset    codschool year
-levelsof codschool if network == 2, local(levels) 
+egen group = group(network codmunic)
 
+drop if network == 3 & T == 1 //13 municipalities
+
+drop T
+		
+		gen T   				= .										//1 for closed schools, 0 otherwise
+		foreach munic in $treated_municipalities {
+			replace T   		= 1 		if codmunic == `munic' & network == 3
+		}		
+		replace T    			= 1 		if network == 2
+		replace T    			= 0 		if T == .
+
+
+
+									
+
+sort group year
+
+drop if year == 2008 | math5 == .
+
+
+
+/*
+preserve
+keep if year == 2005 & math5 != .
+keep group 
+gen keep = 1
+tempfile 2005
+save `2005'
+restore
+
+merge m:1 group using `2005', keep(3)
+*/
+
+
+foreach var of varlist tclass5grade classhour5grade approval5 absenteeism_teachers3 absenteeism_students3 covered_curricula4 mother_edu_highschool ///
+	ever_repeated ever_dropped work incentive_study incentive_homework  incentive_read  incentive_school ///
+	ComputerLab ScienceLab Library InternetAccess SportCourt {
 	
-foreach school of local levels {
+		gen `var'_times = 1 if `var' !=. 					& year != 2009 
+		bys group: egen n_times_`var' = sum(`var'_times)	if year != 2009 
+		drop if n_times_`var'  == 0					&  year != 2009 
+		drop `var'_times n_times_`var' 
+	}
+	
+bys group: gen times = _N
+
+keep if times == 3 	
+	
+tsset    group year
+
+*drop if year == 2005
+cd "/Users/vivianamorim/Desktop"
+
+levelsof group if network == 2, local(levels) 
+foreach group of local levels{
 	preserve
-	keep if codschool == `school' | T == 0 
-	synth math5 spt5 classhour5 approval5 absenteeism_issue5 covered_curricula45 mother_edu_highschool5 ///
-	ever_repeated5 ever_dropped5 work5 incentive_study5 incentive_homework5  incentive_read5  incentive_school5 ///
-	ComputerLab ScienceLab Library InternetAccess SportCourt, trunit(`school') trperiod(2009) keep("`school'")  replace
+	keep if group == `group' | T == 0 
+	synth math5 tclass5grade classhour5grade approval5 absenteeism_teachers3 absenteeism_students3 covered_curricula4 mother_edu_highschool ///
+	ever_repeated ever_dropped work incentive_study incentive_homework  incentive_read  incentive_school 						///
+	ComputerLab ScienceLab Library InternetAccess SportCourt, trunit(`group') keep(a`group') trperiod(2009)   replace
 	restore
 }
+clear
+
+levelsof group if network == 2, local(levels) 
+foreach group of local levels {
+append using a`group'.dta
+erase a`group' 
+}
+	
+=
+	
+	keep if group == 2| T == 0 
+	trunit(2) trperiod(2009)  replace
 
 
+
+
+
+
+
+
+gen tclass5grade_times = 1 if tclass5grade !=.
+		bys group: egen n_times_tclass5grade = sum(tclass5grade_times)
 
 
 /*
@@ -107,6 +243,7 @@ cap noi append using "/Users/vivianamorim/OneDrive/`school'", clear
 }
 keep if _Y_treated !=. 
 
+collapse (mean) _Y*, by(_time)
 		twoway (line _Y_treated _time, lcolor(black)) (line _Y_synthetic _time, lpattern(dash) lcolor(black)), ///
 			ytitle("index - number of completed transactions") xtitle("Time") 
 
@@ -256,10 +393,19 @@ keep if (treated_state == 1 & uf == "SP") | treated_state == 0
 
 	
 	
-	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009) & G == 0, clear
+	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009), clear
 	
-		reg math5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] , cluster(codmunic)
+		reg math5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 1 & tipo_municipio_ef1 == 1, cluster(codmunic)
+		
+		replace T = 0 if network == 3
+		replace T2009 = 0 if network ==3 
+		reg math5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 0 & tipo_municipio_ef1 == 1, cluster(codmunic)
+	
+	drop 	 T2009
+	clonevar T2009 = beta7
+	reg 	math5 T2009 										 beta1-beta6 i.codmunic $controls2007 [aw = enrollment5] if year == 2007 | year == 2009, cluster(codmunic)
 
+	
 	
 	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009) & G == 0, clear
 	
