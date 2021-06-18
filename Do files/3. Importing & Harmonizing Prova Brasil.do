@@ -9,115 +9,6 @@
 	**Importing Student Data
 	**
 	*________________________________________________________________________________________________________________________________* 
-
-			**
-		clear
-		#delimit;
-		infix
-	str MASCARA 1-8
-	str ANO_MASCARA 9-16
-	str ANO 17-20
-	str SERIE 21-22
-	str DISC 23-23
-	str TURMA 24-25
-	str ALUNO 26-28
-	str ESTRATO 29-40
-	str UPA 41-52
-	str DEP_ADM 53-60
-	str LOCAL 61-68
-	str REDE 69-76
-	str UF 77-84
-	str UFSUD 85-92
-	str REGIAO 93-100
-	str TAM_MUNIC 101-108
-	str REG_METROP 109-116
-	str TAM_CID 117-124
-	str TUR_BE 125-132
-	str ALU_BE 133-140
-	str PESO_AC 141-148
-	str CADERNO 149-156
-	str BLOCO1 157-164
-	str BLOCO2 165-172
-	str BLOCO3 173-180
-	str RESP_BL1 181-193
-	str RESP_BL2 194-206
-	str RESP_BL3 207-219
-	str GAB_BL1 220-232
-	str GAB_BL2 233-245
-	str GAB_BL3 246-258
-	str PROFIC 259-270
-	str ESTAGIO 271-285
-			using "$raw/SAEB/2003/DADOS/ALUNOS/MATEMATICA_04SERIE.txt";
-		tempfile  socioeconomic_2003 ;
-		save	 `socioeconomic_2003';
-		clear;	
-		#delimit cr		
-
-		
-		use  `socioeconomic_2003', clear
-		gen year = 2003
-		rename (DEP_ADM UF) (network coduf)
-		destring, replace
-		
-		collapse (mean)PROFIC [aw = PESO_AC], by(year network coduf DISC)
-		keep if coduf == 35
-
-		
-	
-		**
-		*2005*
-		*----------------------------------------------------------------------------------------------------------------------------*
-		**
-		clear
-		#delimit;
-		infix
-		str MASCARA 1-8
-		str ANO_MASCARA 9-16
-		str ANO 17-24
-		str SERIE 25-26
-		str DISC 27-27
-		str TURMA 28-30
-		str NOMETURMA 31-53
-		str TURMA_APLI 54-56
-		str EXTRA 57-57
-		str ALUNO 58-60
-		str ALUNO_VALI 61-63
-		str ESTRATO 64-69
-		str DEP_ADM 70-72
-		str LOCAL 73-75
-		str REDE 76-78
-		str COD_UF 79-80
-		str REGIAO 81-81
-		str CAPITAL 82-84
-		str PESO_AT 85-96
-		str PESO_AC 97-108
-		str PESO_EC 109-120
-		str PESO_TC 121-132
-		str PROFIC_250 223-234
-		str PROFIC_SAE 235-246
-		using "$raw/SAEB/2005/DADOS/ALUNOS/MATEMATICA_04SERIE.txt";
-		tempfile  socioeconomic_2005 ;
-		save	 `socioeconomic_2005';
-		clear;	
-		#delimit cr		
-		
-use  `socioeconomic_2005', clear
-
-
-merge m:1 MASCARA using  "$inter/Máscara2005.dta", nogen keep(3)
-destring codschool, replace 
-gen year = 2005
-rename (DEP_ADM COD_UF) (network coduf)
-merge m:1 codschool year using  "$inter/Enrollments.dta", nogen keep(3) keepusing(codmunic)
-destring, replace
-collapse (mean)PROFIC_250 [aw = PESO_TC], by(year network coduf)
-keep if coduf == 35
-
-merge 1:1 coduf year network using "$inter/IDEB by state.dta", 
-drop if year > 2005
-/*
-
-
 	
 		**
 		*2007*
@@ -986,7 +877,7 @@ drop if year > 2005
 			egen 	socio_eco 	 		= rowmean(number_fridge number_tv  number_car  number_bath number_room)
 			replace socio_eco 	 		= . if temp1 > 2
 			drop 	temp1
-			format socio_eco %4.2fc	
+			format 	socio_eco %4.2fc	
 							
 							
 			*Students effort
@@ -998,11 +889,12 @@ drop if year > 2005
 			replace 	do_homework_both_always = 0 			    		if valid_score!= 0 & 	(do_homework_port_always 		== 0 | do_homework_math_always 		 == 0) & !missing(do_homework_port_always) & !missing(do_homework_math_always)
 
 			
-			*Teacher's effort
+			*Teachers' effort
 			*-----------------------------------------------------------------------------------------------------------------------*
 			recode 		homework_corrected_port  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (homework_corrected_port_always)
 			recode 		homework_corrected_math  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (homework_corrected_math_always)
-			
+			recode 		homework_corrected_port  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 			gen (teacher_motivation_port) 
+			recode 		homework_corrected_math  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 			gen (teacher_motivation_math) 
 			gen     	homework_corrected_both_always = 1 			   	 	if valid_score!= 0 &  	 homework_corrected_port_always == 1 & homework_corrected_math_always == 1
 			replace 	homework_corrected_both_always = 0 			    	if valid_score!= 0 & 	(homework_corrected_port_always == 0 | homework_corrected_math_always == 0) & !missing(homework_corrected_port_always) & !missing(homework_corrected_math_always)
 
@@ -1016,7 +908,7 @@ drop if year > 2005
 			*Private school and preschool
 			*-----------------------------------------------------------------------------------------------------------------------*
 			recode 		type_school  (2 3 = 1) (1    = 0),  gen (private_school)	//student already enrolled in a private school
-			recode 		enter_school (1 2 = 1) (3 4  = 0),  gen (preschool)		//student did preschool
+			recode 		enter_school (1 2 = 1) (3 4  = 0),  gen (preschool)			//student did preschool
 			
 			
 			*-----------------------------------------------------------------------------------------------------------------------*
@@ -1101,14 +993,14 @@ drop if year > 2005
 			label variable grade 							"Grade"
 			label variable id_student 						"Student ID"
 			label variable year 							"Year"
-			label variable age 								"Student's age"
+			label variable age 								"Students' age"
 			label variable urban							"1: Urban area. 0: Rural area"
 			label variable class_time						"1: Morning. 2: Afternoon. 3: Night"
 			label variable id_class							"Code of the class - you can check students in the same classroom"
-			label variable gender							"Student's gender"
-			label variable skincolor   						"Student's skin color"
-			label variable mother_edu  						"Mother's education (highest degree acquired)"
-			label variable father_edu  						"Father's education (highest degree acquired)"
+			label variable gender							"Students' gender"
+			label variable skincolor   						"Students' skin color"
+			label variable mother_edu  						"Mothers' education (highest degree acquired)"
+			label variable father_edu  						"Fathers' education (highest degree acquired)"
 			label variable parents_sch_meetings 			"Parental attendance to school meetings"
 			label variable incentive_study 					"Parents encourage to study"
 			label variable incentive_homework 				"Parents encourage to do the homework"
@@ -1138,10 +1030,10 @@ drop if year > 2005
 			label variable n_family_members 				"Number of family members"
 			label variable maid 							"Maid in the household"
 			label variable live_mother 						"Student lives with mother (or legal responsible)"
-			label variable mother_literate 					"Student's mother knows how to read and write"
+			label variable mother_literate 					"Students' mother knows how to read and write"
 			label variable mother_reads 					"Student sees mother reading"
 			label variable live_father 						"Student lives with father (or legal responsible)"
-			label variable father_literate 					"Student's father knows how to read and write"
+			label variable father_literate 					"Students' father knows how to read and write"
 			label variable father_reads 					"Student sees father reading"
 			label variable tv 								"TV in the household"
 			label variable radio 							"Radio in the household"
@@ -1167,17 +1059,19 @@ drop if year > 2005
 			label variable type_school 						"Type of school since 1st/grade for 5th/graders, and since 6th/grade for 9th"
 			label variable like_port 						"Student that likes portuguese"
 			label variable like_math 						"Student that likes math"
-			label variable mother_edu_highschool 			"Student's mother finished high school"
-			label variable father_edu_highschool 			"Student's father finished high school"
+			label variable mother_edu_highschool 			"Students' mother finished high school"
+			label variable father_edu_highschool 			"Students' father finished high school"
 			label variable only_intend_work					"Children only intend to work after 9th grade"
 			label variable do_homework_port_always 			"Children always finish the homework"
 			label variable do_homework_math_always 			"Children always finish the homework"
 			label variable do_homework_both_always 			"Children always finish the homework"
-			label variable homework_corrected_port_always   "Teacher always corrects the homework"
-			label variable homework_corrected_math_always 	"Teacher always corrects the homework"
+			label variable homework_corrected_port_always   "Teacher always corrects Portuguese homework"
+			label variable homework_corrected_math_always 	"Teacher always corrects Math homework"
 			label variable homework_corrected_both_always 	"Teacher always corrects the homework"
 			label variable private_school 					"Already attended Private School"
 			label variable preschool						"Student did preschool"
+			label variable teacher_motivation_math			"Teacher motivation to correct the math homework"
+			label variable teacher_motivation_port			"Teacher motivation to correct the Portuguese homework"
 			compress
 			save "$inter/Students - Prova Brasil.dta", replace
 			
@@ -1198,8 +1092,8 @@ drop if year > 2005
 					gen 	 year = 2007
 					drop 	 NO_MUNICIPIO SIGLA_UF  DS_DISCIPLINA
 					rename  (PK_COD_ENTIDADE-ID_SERIE) (codschool network location coduf codmunic id_class grade)
-					rename (Q1 Q2 Q3 Q4 Q5 Q6 Q8 Q9 Q10 Q16 Q15 Q17 Q18 Q19 Q23 Q20 Q21 Q22 Q47 Q49 Q52 Q53 Q54 Q77 Q78 Q79 Q73 Q76 Q80 Q74 Q82 Q83 Q59 Q60 Q63 Q64 Q66 Q67 Q68 Q69 Q72 Q71 Q65 Q94 Q114 Q115 Q118 Q119 Q120 Q121 Q122 Q123 Q56 Q57 Q58 Q130 Q126 Q127 Q131 Q55 ) ///
-							   (teacher_gender teacher_age_range teacher_skincolor teacher_edu teacher_years_graduation type_university type_education postgrad area_postgrad teacher_wage teacher_other_job experience_asteacher teacher_exp_school teacher_exp_grade teacher_work_contract teacher_workhours_school nu_schools_work teacher_workhours_total use_news use_literature_books use_copy_machine pedagogic_plan meetings_class_council principal_learning principal_norms principal_maintenance principal_motivation principal_innovation principal_respect principal_trust work_decisions my_ideas def_schoolinfra def_curricula def_cover_curricula def_2muchwork def_teacher_insatisfaction def_student_socioback def_parents_culturalback def_noparents_support def_low_selfesteem def_student_loweffort def_bad_behavior def_absenteeism violence_lifethreat violence_student_threat violence_theft violence_robb violence_students_alcohol violence_students_drugs violence_students_knife violence_students_gun expec_finish_grade9 expec_finish_grade12 expec_get_college received_book students_books books_since_beg_year quality_books share_curricula )
+					rename  (Q1 Q2 Q3 Q4 Q5 Q6 Q8 Q9 Q10 Q16 Q15 Q17 Q18 Q19 Q23 Q20 Q21 Q22 Q47 Q49 Q52 Q53 Q54 Q77 Q78 Q79 Q73 Q76 Q80 Q74 Q82 Q83 Q59 Q60 Q63 Q64 Q66 Q67 Q68 Q69 Q72 Q71 Q65 Q94 Q114 Q115 Q118 Q119 Q120 Q121 Q122 Q123 Q56 Q57 Q58 Q130 Q126 Q127 Q131 Q55 ) ///
+							(teacher_gender teacher_age_range teacher_skincolor teacher_edu teacher_years_graduation type_university type_education postgrad area_postgrad teacher_wage teacher_other_job experience_asteacher teacher_exp_school teacher_exp_grade teacher_work_contract teacher_workhours_school nu_schools_work teacher_workhours_total use_news use_literature_books use_copy_machine pedagogic_plan meetings_class_council principal_learning principal_norms principal_maintenance principal_motivation principal_innovation principal_respect principal_trust work_decisions my_ideas def_schoolinfra def_curricula def_cover_curricula def_2muchwork def_teacher_insatisfaction def_student_socioback def_parents_culturalback def_noparents_support def_low_selfesteem def_student_loweffort def_bad_behavior def_absenteeism violence_lifethreat violence_student_threat violence_theft violence_robb violence_students_alcohol violence_students_drugs violence_students_knife violence_students_gun expec_finish_grade9 expec_finish_grade12 expec_get_college received_book students_books books_since_beg_year quality_books share_curricula )
 				}
 					
 				if `year' == 2009 {
@@ -1276,7 +1170,7 @@ drop if year > 2005
 			
 			*teacher_gender
 			*------------------------------------------------------------------------------------------------------------------------*
-			label   define teacher_gender    2 "Feteacher_male" 1 "teacher_male"
+			label   define teacher_gender    2 "Male" 1 "Female"
 			label   val    teacher_gender teacher_gender
 			
 			
@@ -1289,7 +1183,7 @@ drop if year > 2005
 			*Skin color
 			*------------------------------------------------------------------------------------------------------------------------*
 			recode 		   teacher_skincolor (6 7 = .)		//6 = "dont know my color"
-			label 	define teacher_skincolor 1 "teacher_white" 2 "Brown" 3 "Black" 4 "Yellow" 5 "Indigenous"
+			label 	define teacher_skincolor 1 "White" 2 "Brown" 3 "Black" 4 "Yellow" 5 "Indigenous"
 			label 	val	   teacher_skincolor teacher_skincolor
 			
 			
@@ -1301,108 +1195,104 @@ drop if year > 2005
 			label 	define type_university 				1 "Federal"				    2 "State" 				3 "Municipal" 				4 "Private" 
 			label 	define type_education 				1 "Face to Face"  		    2 "Face/Distance" 		3 "Distance Learning"  
 			label 	define area_postgrad 				1 "Education" 			    0 "Other field" 
-			recode 	teacher_edu 			(1 = 1) (2 3 = 2) (4 = 3) (5 = 4) (6 = 5) (7 8 = 6)   	if year <  2013
-			recode 	teacher_edu 			(1 = 1) (2 3 = 2) (4 = 3) (6 = 4) (7 = 5) (5 8 9 = 6) 	if year >= 2013
-			recode 	postgrad 				(5 = 1) (1   = 2) (2 = 3) (3 = 4) (4 = 5)   		  	if year <  2013
-			recode  type_university 		(5 = .) 								  		 		if year <  2013
-			recode 	type_university 		(1 = .) (2   = 4) (3 = 1) (4 = 2) (5 = 3) 				if year >= 2013
-			recode 	type_education	 		(4 = .) 												if year <  2013
-			recode 	type_education 			(1 = .) (2   = 1) (3 = 2) (4 = 3) 						if year >= 2013
-			recode 	area_postgrad 			(1 2 3   = 1) (4 = 0) (5 = .) 							if year <  2011
-			recode 	area_postgrad 			(1 2 3 4 = 1) (5 = 0) 		   							if year == 2011
-			recode 	area_postgrad 			(2 3 4 5 = 1) (6 = 0) (1 = .) 							if year >  2011
+			recode 	teacher_edu 						(1 = 1) (2 3 = 2) (4 = 3) (5 = 4) (6 = 5) (7 8 = 6)   	if year <  2013
+			recode 	teacher_edu 						(1 = 1) (2 3 = 2) (4 = 3) (6 = 4) (7 = 5) (5 8 9 = 6) 	if year >= 2013
+			recode 	postgrad 							(5 = 1) (1   = 2) (2 = 3) (3 = 4) (4 = 5)   		  	if year <  2013
+			recode  type_university 					(5 = .) 								  		 		if year <  2013
+			recode 	type_university 					(1 = .) (2   = 4) (3 = 1) (4 = 2) (5 = 3) 				if year >= 2013
+			recode 	type_education	 					(4 = .) 												if year <  2013
+			recode 	type_education 						(1 = .) (2   = 1) (3 = 2) (4 = 3) 						if year >= 2013
+			recode 	area_postgrad 						(1 2 3   = 1) (4 = 0) (5 = .) 							if year <  2011
+			recode 	area_postgrad 						(1 2 3 4 = 1) (5 = 0) 		   							if year == 2011
+			recode 	area_postgrad 						(2 3 4 5 = 1) (6 = 0) (1 = .) 							if year >  2011
 			label  	val teacher_years_graduation teacher_years_graduation
-			label  	val teacher_edu teacher_edu
-			label  	val postgrad postgrad
-			label 	val type_university type_university
-			label   val type_education type_education
-			label   val area_postgrad area_postgrad
+			label  	val teacher_edu 			 teacher_edu
+			label  	val postgrad 				 postgrad
+			label 	val type_university 		 type_university
+			label   val type_education 			 type_education
+			label   val area_postgrad 			 area_postgrad
 
 					
 			*Teacher Experience
 			*------------------------------------------------------------------------------------------------------------------------*
-			label  	define experience 		  1 "First year"    2 "1-2 years"     3 "3-5 years"         4 "6-10 years" 5 "11-15 years" 6 "16-20 years" 7 "More than 20 years"
-			label  	define teacher_exp_grade   1 "Up to 2 years" 2 "Between 3-6 years" 3 "More than 6 years" 
-			recode 	experience_asteacher 	(4 5 = 4) (6   = 5) (7 = 6) (8 = 7) if year == 2011
-			recode 	teacher_exp_school    	(4 5 = 4) (6   = 5) (7 = 6) (8 = 7) if year == 2011
-			recode 	teacher_exp_grade 		(1   = 1) (2 3 = 2) (4 5     = 3) 	if year <  2013
-			recode 	teacher_exp_grade 		(1 2 = 1) (3   = 2) (4 5 6 7 = 3)   if year >= 2013
-			label   val teacher_exp_grade teacher_exp_grade
-			label   val experience_asteacher experience  
-			label   val teacher_exp_school    experience 
+			label  	define experience 		  			1 "First year"    2 "1-2 years"     3 "3-5 years"         4 "6-10 years" 5 "11-15 years" 6 "16-20 years" 7 "More than 20 years"
+			label  	define teacher_exp_grade   			1 "Up to 2 years" 2 "Between 3-6 years" 3 "More than 6 years" 
+			recode 	experience_asteacher 				(4 5 = 4) (6   = 5) (7 = 6) (8 = 7) if year == 2011
+			recode 	teacher_exp_school    				(4 5 = 4) (6   = 5) (7 = 6) (8 = 7) if year == 2011
+			recode 	teacher_exp_grade 					(1   = 1) (2 3 = 2) (4 5     = 3) 	if year <  2013
+			recode 	teacher_exp_grade 					(1 2 = 1) (3   = 2) (4 5 6 7 = 3)   if year >= 2013
+			label   val teacher_exp_grade 		teacher_exp_grade
+			label   val experience_asteacher  	experience  
+			label   val teacher_exp_school    	experience 
 
 			
 			*Type of contract/teacher_wage
 			*------------------------------------------------------------------------------------------------------------------------*
-			label 	define teacher_work_contract 	4 "No contract"				 			5 "Other" 								3  "Temporary contract" 				 2 "CLT" 							1 "Tenure (estatutário)" 
-			label 	define hours_worked 			1 "More than 40 hours" 					2 "40 hours" 							3  "Between 20-39 hours" 		 		 4 "Less than 20 hours" 
-			
-			label 	define teacher_wage 			1 "Up to one minimum teacher_wage" 	  	2 "Between 1-1.5 minimum teacher_wage"  3  "Between 1.5-2 minimum teacher_wages" 4 "Between 2-2.5 minimum teacher_wages" ///
-													5 "Between 2.5-3 minimum teacher_wages" 6 "Between 3-3.5 minimum teacher_wages" 7  "Between 3.5-4 minimum teacher_wages" 8 "Between 4-5 minimum teacher_wages"   ///
-													9 "Between 5-7 minimum teacher_wages"   10 "Between 7-10 minimum teacher_wages" 11 "More than 10 minimum ages"
-			label   define nu_schools_work  		1 "One school" 							2 "Two schools" 						3  "Three schools"				 		 4 "Four schools or more" 
-			label   define teacher_other_job		1 "Yes, in education area"				2 "Yes, in other field"					3  "Don't have another job"
-			
-			
-			replace teacher_wage = . if year == 2007
-			recode  teacher_workhours_school (1 2 = 4) (3 4 5 6 7 8 9 = 3) (10 = 2) (11    = 1)  if year == 2007  
-			recode  teacher_workhours_school (1   = 4) (2 3 4 5 6 7   = 3) (8  = 2) (9     = 1)  if year == 2009 | year == 2011  
-			recode  teacher_workhours_total  (1 2 = 4) (3 4 5 6 7 8 9 = 3) (10 = 2) (11 12 = 1)  if year == 2007  
-			recode  teacher_workhours_total  (1   = 4) (2 3 4 5 6 7   = 3) (8  = 2) (9  	  = 1)  if year == 2009 | year == 2011  
+			label   define nu_schools_work  			1 "One school" 							2 "Two schools" 						3  "Three schools"				 		 4 "Four schools or more" 
+			label   define teacher_other_job			1 "Yes, in education area"				2 "Yes, in other field"					3  "Don't have another job"			
+			label 	define teacher_work_contract 		4 "No contract"				 			5 "Other" 								3  "Temporary contract" 				 2 "CLT" 							1 "Tenure (estatutário)" 
+			label 	define hours_worked 				1 "More than 40 hours" 					2 "40 hours" 							3  "Between 20-39 hours" 		 		 4 "Less than 20 hours" 
+			label 	define teacher_wage 				1 "Up to one minimum teacher_wage" 	  	2 "Between 1-1.5 minimum teacher_wage"  3  "Between 1.5-2 minimum teacher_wages" 4 "Between 2-2.5 minimum teacher_wages" ///
+														5 "Between 2.5-3 minimum teacher_wages" 6 "Between 3-3.5 minimum teacher_wages" 7  "Between 3.5-4 minimum teacher_wages" 8 "Between 4-5 minimum teacher_wages"   ///
+														9 "Between 5-7 minimum teacher_wages"   10 "Between 7-10 minimum teacher_wages" 11 "More than 10 minimum ages"			
+			replace teacher_wage = . 																		if year == 2007
+			recode  teacher_workhours_school 			(1 2 = 4) (3 4 5 6 7 8 9 = 3) (10 = 2) (11    = 1)  if year == 2007  
+			recode  teacher_workhours_school 			(1   = 4) (2 3 4 5 6 7   = 3) (8  = 2) (9     = 1)  if year == 2009 | year == 2011  
+			recode  teacher_workhours_total  			(1 2 = 4) (3 4 5 6 7 8 9 = 3) (10 = 2) (11 12 = 1)  if year == 2007  
+			recode  teacher_workhours_total  			(1   = 4) (2 3 4 5 6 7   = 3) (8  = 2) (9  	  = 1)  if year == 2009 | year == 2011  
 			label   val teacher_workhours_school hours_worked
 			label   val teacher_workhours_total  hours_worked
-			label   val teacher_work_contract teacher_work_contract
-			label   val teacher_wage teacher_wage
-			label   val nu_schools_work nu_schools_work
-			label   val teacher_other_job teacher_other_job
+			label   val teacher_work_contract 	 teacher_work_contract
+			label   val teacher_wage 			 teacher_wage
+			label   val nu_schools_work 		 nu_schools_work
+			label   val teacher_other_job 		 teacher_other_job
 			
 			
 			*Teacher uses in the class
 			*------------------------------------------------------------------------------------------------------------------------*
-			label   define use 0 "No/Never" 1 "Yes" 2 "School does not have"
-			recode  use_news 			 (2 = 0) (3 = 2) 			 if year <   2013
-			recode  use_literature_books (2 = 0) (3 = 2) 			 if year <   2013
-			recode  use_copy_machine	 (2 = 0) (3 = 2) 			 if year <   2013
-			recode  use_news 			 (1 = 2) (2 = 0) (3 4 = 1)   if year >=  2013
-			recode  use_literature_books (1 = 2) (2 = 0) (3 4 = 1)   if year >=  2013
-			recode  use_copy_machine	 (1 = 2) (2 = 0) (3 4 = 1)   if year >=  2013
+			label   define 	use 						0 "No/Never" 		1 "Yes"				2 "School does not have"
+			label 	define  share_curricula 			1 "Less than 40%" 	2 "Between 40-60%" 	3 "Between 60-80%" 4 "More than 80%"
+			recode  use_news 			 				(2 = 0) (3 = 2) 			 if year <   2013
+			recode  use_literature_books 				(2 = 0) (3 = 2) 			 if year <   2013
+			recode  use_copy_machine	 				(2 = 0) (3 = 2) 			 if year <   2013
+			recode  use_news 			 				(1 = 2) (2 = 0) (3 4 = 1)   if year >=  2013
+			recode  use_literature_books 				(1 = 2) (2 = 0) (3 4 = 1)   if year >=  2013
+			recode  use_copy_machine	 				(1 = 2) (2 = 0) (3 4 = 1)   if year >=  2013
+			recode  share_curricula 					(1 2 = 1) (3 = 2) (4 = 3) (5 = 4) if year >= 2013
 			label   val use_news 			 use
 			label   val use_literature_books use
 			label   val use_copy_machine 	 use		
-			label 	define  share_curricula 1 "Less than 40%" 2 "Between 40-60%" 3 "Between 60-80%" 4 "More than 80%"
-			recode  		share_curricula (1 2 = 1) (3 = 2) (4 = 3) (5 = 4) if year >= 2013
-			label 	val  	share_curricula share_curricula
+			label 	val share_curricula 	 share_curricula
 
 
 			*Other
 			*------------------------------------------------------------------------------------------------------------------------*
 			label  define  yesno 							1 "Yes" 						0 "No"
 			label  define  meetings_class_council  			1 "Once" 						2 "Twice"   								3 "Three times or more"  				  4 "None"  				5 "No school council"
-			
-			label  define  pedagogic_plan  					1 "No pedag. project" 				2 "Modelo pronto, sem discussão da equipe"			///
-			3  "Modelo pronto com algumas modificações/modelo próprio mas sem teacher's active involvement" 4 "With active teacher's involvement"
-
-			
 			label  define  frequency				 		1 "Never" 						2 "Sometimes" 								3 "Often" 								  4 "Always"
 			label  define  expectations 					1 "Few students" 				2 "Little less than half of the students" 	3 "Little more than half of the students" 4 "Almost all students"
 			label  define  students_books				 	1 "No textbooks" 				2 "Less than half" 							3 "Half" 								  4 "Most of them" 			5 "All"
 			label  define  quality_books 					1 "Bad" 						2 "Ok"						 				3 "Good" 								  4 "Great" 
-			recode meetings_class_council 		(3     = 1) (4 = 2) 		(5 = 3) (2 = 4) (1 = 5)  		if year >= 2013
-			recode pedagogic_plan 				(8 = 1) (1 = 2 ) (2   = 3) (3 4 5 = 4) (6 7 = .)			if year <  2013
-			recode pedagogic_plan 				(2 = 1) (3 = 2 ) (5 7 = 3) (4 6 8 = 4) (1   = .) 			if year >= 2013
-			
-			recode students_books 				(5 = 1) 	(4 = 2) 		(3 = 3) (2 = 4) (1 = 5) 		if year <  2013
-			recode quality_books 				(5 = .) 	(4 = 1) 		(3 = 2) (2 = 3) (1 = 4) 		if year <  2013
-			recode quality_books 				(1 = .) 	(2 = 1) 		(3 = 2) (4 = 3) (5 = 4) 		if year >= 2013
+			label  define  problem   						0 "Not an issue" 				1 "Small" 									2 "A moderate/big issue"
+			label  define  pedagogic_plan  					1 "No pedag. project" 			2 "Modelo pronto, sem discussão da equipe"			///
+			3  "Modelo pronto com algumas modificações/modelo próprio mas sem Teachers' active involvement" 4 "With active Teachers' involvement"
 
+			recode meetings_class_council 		(3 = 1) (4 = 2) (5   = 3) (2 = 4) 	  (1 = 5)  		if year >= 2013
+			recode pedagogic_plan 				(8 = 1) (1 = 2 )(2   = 3) (3 4 5 = 4) (6 7 = .)		if year <  2013
+			recode pedagogic_plan 				(2 = 1) (3 = 2 )(5 7 = 3) (4 6 8 = 4) (1   = .) 	if year >= 2013
+			recode students_books 				(5 = 1) (4 = 2) (3   = 3) (2 = 4)	  (1 = 5) 		if year <  2013
+			recode quality_books 				(5 = .) (4 = 1) (3   = 2) (2 = 3) 	  (1 = 4) 		if year <  2013
+			recode quality_books 				(1 = .) (2 = 1) (3   = 2) (4 = 3) 	  (5 = 4) 		if year >= 2013
+			recode def_absenteeism				(1 = 0) (2   = 1) (3 4 = 2) 						if year >= 2013
+			recode def_absenteeism 				(1 = 0) (2   = 1) (3   = 2) 						if year <  2013
 
 			foreach var of varlist principal_* work_decisions my_ideas* {
-				recode 		`var' (4 5 = 1) (3 = 2) (2 = 3) (1 = 4) 		if year < 2013
+				recode 		`var' (4 5 = 1) (3 = 2) (2 = 3) (1 = 4) 								if year < 2013
 				label val 	`var' frequency
 			}
 			
 			foreach var of varlist expec_* {
-				recode 		`var' (4 = 1) (3 = 2) (2 = 3) (1 = 4) (5 = .) 	if year < 2013
+				recode 		`var' (4 = 1) (3 = 2) (2 = 3) (1 = 4) (5 = .) 							if year < 2013
 				label  val 	`var' expectations
 			}
 			
@@ -1411,9 +1301,6 @@ drop if year > 2005
 				label val `var' yesno 
 			}
 			
-			label   define  problem   0 "Not an issue" 					1 "Small" 											2 "A moderate/big issue"
-			recode	def_absenteeism (1 = 0) (2   = 1) (3 4 = 2) if year >= 2013
-			recode 	def_absenteeism (1 = 0) (2   = 1) (3   = 2) if year <  2013
 			label 	val def_absenteeism  problem
 			label   val students_books students_books
 			label   val pedagogic_plan pedagogic_plan
@@ -1432,15 +1319,18 @@ drop if year > 2005
 			recode teacher_age_range	  (1 2 3 = 1) (4 5 6 = 0)			, gen (teacher_less_40years)
 			recode teacher_wage			  (1/5 = 1) (6/11 = 0)				, gen (teacher_less3min_wages)
 			recode experience_asteacher   (1/4 = 0) (5/7  = 1)				, gen (teacher_more10yearsexp)
-			
+			gen    teacher_wage1 = inlist(teacher_wage, 1,2,3,4,5	)
+			gen    teacher_wage2 = inlist(teacher_wage, 6,7,8	)
+			gen    teacher_wage3 = inlist(teacher_wage, 9,10,11)
+
 			label  val teacher_male   				  yesno
 			label  val teacher_white  				  yesno
 			label  val teacher_tenure 				  yesno
-			label  val teacher_less_40years   yesno
-			label  val teacher_college_degree yesno
+			label  val teacher_less_40years   		  yesno
+			label  val teacher_college_degree 	      yesno
 
 			**
-			*Principal effort according to teacher's perspective
+			*Principal effort according to Teachers' perspective
 			**
 			egen temp1 = rowmiss(principal_motivation-my_ideas)
 			foreach var of varlist principal_motivation-my_ideas{
@@ -1450,7 +1340,7 @@ drop if year > 2005
 			drop II_* temp1
 			
 			**
-			*Teacher's effort ???????????????????????????? -> Segui o Do file do Thomaz
+			*Teachers' effort ???????????????????????????? -> Segui o Do file do Thomaz
 			**
 			gen teacher_effort_index      = use_literature_books + use_news/2  if !missing(use_literature_books) & !missing(use_literature_books)
 			
@@ -1460,12 +1350,15 @@ drop if year > 2005
 			gen parents_effort_index      = def_noparents_support
 			
 			**
-			*Student's effort
+			*Students' effort
 			**
 			egen 	temp1 = 			    rowmiss(def_student_loweffort def_absenteeism def_bad_behavior)
-			egen 	student_effort_index  = rowmean(def_student_loweffort def_absenteeism def_bad_behavior)
+			foreach var of varlist def_student_loweffort def_absenteeism def_bad_behavior {
+				recode `var' (0 = 1) (1 = 0), gen (I_`var')
+			}
+			egen 	student_effort_index  = rowmean(I_def_student_loweffort I_def_absenteeism I_def_bad_behavior)
 			replace student_effort_index  = . if temp1 > 1
-			drop 	temp1
+			drop I_* temp1
 
 			**
 			*Violence in the school
@@ -1477,7 +1370,7 @@ drop if year > 2005
 		
 			
 			**
-			*Teacher's expectations with their students
+			*Teachers' expectations with their students
 			**
 			recode expec_finish_grade9  (1 2 3 = 0) (4 = 1), gen (almost_all_finish_grade9)
 			recode expec_finish_grade12 (1 2 3 = 0) (4 = 1), gen (almost_all_finish_highschool)
@@ -1485,7 +1378,6 @@ drop if year > 2005
 			label  val almost_all_finish_grade9 	    yesno
 			label  val almost_all_finish_highschool 	yesno
 			label  val almost_all_get_college	   		yesno
-			
 			label  val teacher_less3min_wages	   		yesno
 			label  val teacher_more10yearsexp	   		yesno
 			
@@ -1498,7 +1390,6 @@ drop if year > 2005
 			tab	work_decisions , gen(participation_decisions)
 			tab students_books , gen(share_students_books)
 			tab quality_books  , gen(quality_books)
-			
 
 			*-----------------------------------------------------------------------------------------------------------------------*
 			gen treated   		= .				//1 for closed schools, 0 otherwise
@@ -1518,10 +1409,10 @@ drop if year > 2005
 			
 			*Labels
 			*------------------------------------------------------------------------------------------------------------------------*
-			label variable principal_effort					"Principal effort from teacher perspective"
-			label variable teacher_effort_index 			"Teacher's effort based on the use of news and literature books" 	
-			label variable parents_effort_index 			"1 if parents support children (from teacher's perspective) and 0, otherwise"
-			label variable student_effort_index				"Student effort from teacher perspective"
+			label variable principal_effort					"Principal managerial skills from teacher perspective"
+			label variable teacher_effort_index 			"Teachers' effort based on the use of news and literature books" 	
+			label variable parents_effort_index 			"1 if parents support children (from Teachers' perspective) and 0, otherwise"
+			label variable student_effort_index				"Student motivation from teacher perspective"
 			label variable violence_index					"Index for the violence the teacher faces in the school"
 			label variable almost_all_finish_grade9			"Teacher expects that almost all students will finish 9th grade"
 			label variable almost_all_finish_highschool		"Teacher expects that almost all students will finish high school "
@@ -1529,7 +1420,7 @@ drop if year > 2005
 			label variable teacher_college_degree		    "Teacher finished the undergraduate and 0, otherwise"
 			label variable teacher_male						"Male teachers"
 			label variable teacher_white					"White teachers" 
-			label variable teacher_age_range				"Teacher's age range"
+			label variable teacher_age_range				"Teachers' age range"
 			label variable teacher_years_graduation			"Years since graduation"
 			label variable type_university					"1: Federal. 2: State. 3: Municipal. 4: Private"
 			label variable type_education					"1: Face to face. 2: Face to face/distance. 3: Distance learning"
@@ -1541,9 +1432,9 @@ drop if year > 2005
 			label variable def_student_socioback			"Deficit in student learning is due to: socioeconomic background"
 			label variable def_parents_culturalback			"Deficit in student learning is due to: cultural background of the parents"
 			label variable def_noparents_support			"Deficit in student learning is due to: no parents support"
-			label variable def_low_selfesteem				"Deficit in student learning is due to: student's low self esteem"
-			label variable def_student_loweffort			"Deficit in student learning is due to:	student's low effort"
-			label variable def_bad_behavior					"Deficit in student learning is due to: student's bad behavior"
+			label variable def_low_selfesteem				"Deficit in student learning is due to: students' low self esteem"
+			label variable def_student_loweffort			"Deficit in student learning is due to:	students' low effort"
+			label variable def_bad_behavior					"Deficit in student learning is due to: students' bad behavior"
 			label variable def_absenteeism					"Deficit in student learning is due to: student missing the classes"
 			label variable violence_lifethreat  			"Teacher have ever had their life threatened in this school"
 			label variable violence_student_threat  		"Teacher already had a student threatening your life in school" 
@@ -1556,12 +1447,12 @@ drop if year > 2005
 			label variable expec_finish_grade9  			"How many students do you think will finish the 9th grade?"
 			label variable expec_finish_grade12 			"How many students do you think will finish the high school?"
 			label variable expec_get_college 				"How many students do you think will get to college?"
-			label variable teacher_edu 						"Teacher's education"
-			label variable postgrad  						"Teacher's graduate certificate"
-			label variable experience_asteacher 			"Teacher's experience (overall)"
-			label variable teacher_exp_school				"Teacher's experience (in school)"
-			label variable teacher_exp_grade 				"Teacher's experience (in the grade he/she is currently teaching)"
-			label variable teacher_work_contract 			"Teacher's contract type"
+			label variable teacher_edu 						"Teachers' education"
+			label variable postgrad  						"Teachers' graduate certificate"
+			label variable experience_asteacher 			"Teachers' experience (overall)"
+			label variable teacher_exp_school				"Teachers' experience (in school)"
+			label variable teacher_exp_grade 				"Teachers' experience (in the grade he/she is currently teaching)"
+			label variable teacher_work_contract 			"Teachers' contract type"
 			label variable use_news 						"Teacher uses news/magazines as pedag. material"
 			label variable use_copy_machine 				"Teacher uses copy machines as pedag. material"
 			label variable use_literature_books 			"Teacher uses literature books as pedag. material"
@@ -1575,8 +1466,8 @@ drop if year > 2005
 			label variable year 							"Year"
 			label variable urban							"1: Urban area. 0: Rural area"
 			label variable id_class							"Code of the class teacher is in charge of"
-			label variable teacher_gender					"Teacher's gender"
-			label variable teacher_skincolor   				"Teacher's skin color"
+			label variable teacher_gender					"Teachers' gender"
+			label variable teacher_skincolor   				"Teachers' skin color"
 			label variable principal_learning 				"Frequency that the principal: pays attention to students' learning"
 			label variable principal_norms 					"Frequency that the principal: pays attention to administrative norms"
 			label variable principal_maintenance 			"Frequency that the principal: pays attention to school maintenance"
@@ -1600,12 +1491,14 @@ drop if year > 2005
 			label variable teacher_more10yearsexp			"Teachers with more than 10 years of experience"
 			label variable teacher_tenure					"Teacher with tenure"
 			label variable teacher_less_40years				"Teacher with less than 40 years old"
-			label variable teacher_less3min_wages			"Teacher's salary is less than 3 minimum wage"
+			label variable teacher_less3min_wages			"Teachers' salary is less than 3 minimum wage"
 			label variable covered_curricula4				"Teachers covered more than 80 percent of the curricula"	
 			label variable participation_decisions4			"Teachers always participate of the work decisions"								
 			label variable share_students_books5 			"Teachers say that all the students have textbooks"
 			label variable quality_books4 					"Teachers classify the textbooks as great"
-		
+			label var teacher_wage1
+			label var teacher_wage2
+			label var teacher_wage3
 			compress
 			save "$inter/Teachers - Prova Brasil.dta", replace
 					
@@ -1768,14 +1661,14 @@ drop if year > 2005
 			label  define  teachers_tenure 					1 "25% or less"						2 "Between 26-50%"									3 "Between 51-75%" 						  			4 "Between 76%-90%"  									5 "More than 91%"
 			label  define  students_admission				1 "Selection test"					2 "Lottery" 										3 "Household Address" 					  			4 "Order of arrival" 									5 "Other criteria" 						6 "No criteria"   
 			label  define  school_offering					1 "More vacancies than enrollments" 2 "All vacancies were filles"						3 "Demand > vacancies offered"			  			4 "Demand much higher than vacancies offered"
-			label  define  criteria_classrooms				1 "Similar ages"				    2 "Similar student's performance"					3 "Heterogeneity in age"  				  			4 "Heterogeneity in performance"  						5 "No criteria"
-			label  define  criteria_teacher_classrooms	    1 "Teacher's choice" 				2 "More experienced teachers with high performers"  3 "More experienced teachers with low performers" 	4 "Keeping teachers with the same last year's students" 5 "Change of teachers between grades"   6 "Lottery"    7 "Other criteria" 8 "No criteria"  9 "Don't have 1st/5th grade"
+			label  define  criteria_classrooms				1 "Similar ages"				    2 "Similar Students' performance"					3 "Heterogeneity in age"  				  			4 "Heterogeneity in performance"  						5 "No criteria"
+			label  define  criteria_teacher_classrooms	    1 "Teachers' choice" 				2 "More experienced teachers with high performers"  3 "More experienced teachers with low performers" 	4 "Keeping teachers with the same last year's students" 5 "Change of teachers between grades"   6 "Lottery"    7 "Other criteria" 8 "No criteria"  9 "Don't have 1st/5th grade"
 			label  define  programa 						0 "No, even having the problem" 	1 "Yes"												2 "We don't have this problem"
 			label  define  problem                          0 "Not an issue" 					1 "Small" 											2 "A moderate/big issue"
 			label  define  teachers_training 				0 "No training" 					1 "Only a few"  									2 "A bit less than half"						    3 "More than half"
 			label  define  book_choice 						1 "External agent" 					2 "Few people or someone alone" 					3 "Group choice"
 			label  define  pedagogic_plan  					1 "No pedag. project" 				2 "Modelo pronto, sem discussão da equipe"			///
-			3  "Modelo pronto com algumas modificações/modelo próprio mas sem teacher's active involvement" 4 "With active teacher's involvement"
+			3  "Modelo pronto com algumas modificações/modelo próprio mas sem Teachers' active involvement" 4 "With active Teachers' involvement"
 			
 			recode criteria_classrooms						(5 = .) (6 = 5) if year > 2011
 			recode principal_selection_work  							(2 = 1) 	(3 = 2) 		(1     = 3) 	(4 5 6 = 4) (7 = 5)	 								if year <  2013
@@ -1858,8 +1751,8 @@ drop if year > 2005
 			**
 			*Males, whites and college degree
 			**
-			recode principal_gender     (1 = 1) (2 = 0)					, gen (male)
-			recode principal_skincolor  (1 = 1) (2 3 4 5 = 0)			, gen (white)
+			recode principal_gender     (1 = 1) (2 = 0)					, gen (principal_male)
+			recode principal_skincolor  (1 = 1) (2 3 4 5 = 0)			, gen (principal_white)
 			recode principal_edu_level  (3 4 5 6 = 1) (2 1 = 0)			, gen (principal_college_degree)
 			label  val male   yesno
 			label  val white  yesno
@@ -1897,7 +1790,7 @@ drop if year > 2005
 			label val external_support_all 		  yesno
 			
 			**
-			*Student and teacher effort (principal's perspective)
+			*Student and teacher effort (Principals' perspective)
 			**
 			egen temp1 =  rowmiss(absenteeism_students student_bad_behavior)
 			egen temp2 =  rowmiss(absenteeism_teachers teachers_turnover)
@@ -1939,20 +1832,20 @@ drop if year > 2005
 			replace treated    = 0 if treated == .
 			
 			
-			label variable student_effort 				  	"Student effort - principal's view"
-			label variable teacher_effort 				  	"Teacher effort - principal's view"
+			label variable student_effort 				  	"Student motivation - Principals' view"
+			label variable teacher_effort 				  	"Teacher effort - Principals' view"
 			label variable implementation_projects_mean  	"Mean principal effort - projects to reduce dropout/repetition and increase learning"
 			label variable implementation_projects_all   	"Full principal effort - projects to reduce dropout/repetition and increase learning"
-			label variable external_support_mean 		 	"Mean external stakeholder's suppport - principal's view"
-			label variable external_support_all  		  	"Full external stakeholder's suppport - principal's view"
-			label variable male								"Male principal"
-			label variable white							"White principal" 
-			label variable principal_age_range				"Principal's age range"
+			label variable external_support_mean 		 	"Mean external stakeholder's suppport - Principals' view"
+			label variable external_support_all  		  	"Full external stakeholder's suppport - Principals' view"
+			label variable principal_male					"Male principal"
+			label variable principal_white							"White principal" 
+			label variable principal_age_range				"Principals' age range"
 			label variable principal_years_graduation		"Years since graduation"
 			label variable type_university					"1: Federal. 2: State. 3: Municipal. 4: Private"
 			label variable type_education					"1: Face to face. 2: Face to face/distance. 3: Distance learning"
-			label variable principal_edu_level 				"Principal's education"
-			label variable postgrad  						"Principal's graduate certificate"
+			label variable principal_edu_level 				"Principals' education"
+			label variable postgrad  						"Principals' graduate certificate"
 			label variable meetings_class_council  			"Number of class council meetings"
 			label variable meetings_school_council  		"Number of student council meetings"
 			label variable pedagogic_plan 					"Development of the pedagogical plan"
@@ -1962,35 +1855,35 @@ drop if year > 2005
 			label variable network 							"School administrative network"
 			label variable year 							"Year"
 			label variable urban							"1: Urban area. 0: Rural area"
-			label variable principal_gender					"Principal's gender"
-			label variable principal_skincolor   			"Principal's skin color"
+			label variable principal_gender					"Principals' gender"
+			label variable principal_skincolor   			"Principals' skin color"
 			label variable area_postgrad 					"Area of Graduate School"
 			label variable principal_other_job 				"Do you have another job?"
 			label variable principal_wage 					"Gross principal_wage as principal"
 			label variable total_principal_wage 			"Gross principal_wage consideral all jobs the principal has"
-			label variable principal_exp_educ				"Principal's experience working in education"
+			label variable principal_exp_educ				"Principals' experience working in education"
 			label variable experience_asprincipal_total 	"Total experience as principal"
 			label variable experience_asprincipal_school 	"Experience as principal in this school"
 			label variable principal_workhours_school 		"Weekly hours of work in this school"
-			label variable students_admission 				"Criteria for student's enrollment in the school"
+			label variable students_admission 				"Criteria for Students' enrollment in the school"
 			label variable school_offering 					"Demand and supply of vacancies"
-			label variable criteria_classrooms 				"Criteria for student's allocation into classrooms"
-			label variable criteria_teacher_classrooms		"Criteria for teacher's allocation into classrooms"
+			label variable criteria_classrooms 				"Criteria for Students' allocation into classrooms"
+			label variable criteria_teacher_classrooms		"Criteria for Teachers' allocation into classrooms"
 			label variable principal_selection_work 		"How principal was selected for the position"
-			label variable org_training 					"Principal has organized teacher's training last two years"
+			label variable org_training 					"Principal has organized Teachers' training last two years"
 			label variable teachers_training			 	"Teachers training. 1: no training. 2: only a few. 3: less half. 4: more than half"
 			label variable training_last2years				"Principal has participated of some training last two years"
 			label variable teachers_tenure 					"Share of teachers with tenure (civil servants)"
 			label variable prog_reduce_dropout 				"0: no program reduce dropout but needs it/1: has a program/2: Does not need"
 			label variable prog_reduce_repetition 			"0: no program reduce repetition but needs it/1: has a program/2: Does not need"
 			label variable absenteeism_talk_students 		"Teachers talk to students to avoid their absenteeism"
-			label variable absenteeism_talk_parents 		"Teachers communicate parents about student's absenteeism"
-			label variable absenteeism_parents_inperson 	"Teachers invite parents to talk about student's absenteeism"
-			label variable absenteeism_send_someone 		"School sends someone to student's home talk about absenteeim"
-			label variable absenteeism_parents_meeting 		"Teachers talk about student's absenteeism in parent's meeting"
+			label variable absenteeism_talk_parents 		"Teachers communicate parents about Students' absenteeism"
+			label variable absenteeism_parents_inperson 	"Teachers invite parents to talk about Students' absenteeism"
+			label variable absenteeism_send_someone 		"School sends someone to Students' home talk about absenteeim"
+			label variable absenteeism_parents_meeting 		"Teachers talk about Students' absenteeism in parent's meeting"
 			label variable prog_increase_learning 			"0: no program increase learning but needs it/1: has a program/2: Does not need"
-			label variable absenteeism_teachers 			"Teacher's absenteeism. 0: not an issue. 1: Small/moderate. 2: Big issue"
-			label variable teachers_turnover				"Teacher's turnover. 0: not an issue. 1: Small/moderate. 2: Big issue"
+			label variable absenteeism_teachers 			"Teachers' absenteeism. 0: not an issue. 1: Small/moderate. 2: Big issue"
+			label variable teachers_turnover				"Teachers' turnover. 0: not an issue. 1: Small/moderate. 2: Big issue"
 			label variable lack_finantial_resources 		"Lack of finantial resources. 0: not an issue. 1: Small/moderate. 2: Big issue"
 			label variable lack_teachers 					"Lack of teachers. 0: not an issue. 1: Small/moderate. 2: Big issue"
 			label variable lack_adm_staff 					"Lack of adm staff. 0: not an issue. 1: Small/moderate. 2: Big issue"
@@ -1998,7 +1891,7 @@ drop if year > 2005
 			label variable lack_pedago_resources 			"Lack of pedago resources. 0: not an issue. 1: Small/moderate. 2: Big issue"
 			label variable interruption_school 				"Interruption of classes. 0: not an issue. 1: Small/moderate. 2: Big issue"
 			label variable absenteeism_students 			"Absenteism of students. 0: not an issue. 1: Small/moderate. 2: Big issue"
-			label variable student_bad_behavior 			"Student's bad behaviour 0: not an issue. 1: Small/moderate. 2: Big issue"
+			label variable student_bad_behavior 			"Students' bad behaviour 0: not an issue. 1: Small/moderate. 2: Big issue"
 			label variable interference_external_agents 	"Interference of external agents in the principals management"
 			label variable support_secretary_edu 			"Principal has the support from the secretary of education"
 			label variable exchange_information 			"Principal exchange informations with other principals"
@@ -2019,7 +1912,6 @@ drop if year > 2005
 			label variable absenteeism_teachers3 			"Teacher absenteeism as a big issue"									
 			label variable absenteeism_students3			"Student absenteeism as a big issue"	
 			compress
-			rename (male white) (principal_male principal_white)
 			save "$inter/Principals - Prova Brasil.dta", replace
 
 		

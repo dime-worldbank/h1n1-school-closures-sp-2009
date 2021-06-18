@@ -25,23 +25,26 @@
 		destring, replace
 		gen 	year = 2009
 		
-		rename  v39 hosp_h1n1
+		drop v39
 		
+		egen 	hosp_h1n1_july = rsum(week_16-week_31)
+
 		merge   1:1 codmunic2 year using "$inter/GDP per capita.dta", nogen keepusing(pop T)
 		keep if year == 2009
 		drop in 1	
-		foreach var of varlist week_* hosp_h1n1 {
+		foreach var of varlist week_*  hosp_h1n1_july {
 			replace `var' = 0 if `var' == .
 			replace `var' = `var'/(pop/100)
+			}
 		}		
-		format week* hosp_h1n1 %5.2fc
+		format week* hosp_h1n1* %5.2fc
 		drop v1
-	    order year codmunic2 T pop pop hosp_h1n1 
+	    order year codmunic2 T pop pop hosp_h1n1* 
 		save "$inter/H1N1.dta",replace
 		
 		gen 	 coduf = substr(string(codmunic2), 1,2 )
 		destring coduf, replace
-		collapse (sum)week* hosp_h1n1, by(year coduf)
+		collapse (sum)week* hosp_h1n1*,  by(year coduf)
 		save "$inter/H1N1 at state level.dta",replace
 
 		/*

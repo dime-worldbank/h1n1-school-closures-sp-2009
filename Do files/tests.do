@@ -9,22 +9,113 @@ global controls2007 c.mother_edu_highschool5##c.mother_edu_highschool5 c.number_
 				c.incentive_school5##c.incentive_school5 c.incentive_talk5##c.incentive_talk5 c.incentive_parents_meeting5##c.incentive_parents_meeting5	
 
 	
+global teachers_principals lack_books quality_books45 principal_effort5 student_effort_index5 absenteeism_issue5 classrooms_het_performance 
+	
 	use  "$final/h1n1-school-closures-sp-2009.dta" if (year == 2007 | year == 2009), clear
+	drop if treated_management_program == 1
+	
+ 	 reg math5 beta1-beta6 $controls2007 $teachers_principals  T2009 if tipo_municipio_ef1 == 1, cluster(codmunic)
+
+		xtset codschool year
+		drop 	 T2009
+		clonevar T2009 = beta7
+		xtreg 	 math5 beta1-beta6 $controls2007 $teachers_principals T2009  if tipo_municipio_ef1 == 1, fe cluster(codmunic)
+
+
+	
+	
+	
+	
 	
 		reg math5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 1 & tipo_municipio_ef1 == 1, cluster(codmunic)
-		reg port5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 1 & tipo_municipio_ef1 == 1, cluster(codmunic)
+
+		reg math5  i.codmunic $controls2007 $teachers_principals i.year i.T T2009 [aw = enrollment5] if G == 1 & tipo_municipio_ef1 == 1, cluster(codmunic)
 		
 		replace T 	  = 0 if network == 3
 		replace T2009 = 0 if network == 3 
-		
-		reg math5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 0 & tipo_municipio_ef1 == 1, cluster(codmunic)
-		reg port5  i.codmunic $controls2007 i.year i.T T2009 [aw = enrollment5] if G == 0 & tipo_municipio_ef1 == 1, cluster(codmunic)
-	
-	
+		reg math5  i.codmunic i.year i.T T2009 [aw = enrollment5] if G == 0 & tipo_municipio_ef1 == 1, cluster(codmunic)
+
+		reg math5  i.codmunic $controls2007 $teachers_principals i.year i.T T2009 [aw = enrollment5] if G == 0 & tipo_municipio_ef1 == 1, cluster(codmunic)
+
 		drop 	 T2009
 		clonevar T2009 = beta7
-		reg 	 math5 beta1-beta6 i.codmunic $controls2007 T2009 	[aw = enrollment5] if year == 2007 | year == 2009, cluster(codmunic)
-		reg 	 port5 beta1-beta6 i.codmunic $controls2007 T2009 	[aw = enrollment5] if year == 2007 | year == 2009, cluster(codmunic)
+		reg 	 math5 beta1-beta6 i.codmunic $controls2007 $teachers_principals T2009 	[aw = enrollment5] if year == 2007 | year == 2009, cluster(codmunic)
+
+		
+		
+		
+		
+		
+		xtreg math5   $controls2007  i.year i.T T2009  if G == 1 & tipo_municipio_ef1 == 1, fe cluster(codmunic)
+		xtreg math5   $controls2007 $teachers_principals  i.year i.T T2009  if G == 1 & tipo_municipio_ef1 == 1, fe cluster(codmunic)
+
+		xtreg math5   $controls2007  i.year i.T T2009  if G == 0 & tipo_municipio_ef1 == 1, fe cluster(codmunic)
+		xtreg math5   $controls2007 $teachers_principals  i.year i.T T2009  if G == 0 & tipo_municipio_ef1 == 1, fe cluster(codmunic)
+
+
+
+
+
+/*
+
+use  "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP" & network == 2 & year == 2009, clear
+
+count if G == 0 & math5 !=.
+count if G == 0 & math5 !=. & treated_management_program ==1
+
+use  "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP" & network == 2 & year == 2009, clear
+
+count if G == 1 & math5 !=.
+count if G == 1 & math5 !=. & treated_management_program ==1
+
+
+
+use  "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP" & network == 2 & year == 2009, clear
+
+count if G == 0 
+count if G == 0 & treated_management_program ==1
+
+use  "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP" & network == 2 & year == 2009, clear
+
+count if G == 1 
+count if G == 1 & treated_management_program ==1
+
+
+
+
+use "$final/Performance & Socioeconomic Variables of SP schools.dta" if network == 3 & (year == 2007 | year == 2009), clear 
+
+foreach var of varlist T2009 T mother_edu_highschool5 number_dropouts5 number_repetitions5  ///
+computer5 pib_pcap work5 white5 male5 private_school5 live_mother5 ///
+ComputerLab ScienceLab SportCourt Library InternetAccess  classhour5 spt5 tclass5 incentive_study5 ///
+incentive_homework5 incentive_read5 incentive_school5 incentive_talk5 incentive_parents_meeting5 math5 sp5 port5  {
+	rename `var' A`var'
+
+}
+tempfile a
+save `a'
+
+
+use  "$final/h1n1-school-closures-sp-2009.dta" if network == 3 & (year == 2007 | year == 2009), clear
+merge 1:1 codschool year using `a', keep(3)
+
+
+foreach var of varlist T2009 T mother_edu_highschool5 number_dropouts5 number_repetitions5  ///
+computer5 pib_pcap work5 white5 male5 private_school5 live_mother5 ///
+ComputerLab ScienceLab SportCourt Library InternetAccess  classhour5 spt5 tclass5 incentive_study5 ///
+incentive_homework5 incentive_read5 incentive_school5 incentive_talk5 incentive_parents_meeting5 math5 sp5 port5  {
+	gen B`var' = `var' - A`var'
+	count if `var' != A`var'
+	su B`var'
+
+}
+
+
+
+		
+	
+	
+		xtreg 	 port5 beta1-beta6 $controls2007 T2009 	 if year == 2007 | year == 2009, fe cluster(codmunic)
 
 
 

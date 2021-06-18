@@ -1,6 +1,6 @@
 clear
 set more off
-foreach i in RO AC AM RR PA AP TO MA PI CE RN PB PE AL SE BA MG ES RJ SP PR SC RS MS MT GO DF {
+foreach i in SP {
 #delimit ;
 infix
 str	ANO_CENSO	1	 - 	7

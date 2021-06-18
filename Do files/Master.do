@@ -308,18 +308,75 @@
 									  Ensino Fundamental Regular - Anos Iniciais. File 'divulgacao_anos_iniciais_escolas_2019'
 									  +
 									  Ensino Fundamental Regular - Anos Finais.   File 'divulgacao_anos_finais_escolas_2019'
-									  
-									 
-							
+									  							
 					**
 					** We save the excel files we downloaded in: h1n1-school-closures-sp-2009/DataWork/Datasets/Raw/IDEB 
 						
 			-> What it creates? 
 				2 .dta files named 'IDEB by school.dta' 'IDEB by municipality.dta' saved in: h1n1-school-closures-sp-2009/DataWork/Datasets/Intermediate	
 	
+	
 		**
 		**
-		- 7. Setting up dataset
+		- 7. RAIS
+		**---------------------------------------------------------------------------------------------------------------------------
+			-> How long it takes to run? 
+				
+	
+			-> What it does?
+				The code imports the microdata of RAIS (Relação Anual de Informações Sociais) and harmonizes.
+				The data collected are total wages of teachers and total number of hours worked. 
+				Teachers from state and locally-managed schools
+				Data by municipality.
+				
+					**
+					** We download and work on .csvfiles from https://bi.mte.gov.br/bgcaged/rais.php
+					User: basico
+					Password: 12345678
+					
+					Select RAIS -> RAIS VÍNCULOS -> then select 'Ano corrente a 2002'
+					
+					(A)
+					On the right hand side:
+						In 'Ano'   		, select years: 2007, 2008 and 2009
+						In 'Linha' 		, select 'Município'
+						In 'Coluna'		, select 'Ano'
+						In 'Subcoluna'	, select 'Natureza Jurídica Especial'
+					(B)
+					
+					On the left hand side:
+						In 'Seleções por assunto', select -> 'CBO 2002 Subgrupo'.
+					
+						In 'CBO 2002 Subgrupo', select 'Professores de nivel superior na educacao infantil e no ensino fundamental'
+						(Do not forget to click on right arrow (->) and then select on the green bottom. 
+						In 'Estabelecimento', select 'Natureza Jurídica Especial, then select on 'Setor Público Estadual' and
+						select 'Setot Público Municipal' 
+						(Do not forget to click on right arrow (->) and then click on the green bottom. 
+					
+					*====> For total hours teachers'  work
+					Back on the right hand side:
+						In 'Conteúdo', select "Qtd Hora Contr', then 'Soma'
+						Then Click in 'Execução da Consulta' (lightning bolt), then click in 'Transfere aquivo .csv' 
+						Save the file as 'Teachers hours of work.xlsx' in
+						h1n1-school-closures-sp-2009/DataWork/Datasets/Raw/RAIS
+						(Do not forget to change the file extention to '.xlsx')
+						
+					*====> For total teachers' wage 
+					Repeat steps (A) and (B) above. 
+					Back on the right hand side:
+						In 'Conteúdo', select "Vl Remun Média Nom', then 'Soma'
+						Then Click in 'Execução da Consulta' (lightning bolt), then click in 'Transfere aquivo .csv' 
+						Save the file as 'Teachers wage.xlsx' in 
+						h1n1-school-closures-sp-2009/DataWork/Datasets/Raw/RAIS
+						(Do not forget to change the file extention to '.xlsx')
+	
+			-> What does it create?
+				One .dta file named 'RAIS' saved in h1n1-school-closures-sp-2009/DataWork/Datasets/Intermediate
+	
+	
+		**
+		**
+		- 8. Setting up dataset
 		**---------------------------------------------------------------------------------------------------------------------------
 			-> How long it takes to run? 
 				
@@ -333,7 +390,7 @@
 
 		**
 		**
-		- 8. Descriptives
+		- 9. Descriptives
 		**---------------------------------------------------------------------------------------------------------------------------
 			-> How long it takes to run? 
 				
@@ -347,7 +404,7 @@
 
 		**
 		**
-		- 9. Regressions
+		- 10. Regressions
 		**---------------------------------------------------------------------------------------------------------------------------
 			-> How long it takes to run? 
 				
@@ -382,7 +439,7 @@
 				- inside this folder, create "DataWork"
 					- inside "DataWork", create "Datasets" 
 						- inside "Datasets", create 3 folders: "Raw", "Intermediate" and "Final" 
-							- inside "Raw", create the folders: IBGE, SUS, Prova Brasil, Censo Escolar, IDEB, Rendimento, Geocodes
+							- inside "Raw", create the folders: IBGE, SUS, Prova Brasil, Censo Escolar, IDEB, Rendimento, Geocodes, RAIS
 							- inside each of the folders created in Raw save the .txt files, .csv and xls files we instructed you
 							to download (in the explanation of each do file, we show how to download all the microdata you need to run the analaysis.
 							- inside folder Geocodes, save the .dta files saved in this link: 

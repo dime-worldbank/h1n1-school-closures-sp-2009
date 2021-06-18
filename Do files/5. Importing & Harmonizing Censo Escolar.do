@@ -549,7 +549,7 @@
 	*________________________________________________________________________________________________________________________________* 
 		foreach year in 2007 2008 2009 {
 			
-			foreach region in RO AC AM RR PA AP TO MA PI CE RN PB PE AL SE BA MG ES RJ SP PR SC RS MS MT GO DF {
+			foreach region in SP  {
 			
 			use "$inter/Professores`year'`region'.dta", clear
 
@@ -607,6 +607,8 @@
 			keep if occupation2 == 1 		
 
 			collapse (mean) LTeacher*,	 by (year codteacher occupation2 network codschool codmunic coduf location)
+			
+			save "$inter/Código de Identificação dos professores_`year'`region'.dta", replace
 				
 			foreach var of varlist LTeacher* {
 				local newname = substr("`var'", 2, .)
@@ -631,7 +633,7 @@
 		*----------------------------------------------------------------------------------------------------------------------------*
 			clear
 			foreach year in 2007 2008 2009 { 
-				foreach region in RO AC AM RR PA AP TO MA PI CE RN PB PE AL SE BA MG ES RJ SP PR SC RS MS MT GO DF {
+				foreach region in SP {
 					append using "$inter/Professores por escola_`year'`region'.dta",
 					erase 		 "$inter/Professores por escola_`year'`region'.dta"
 				}
@@ -641,6 +643,18 @@
 			compress
 			save "$inter/Teachers.dta", replace
 	
+			clear
+			foreach year in 2007 2008 2009 { 
+				foreach region in SP {
+					append using  "$inter/Código de Identificação dos professores_`year'`region'.dta"
+					erase 		  "$inter/Código de Identificação dos professores_`year'`region'.dta"
+				}
+			}
+			keep year codteacher occupation2 network codschool codmunic coduf location
+			compress
+			save "$inter/Código de Identificação dos professores", replace
+			
+			
 		**
 		**-> Students per teacher
 		*----------------------------------------------------------------------------------------------------------------------------*

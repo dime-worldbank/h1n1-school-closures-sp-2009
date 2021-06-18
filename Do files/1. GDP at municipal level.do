@@ -87,7 +87,7 @@
 
 			foreach year in 2005 2007 2008 2009 2010 2011 2012 2013 {					//GDP in 2019 BRL
 				su 		pib_pcap 	 					 if year == `year', detail
-				replace pib_pcap = .				 	 if year == `year' & pib_pcap > r(p99)
+				replace pib_pcap = .				 	 if year == `year' & pib_pcap > r(p99) & T != 1 //we could exclude Sao CAetano do Sul if we dont do T != 1, the municipality do have a higher gdp per capita. 
 				replace pib_pcap = pib_pcap*`ipca`year'' if year == `year'
 			}
 			
