@@ -155,7 +155,7 @@
 		drop if uf == "SG_UF"
 	
 		formatacao
-		drop if year == 2019 | year == 2021
+		*drop if year == 2019 | year == 2021
 		
 		*==========================>
 		keep if coduf == 35
@@ -247,7 +247,7 @@
 		merge 1:1 codmunic network year using `6th_9th' , nogen
 
 		formatacao
-		drop if year == 2019 | year == 2021
+		*drop if year == 2019 | year == 2021
 		
 		*==========================>
 		keep if coduf == 35
@@ -399,9 +399,7 @@
 		merge 1:1 uf network year using `6th_9th'     , nogen
 		
 		merge 1:1 uf network year using `high_school' , nogen
-		
-		drop if year == 2019 | year == 2021
-		
+				
 		keep if  network == "Estadual" | network == "Privada" | network == "Pública" | network == "Total"
 
 		replace  network = "5" if network == "Pública" 

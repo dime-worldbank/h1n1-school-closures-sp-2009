@@ -650,7 +650,7 @@
 					erase 		  "$inter/Código de Identificação dos professores_`year'`region'.dta"
 				}
 			}
-			keep year codteacher occupation2 network codschool codmunic coduf location
+			keep year codteacher occupation2 network codschool codmunic coduf location LTeacher*
 			compress
 			save "$inter/Código de Identificação dos professores", replace
 			

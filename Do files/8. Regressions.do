@@ -12,23 +12,6 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 	/*
-	
-	**
-	Models: 1, 2 and 3. 
-
-		**Model 1 is the robusteness check. In this model, the post-treament year is 2007 and pre-treatment is 2005. 
-		We set up the treatment dummy (T2007) equal to 1 for the year = 2007, and 0 if year = 2005.
-
-		**Model 2 is the estimation of the Average Treatment Effect (T2009). T2009 if equal if year = 2009, and 0 if year = 2007. 
-
-		**Model 3 is equal to model 2, but it restrict the sample of comparison group to municipalities that only have locally-managed schools.
-
-		**Models 4 to 17 are the models in which we interact the treatment with relevant variables, such as students per teacher, principal's effort and teacher abseenteism
-
-		**Model 18 the estimation of ATT by quantiles using Changes in Changes Model. 
-
-		**Model >= 20 -> Triple Dif-in-Dif
-	
 
 	**
 	Subjects: 
@@ -109,7 +92,7 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 				matrix results  = results \ (`model', `sub', `ATT', `lowerb', `upperb', 0, `grade')
 			
 			if "`var2'" != "novar" {																					//Standard errors using bootstrap for models in which we have the interaction of the treatment 
-																														//with other variables, such as students per teacher, principal's effort and teacher abseenteis
+																														//with other variables, such as students per teacher, principal's effort and teacher abseenteism
 				boottest `var2',  reps(1000)  boottype(wild) seed(141563) level(95) bootcluster(codmunic) quietly		
 				global pvalue2	= r(p)	
 				
@@ -145,36 +128,72 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 		**
 		*We use estout to export regression results. Besides the coefficients, we export pvalues, confidence interval, mean and standard deviation of the dependent variable
 		*----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		if "`var2'" == "novar" {						//pvalues of the models in which we only have the treatment coeficient + controls. 
-														//we need to save the p values in a separate matrix in order the estout the results taking the 
-														//significance levels according to the bootstrapped p-values. 
-			matrix define   pboots  = J(1,1,0)
-			matrix colnames pboots  = "`var1'"
-			matrix pboots[1,1]      = $pvalue
+		if "`var2'" == "novar" {							//pvalues of the models in which we only have the treatment coeficient + controls. 
+															//we need to save the p values in a separate matrix in order the estout the results taking the 
+															//significance levels according to the bootstrapped p-values. 
+			matrix define   pboots    = J(1,1,0)
+			matrix colnames pboots    = "`var1'"
+			matrix pboots[1,1]        = $pvalue
 			estadd matrix pvalueboots = pboots: model`model'`sub'`grade' //the *** of the significant levels will be added according to bootstrapped pvalues. 
 		}
 		
-		if "`var2'" !="novar" {							//pvalues of the models in which we only have the treatment coeficient + treatment coefficient versus interaction + controls
-			matrix define   pboots  = J(1,3,0)
-			matrix colnames pboots  = "`var1' `var2' `var3'"
-			matrix pboots[1,1]      = $pvalue
-			matrix pboots[1,2]      = $pvalue2
-			matrix pboots[1,3]      = $pvalue3
+		if "`var2'" !="novar" {								//pvalues of the models in which we only have the treatment coeficient + treatment coefficient versus interaction + controls
+			matrix define   pboots    = J(1,3,0)
+			matrix colnames pboots    = "`var1' `var2' `var3'"
+			matrix pboots[1,1]        = $pvalue
+			matrix pboots[1,2]        = $pvalue2
+			matrix pboots[1,3]        = $pvalue3
 			estadd matrix pvalueboots = pboots: model`model'`sub'`grade'
 		}		
 		
-		if `model' != 1 & `model' != 25 {				//adding dep var statistics
-			estadd scalar media   = media: 	model`model'`sub'`grade'
-			estadd scalar sd      = sd:		model`model'`sub'`grade'
-			estadd scalar att_sd  = att_sd:	model`model'`sub'`grade'
-			estadd scalar mediaT  = mediaT: model`model'`sub'`grade'
-			estadd scalar sdT     = sdT: 	model`model'`sub'`grade'
-			estadd scalar att_sdT = att_sdT:model`model'`sub'`grade'
-			estadd scalar mediaC  = mediaC: model`model'`sub'`grade'
-			estadd scalar sdC     = sdC: 	model`model'`sub'`grade'
-			estadd scalar att_sdC = att_sdC:model`model'`sub'`grade'
+		if `model' != 1 & `model' != 30 {				//adding dep var statistics, models 1 and 30 are placebos
+			estadd scalar media       = media: 	model`model'`sub'`grade'
+			estadd scalar sd          = sd:		model`model'`sub'`grade'
+			estadd scalar att_sd      = att_sd:	model`model'`sub'`grade'
+			estadd scalar mediaT      = mediaT: model`model'`sub'`grade'
+			estadd scalar sdT         = sdT: 	model`model'`sub'`grade'
+			estadd scalar att_sdT     = att_sdT:model`model'`sub'`grade'
+			estadd scalar mediaC      = mediaC: model`model'`sub'`grade'
+			estadd scalar sdC         = sdC: 	model`model'`sub'`grade'
+			estadd scalar att_sdC     = att_sdC:model`model'`sub'`grade'
 		}
+		
+		
+			unique codmunic  if network == 2 & year == 2009 & G == 1
+			scalar  		codmunict2g1 = r(unique) 
+			estadd scalar   codmunict2g1 = codmunict2g1: 	model`model'`sub'`grade'
+			
+			unique codschool if network == 2 & year == 2009 & G == 1
+			scalar  		codschoolt2g1 = r(unique) 
+			estadd scalar   codschoolt2g1 = codschoolt2g1: 	model`model'`sub'`grade'
+
+			unique codmunic  if network == 2 & year == 2009 & G == 0
+			scalar  		codmunict2g0 = r(unique) 
+			estadd scalar   codmunict2g0 = codmunict2g0: 	model`model'`sub'`grade'
+			
+			unique codschool if network == 2 & year == 2009 & G == 0
+			scalar  		codschoolt2g0 = r(unique) 
+			estadd scalar   codschoolt2g0 = codschoolt2g0: 	model`model'`sub'`grade'
+			
+			unique codmunic  if network == 3 & year == 2009 & G == 1
+			scalar  		codmunict3g1 = r(unique) 
+			estadd scalar   codmunict3g1 = codmunict3g1: 	model`model'`sub'`grade'
+			
+			unique codschool if network == 3 & year == 2009 & G == 1
+			scalar  		codschoolt3g1 = r(unique) 
+			estadd scalar   codschoolt3g1 = codschoolt3g1: 	model`model'`sub'`grade'
+
+			unique codmunic  if network == 3 & year == 2009 & G == 0
+			scalar  		codmunict3g0 = r(unique) 
+			estadd scalar   codmunict3g0 = codmunict3g0: 	model`model'`sub'`grade'
+			
+			unique codschool if network == 3 & year == 2009 & G == 0
+			scalar  		codschoolt3g0 = r(unique) 
+			estadd scalar   codschoolt3g0 = codschoolt3g0: 	model`model'`sub'`grade'			
+			
 	end
+	
+	
 
 *____________________________________________________________________________________________________________________________________________________________________________________*
 **
@@ -182,7 +201,14 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 *Regressions
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 *------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		use "$final/h1n1-school-closures-sp-2009.dta", clear	//YOU NEED STATA 16 FOR LASSO 
+*=============================>>YOU NEED STATA 16 FOR LASSO 
+*=============================>>
+
+	**
+	**
+	**Dataset
+	
+		use "$final/h1n1-school-closures-sp-2009.dta", clear					
 		foreach grade in 5 9 {
 		clonevar stuptea`grade' 	   	 	= spt`grade' 						//just renaming the variables because their names were too long for the matrix of pvalues after we run boottest
 		clonevar T2009_stuptea`grade'  		= T2009_spt`grade' 
@@ -202,19 +228,14 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 
 	**
 	**
-	**Models
-	foreach subject in math5 { // sp5  math5 port5 math_insuf5 port_insuf5 approval5 repetition5 dropout5  	 //regression for each of our dependent variables 
+	**Outcomes
+	foreach subject in  sp5  math5 port5 math_insuf5 port_insuf5 approval5 repetition5 dropout5	 { // sp5  math5 port5 math_insuf5 port_insuf5 approval5 repetition5 dropout5	 //regression for each of our dependent variables 
 		 
 		if  substr("`subject'", -1,.) == "5" 			{
 			local etapa 1
 			local weight enrollment5		//we weight all regressions by the number of students enrolled in fifth grade 
 			local grade 5
 		}
-		if  substr("`subject'", -1,.) == "9" 			{
-			local etapa 2
-			local weight enrollment9		//we weight all regressions by the number of students enrolled ninth-grade 
-			local grade 9
-		}	
 		if  substr("`subject'", 1,2)  == "sp"   		{
 			local sub = 1					//subject = 1, Standardized score, Portuguese and Math
 			local title = "Português e Matemática"
@@ -250,17 +271,16 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 				
 				
 		*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-		use `file_reg', clear	//YOU NEED STATA 16 FOR LASSO 
-
-			**
-			**
-			*Teacher and principal controls
-			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-			global 	teacher_principal 
+		use `file_reg', clear	
+		
+		*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+		**
+		*Selecting our control variables
+		**
 		
 			**
 			**
-			*Placebo Model. In our placebo model comparing 2005 and 2007 data, we need to restrict the vector of controls variables since there are fewer variables available for 2005. 
+			*Placebo Model. In our placebo model comparing 2005 and 2007 data, we need to restrict the vector of controls variables since there are fewer variables available for 2005
 			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 			global controls2005 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	  			///
 				   c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5 
@@ -273,12 +293,12 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 			
 			**
 			**
-			*Placebo Model. In our placebo model comparing 2007 and 2008 data, we also need to restrict the vector of control variables since we do not have socioeconomic variables for this year.
+			*Placebo Model. In our placebo model comparing 2007 and 2008 data, we also need to restrict the vector of control variables since in 2008 we do not have socioeconomic variables
 			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 			global controls2008 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	  			///
 				   c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5 c.classhour5##c.classhour5 
 	
-			if `sub' == 6 | `sub' == 7 | `sub' == 8 { //approval, rrepetition and dropout. Outcomes that we have since 2007
+			if `sub' == 6 | `sub' == 7 | `sub' == 8 { //We can only run this placebo model for approval, repetition and dropout. These are the outcomes that we have available in 2007 and 2008 (Prova Brasil data is not available in 2008). 
 				lasso linear `subject' $controls2008 i.year i.network if year <= 2008, rseed(89018)						
 				global controls2008  `e(allvars_sel)'
 			}
@@ -287,9 +307,8 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 			**
 			*Controls of our main model: comparing 2007 (pre-treatment data) with 2009. 
 			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-			if `etapa' == 1 {				//5th grade
-				
-				**Lasso considering socioeconomic controls for students
+				**
+				*Controls including only socioeconomic variables for students
 				global controls2007 c.mother_edu_highschool5##c.mother_edu_highschool5 c.number_dropouts5##c.number_dropouts5 									///
 				c.number_repetitions5##c.number_repetitions5 c.computer5##c.computer5																			///
 				c.pib_pcap##c.pib_pcap c.work5##c.work5 						   																				///
@@ -301,8 +320,9 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 				c.enrollmentTotal##c.enrollmentTotal 
 				lasso linear `subject' $controls2007 i.year i.network if year >= 2007, rseed(22224)		
 				global controls2007  `e(allvars_sel)'
-				
-				**Lasso considering socioeconomic controls for students + teachers' and principals' controls (we lose a significant amount of observations)
+			
+				**
+				*Controls including socioeconomic variables for students + teachers' and principals' controls (we lose a significant amount of observations)
 				global controls_add_2007 c.mother_edu_highschool5##c.mother_edu_highschool5 c.number_dropouts5##c.number_dropouts5 								///
 				c.number_repetitions5##c.number_repetitions5 c.computer5##c.computer5																			///
 				c.pib_pcap##c.pib_pcap c.work5##c.work5 						   																				///
@@ -313,125 +333,151 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 				c.incentive_school5##c.incentive_school5 c.incentive_talk5##c.incentive_talk5 c.incentive_parents_meeting5##c.incentive_parents_meeting5		///
 				c.enrollmentTotal##c.enrollmentTotal c.lack_books##c.lack_books c.quality_books4`grade'##c.quality_books4`grade' 								///
 				c.principal_effort`grade'##c.principal_effort`grade' c.student_effort_index`grade'##c.student_effort_index`grade'	 							///
-				i.absenteeism_teachers c.classrooms_het_performance##c.classrooms_het_performance																///
+				i.absenteeism_teachers c.classrooms_het_performance##c.classrooms_het_performance c.teacher_motivation5##c.teacher_motivation5					///
 				
 				lasso linear `subject' $controls_add_2007 i.year i.network if year >= 2007, rseed(78374)		
 				global controls_add_2007  `e(allvars_sel)'								
-			}
-			/*
-			if `etapa' == 2 {				//9th grade
-				global controls2007 c.mother_edu_highschool9##c.mother_edu_highschool9 c.number_dropouts9##c.number_dropouts9 									///
-				c.number_repetitions9##c.number_repetitions9 c.computer9##c.computer9																			///
-				c.pib_pcap##c.pib_pcap   c.work9##c.work9 						   																				///
-				c.white9##c.white9 c.male9##c.male9 c.private_school9##c.private_school9 c.live_mother9##c.live_mother9 										///
-				c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt 																///
-				c.Library##c.Library c.InternetAccess##c.InternetAccess c.classhour9##c.classhour9 c.tclass9##c.tclass9 										///
-				c.incentive_study9##c.incentive_study9 c.incentive_homework9##c.incentive_homework9 c.incentive_read9##c.incentive_read9	 					///
-				c.incentive_school9##c.incentive_school9 c.incentive_talk9##c.incentive_talk9 c.incentive_parents_meeting9##c.incentive_parents_meeting9									
-						
-				if `sub' != 5 {	 //The model does not converge when sub == 5, so in sub = 5 we use the same controls as sub = 4
-					lasso linear `subject' $controls2007 i.year i.network if year >= 2007, rseed(34464)		
-					global controls2007  `e(allvars_sel)'
-				}
-			}
-			*/
 			
-			
-			**
-			*Diference-in-diferences
-			**The strategy is to restrict the sample to locally managed schools. The treatment group  -> schools in the 13 municipalities that opted to extend the winter break.
-																			   //The comparison group -> schools of the other municipalities in São Paulo that mantained their school calendar
-			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+		*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+		**
+		**Diference-in-diferences
+		**The strategy is to restrict the sample to locally managed schools. The treatment group  -> schools in the 13 municipalities that opted to extend the winter break.
+																	       //The comparison group -> schools of the other municipalities in São Paulo that mantained their school calendar
+																		   
 			use `file_reg' if network == 3, clear					
 			drop if codmunic == 3509502 | codmunic == 3520509 | codmunic == 3548807 				//municipalities without 5th grade scores in 2005. Since we can not test parallel trends for these municipalities, 
 																									//we did not consider them in our analaysis
 			sort 	codschool year
-			
-			if `etapa' == 1 {  																		//we only run the dif-in-dif for 5th graders as not all the 13 municipalities that extended the winter break 
-																									//offered 6th to 9th graders. In this case, we would have just a small number of clusters. 
+																								 
 					
 				*=============================> 
+				**
 				*Placebo models. 2007 versus 2005, or 2008 versus 2007.
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-				local model = 1
+				
+				//model 1, is the robusteness check. In this model, the post-treament year is 2007 and pre-treatment is 2005. 
+				//We set up the treatment dummy (T2007) equal to 1 for the year = 2007, and 0 if year = 2005.
+				
+				local model = 1																		
 					
-				if `sub' != 6 & `sub' != 7 & `sub' != 8 {		//for performance data our placebo compares 2005 with 2007. 
-					reg  	`subject' T2007 		  								 		  i.T i.codmunic i.year $controls2005 	  			 		if year == 2005 | year == 2007  [aw = `weight'], cluster(codmunic)
+				if `sub' != 6 & `sub' != 7 & `sub' != 8 {		//for performance data, our placebo compares 2005 with 2007. 
+					reg  	`subject' T2007 		  								 		  i.T i.codmunic i.year $controls2005 	  			 		if year == 2005 | year == 2007  																									[aw = `weight'], cluster(codmunic)
 					eststo 		model`model'`sub'`grade', title("placebo")
 					mat_res, 	model(`model') sub(`sub') var1(T2007) var2(novar) var3(novar)  dep_var(`subject') grade(`grade')
 				}
 				
 				if `sub' == 6 | `sub' == 7 | `sub' == 8 { 		//for approval, repetition and dropout, our placebo compares 2007 with 2008
-					reg  	`subject' T2008 		  										  i.T i.codmunic i.year $controls2008 						if year == 2007 | year == 2008 [aw = `weight'], cluster(codmunic)
+					reg  	`subject' T2008 		  										  i.T i.codmunic i.year $controls2008 						if year == 2007 | year == 2008 																										[aw = `weight'], cluster(codmunic)
 					eststo 		model`model'`sub'`grade', title("Dif-in-dif")
 					mat_res, 	model(`model') sub(`sub') var1(T2008) var2(novar) var3(novar)  dep_var(`subject') grade(`grade')
-					
+				
 				}
 				local model = `model' + 1
 					
+					
 				*=============================> 
+				**
 				*2009 versus 2007
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-					reg 	`subject' 	    T2009	  								 		  i.T i.codmunic i.year $controls2007 						if year == 2007 | year == 2009  [aw = `weight'], cluster(codmunic)
+				//model 2, dif in dif 
+				//Estimation of the Average Treatment Effect (T2009). T2009 if equal if year = 2009, and 0 if year = 2007. 
+					reg 	`subject' 	    T2009	  								 		  i.T i.codmunic i.year $controls2007 						if year == 2007 | year == 2009  																									[aw = `weight'], cluster(codmunic)
 					eststo 	 	model`model'`sub'`grade', title("Dif-in-dif") 
 					mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar)  dep_var(`subject') grade(`grade')
 					local 		model = `model' + 1
 					
 					
 				*=============================> 
-				*Robustness. Comparison group: only municipalities that do not have state schools, since one can argue that in municipalities with state and municipal schools, 
-											 //we can have spilovers if the same teacher works in a municipal and a state schools at the same time. 
+				**
+				*2009 versus 2007 + additional controls (principal and teacher controls)
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-					reg 	`subject' 	    T2009	  										   i.T i.codmunic i.year $controls2007 						if (year == 2007 | year == 2009) & ((T == 1) | (T == 0 & share_teacher_both_networks < 50))   [aw = `weight'], cluster(codmunic)
-					eststo 		model`model'`sub'`grade', title("robmuni")  
-					mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar)  var3(novar)  dep_var(`subject') grade(`grade')
-					local 		model = `model' + 1
-				
-				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-					reg 	`subject' 	    T2009	  										   i.T i.codmunic i.year $controls2007 						if (year == 2007 | year == 2009) & ((T == 1) | (T == 0 & share_teacher_both_networks < 50)) & share_teacher_management_program == 0  [aw = `weight'], cluster(codmunic)
-					eststo 		model`model'`sub'`grade', title("robmuni2")  
-					mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar)  var3(novar)  dep_var(`subject') grade(`grade')
-					local 		model = `model' + 1
-					
-					
-				*=============================> 
-				*2009 versus 2007 + teacher/principal controls
-				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-					reg 	`subject' 	    T2009	  								 		  i.T i.codmunic i.year $controls_add_2007					if year == 2007 | year == 2009  [aw = `weight'], cluster(codmunic)
+				//model 3, dif-in-dif with additional controls
+					reg 	`subject' 	    T2009	  								 		  i.T i.codmunic i.year $controls_add_2007					if year == 2007 | year == 2009  																									[aw = `weight'], cluster(codmunic)
 					eststo 	 	model`model'`sub'`grade', title("principal") 
 					mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar)  dep_var(`subject') grade(`grade')
 					local 		model = `model' + 1
 					
-				/*
+					
 				*=============================> 
+				**
+				*Robustness. In the comparison group, we can have spilovers if the same teacher works in a locally and a state-managed school at the same time. 
+							 //In this robustness check we restrict to schools in which the share of teachers that also work in state-managed schools is smaller than 50%. 
+				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+				//model 4, dif in dif, robustness with share of teachers in both networks < 5%
+				//model 5, dif in dif, robustness with share of teachers in both networks < 10%
+				//model 6, dif in dif, robustness with share of teachers in both networks < 15%
+				//model 7, dif in dif, robustness with share of teachers in both networks < 20%
+				//model 8, dif in dif, robustness with share of teachers in both networks < 25%
+					forvalues share = 5(5)25 {
+					reg 	`subject' 	    T2009	  										   i.T i.codmunic i.year $controls2007 						if (year == 2007 | year == 2009) & ((T == 1) | (T == 0 & share_teacher_both_networks < `share'))   									[aw = `weight'], cluster(codmunic)
+					eststo 		model`model'`sub'`grade', title("Dif-in-dif")  
+					mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar)  var3(novar)  dep_var(`subject') grade(`grade')
+					local 		model = `model' + 1
+					}
+			
+			
+				*=============================> 
+				**
+				*Robustness. One can also argue spillovers if the locally-managed schools have teachers that work in state-managed schools and that are included in the Improving Management
+						   //Practices Program implemented by the State Government of Sao Paulo. 
+						   //In this robustness check, we restrict the sample to schools where there are teachers participating in this Management Intervation. 
+				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+				//model 9, robusness
+					reg 	`subject' 	    T2009	  										   i.T i.codmunic i.year $controls2007 						if (year == 2007 | year == 2009) & share_teacher_management_program == 0  [aw = `weight'], cluster(codmunic)
+					eststo 		model`model'`sub'`grade', title("Dif-in-dif")  
+					mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar)  var3(novar)  dep_var(`subject') grade(`grade')
+					local 		model = `model' + 1
+					
+					
+				*=============================> 
+				**
 				*Treatment with interactions
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+				//model 10 interaction of ATT versus students per teacher
+				//model 11 interaction of ATT versus principal effort
+				//model 12 interaction of ATT versus teacher absenteeism
 					if `grade' == 5 & (`sub' == 2 | `sub' == 3) {
-						foreach variable in stuptea prin  absen { //
+						foreach variable in stuptea prin absen { //
 							
-							reg 	`subject' T2009 T2009_`variable'`grade' `variable'`grade'  i.T i.codmunic i.year $controls2007 						if year == 2007 | year == 2009  [aw = `weight'], cluster(codmunic)					
-							eststo 		model`model'`sub'`grade', title("Triple-dif")   
+							reg 	`subject' T2009 T2009_`variable'`grade' `variable'`grade'  i.T i.codmunic i.year $controls2007 						if (year == 2007 | year == 2009) & share_teacher_management_program == 0  [aw = `weight'], cluster(codmunic)
+							eststo 		model`model'`sub'`grade', title("Dif-in-dif")   
 							mat_res, 	model(`model') sub(`sub') var1(T2009) var2(T2009_`variable'`grade') var3(`variable'`grade')  dep_var(`subject') grade(`grade')
 							local 		model = `model' + 1
 						}
 					}
-				*/
-				
-				/*
+					
+					
 				*=============================> 
+				**
+				*Same as model 9 but with delta of performance using 2007 controls
+				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+				//model 13, delta performance
+					if `grade' == 5 & (`sub' == 2 | `sub' == 3) {
+						reg 	delta_`subject' 	    T	  								   i.codmunic i.year $controls2007 						    if (year == 2007 			   ) & share_teacher_management_program == 0  [aw = `weight'], cluster(codmunic)
+						eststo 		model`model'`sub'`grade', title("Dif-in-dif")  
+						mat_res, 	model(`model') sub(`sub') var1(T) var2(novar)  var3(novar)  dep_var(`subject') grade(`grade')
+						local 		model = `model' + 1
+					}
+					
+				
+				
+				*=============================> 
+				**
 				*Changes in changes estimator
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+				//model 14
 					if "`subject'" == "port5" | "`subject'" == "math5" {
 						foreach quantile in 10 20 30 40 50 60 70 80 90 { 
-							cic 	continuous `subject' T post_treat $controls2007 i.codmunic 															if year == 2007 | year == 2009  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
+							cic 	continuous `subject' T post_treat $controls2007 i.codmunic 														    if (year == 2007 | year == 2009) & share_teacher_management_program == 0  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(1000))
 							matrix 	reg_results = r(table)
 							matrix 	results = results \ (`model', `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile', `grade')	 	
 						}
 					}
-				*/			
+						
 						
 				*=============================> 
-				*Parallel trends
+				**
+				*Saving Data to check parallel trends
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 					preserve	
 						sort codschool year						
@@ -441,125 +487,155 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 						format 	 	   `subject' %4.1fc
 						save 		   "$inter/time_trend_dif-in-dif_`subject'.dta", replace
 					restore
-			}
 			
-			**		
-			*Triple difference-in-differences
-			*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+		*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+		**
+		**Triple diference-in-diferences
+		**The advantage of this strategy is to include locally and state-managed schools
+		
 			local model = 20
-			
-			if `etapa' == 1 | `etapa' == 2 { //triple dif we run for 5th and 9th grades
-					
+								
 				use `file_reg' if (year >= 2005 & year <= 2009) & tipo_municipio_ef`etapa' == 1, clear //tipo_municipio_ef1 : municipalities with state and municipal schools offering 1st to 5th grade 
+				
 				drop if school_management_program == 1												   //excluding state schools included in the program to increase managerial practices
-				replace share_teacher_management_program = 0 if year == 2007
+				
+				replace share_teacher_management_program = 0 if year == 2007						   //In 2009, the Management Program of the state-managed network had not yet been implemented.
 					
 				*=============================> 
-				*2009 versus 2007
+				**
+				*2009 versus 2007, + additional controls (principal and teacher controls) + school fixed effects
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 					drop 	 T2009
 					clonevar T2009 = beta7
-						reg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls2007 		share_teacher_management_program	 [aw = `weight'] if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < 50) | (G == 0)), cluster(codmunic)
+					//model 20, triple dif, no restriction in the % of teachers working in both networks
+					//model 21, triple dif, share of teachers in both networks < 10%
+					//model 22, triple dif, share of teachers in both networks < 15%
+					//model 23, triple dif, share of teachers in both networks < 20%
+					//model 24, triple dif, share of teachers in both networks < 25% 
+					//model 25, triple dif, share of teachers in both networks < 25% 
+
+						reg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls_add_2007  [aw = `weight'] if (year == 2007 | year == 2009) & 																   share_teacher_management_program == 0, cluster(codmunic)
 						eststo 		model`model'`sub'`grade', title("Triple-dif")   
 						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
-						local 		model = `model' + 1
+						local 		model = `model' + 1					
+
+					forvalues share = 5(5)25 {
+						reg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls_add_2007  [aw = `weight'] if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < `share') | (G == 0)) & share_teacher_management_program == 0, cluster(codmunic)
+						eststo 		model`model'`sub'`grade', title("Triple-dif")   
+						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
+						local 		model = `model' + 1					
+					}
 						
 				*=============================> 
-				*2009 versus 2007 + principals/teachers controls
+				**
+				*2009 versus 2007, + additional controls (principal and teacher controls) , schools fixed effects
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-						reg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls_add_2007 share_teacher_management_program	 [aw = `weight'] if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < 50) | (G == 0)), cluster(codmunic)
-						eststo 		model`model'`sub'`grade', title("Triple-principals")   
-						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
-						local 		model = `model' + 1	
-						
-						xtset codschool year
-						
-						xtreg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls2007  	share_teacher_management_program	if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < 50) | (G == 0)), cluster(codmunic)
-						eststo 		model`model'`sub'`grade', title("xtreg")   
+				//model 26
+						xtreg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls_add_2007 					if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < 25) 	 | (G == 0)) & share_teacher_management_program == 0,  fe cluster(codmunic)
+						eststo 		model`model'`sub'`grade', title("Triple-dif")   
 						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
 						local 		model = `model' + 1	
 												
-						xtreg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls_add_2007	share_teacher_management_program	 if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < 50) | (G == 0)), cluster(codmunic)
-						eststo 		model`model'`sub'`grade', title("xtreg_principal")   
-						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
-						local 		model = `model' + 1	
-												
-				/*		
+				
 				*=============================> 
+				**
 				*Treatment with interactions
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+				//model 27 interaction of ATT versus students per teacher
+				//model 28 interaction of ATT versus principal effort
+				//model 29 interaction of ATT versus teacher absenteeism
 					foreach variable in stuptea prin  absen { //
-						reg 	`subject' T2009 T2009_`variable'`grade' `variable'`grade' beta1-beta6 i.codmunic $controls2007 					 [aw = `weight'] if year == 2007 | year == 2009, cluster(codmunic)					
+						reg 	`subject' T2009 T2009_`variable'`grade' `variable'`grade' beta1-beta6 i.codmunic $controls_add_2007 [aw = `weight'] if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < 25)		| (G == 0)) & share_teacher_management_program == 0, cluster(codmunic)
+						eststo 		model`model'`sub'`grade', title("Triple-dif")   
 						eststo 		model`model'`sub'`grade', title("Triple-dif")   
 						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar)  var3(novar) dep_var(`subject') grade(`grade')
 						local 		model = `model' + 1
 					}
-				*/
+				
+				
 				*=============================> 
+				**
 				*Changes in changes estimator
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
-					/*
+				//model 30	
+					preserve
+					keep if ((G == 1 & share_teacher_both_networks < 25) | (G == 0)) & share_teacher_management_program == 0
 					if  "`subject'" == "math5" | "`subject'" ==  "port5" {
 						foreach quantile in 10 20 30 40 50 60 70 80 90 { 
-							cic 	continuous `subject' beta4 beta3 beta1 beta2 beta5 beta6 $controls2007 i.codmunic  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(500))
+							cic 	continuous `subject' beta4 beta3 beta1 beta2 beta5 beta6 $controls_add_2007 i.codmunic  [aw = `weight'], did at(`quantile') vce(bootstrap, reps(500))
 							matrix 	reg_results = r(table)
 								matrix results = results \ (`model', `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile', `grade')	 	
 							}
 					}
-					*/
+					restore
+					
 					local model = `model' + 1
+					
 								
 				*=============================> 
+				**
 				*Triple dif placebo.   We run the placebo comparing approval, repetition and dropout rates in 2007 and 2008 (placebo post-treament period).
 									 //we could not run the same for portuguese and math because we do no have state schools in Prova Brasil 2005. 
 				*-------------------------------------------------------------------------------------------------------------------------------------------------------------------*
+				//model 31
 				if `sub' == 6 | `sub' == 7 | `sub' == 8 {
 					drop 	 T2008
 					clonevar T2008 = beta7P2
 					label var T2008 "ATT, 2008 versus 2007"
-						reg 	`subject' T2008											 beta1P2-beta6P2 i.codmunic $controls2008 [aw = `weight'] if year == 2007 | year == 2008, cluster(codmunic)
+						reg 	`subject' T2008											 beta1P2-beta6P2 i.codmunic $controls2008  [aw = `weight']  if (year == 2007 | year == 2008) & ((G == 1 & share_teacher_both_networks < 10) 		| (G == 0)) & share_teacher_management_program == 0, cluster(codmunic)
 						eststo 		model`model'`sub'`grade', title("Triple-dif")   
 						mat_res, 	model(`model') sub(`sub') var1(T2008) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
 						local		model = `model' + 1
 				}
-				
-			}
 	}
-	estout * using "$results/Table2.csv"  , delimiter(";") keep(T2007  T2009* beta*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
+
 	
-	/*
 	**
 	**
 	**Tables
 	
-	//Placebo (model1), dif-in-dif (model2), dif-in-dif robustness(model3), triple-dif (model 20)
+	//Table that we use just to check the number of clusters (municipalities) and number of treatment/comparison schools
+	estout *	using "$results/All-results.csv"    , delimiter(";") keep(T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC space  codmunict2g1 codschoolt2g1 codmunict2g0 codschoolt2g0 codmunict3g1 codschoolt3g1 codmunict3g0  codschoolt3g0 , fmt(%9.0g %9.3f %9.2f) labels("Obs" "R2" " " "Pooled Sample" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Treatment Group" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Comparison Group" "Mean" "Standard Deviation" "Estimate of ATT(in sd)")) replace
+
+	
+	//Placebo (model1), dif-in-dif (model2), dif-in-dif robustness(model9) triple-dif (model 25)
 	//subs 1, 2 and 3.
 	//grade 5
-	estout model115 model215 model315 model2015 model125 model225 model325 model2025 model135 model235 model335  model2035   	using "$results/Table2.csv"  , delimiter(";") keep(T2007  T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
+	estout model115 model215 model915 model2515 model125 model225 model925 model2525 model135 model235 model935  model2535   							using "$results/Table2.csv"    , delimiter(";") keep(T2007  T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f) labels("Obs" "R2" " " "Pooled Sample" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Treatment Group" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Comparison Group" "Mean" "Standard Deviation" "Estimate of ATT(in sd)")) replace
 
-	estout model225 model425 model2025 model2125 model235 model435 model2035 model2135    										using "$results/TableA14.csv"  , delimiter(";") keep(T2007  T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
+	
+	//dif-in-dif (model 2), + testing models with different % of teachers who work in both state and locally-managed schools
+	estout model225 model325 model425 model525 model625 model725 model825 model925  																	using "$results/TableA14.csv"  , delimiter(";") keep(		T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f) labels("Obs" "R2" " " "Pooled Sample" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Treatment Group" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Comparison Group" "Mean" "Standard Deviation" "Estimate of ATT(in sd)")) replace
+
+	
+	//dif-in-dif (model 2), + testing models with different % of teachers who work in both state and locally-managed schools
+	estout model235 model335 model435 model535 model635 model735 model835 model935 																		using "$results/TableA15.csv"  , delimiter(";") keep(		T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f) labels("Obs" "R2" " " "Pooled Sample" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Treatment Group" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Comparison Group" "Mean" "Standard Deviation" "Estimate of ATT(in sd)")) replace
 	
 	
-	//dif-in-dif (model 2), tiple dif (model 20)
+	//models 20, 21, 22, 23, 24
+	estout model2025 model2125 model2225 model2325 model2425 model2525 model2625 model2035 model2135 model2235 model2335 model2435 model2535 model2635	using "$results/TableA16.csv"  , delimiter(";") keep(		T2009*) label cells(b(star   fmt(3)) p) 							starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f) labels("Obs" "R2" " " "Pooled Sample" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Treatment Group" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Comparison Group" "Mean" "Standard Deviation" "Estimate of ATT(in sd)")) replace
+	
+	
+	//Interactions, dif in dif, model 9 and models 10, 11, 12
+	estout model925 model1025 model1125 model1225 model935 model1035 model1135 model1235 																using "$results/TableA17.csv"  , delimiter(";") keep(  		T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f) labels("Obs" "R2" " " "Pooled Sample" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Treatment Group" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Comparison Group" "Mean" "Standard Deviation" "Estimate of ATT(in sd)")) replace
+	
+	
+	//dif-in-dif models 2, 8, 9, 24 and 25
 	//subs 4 and 5
 	//grade 5
-	estout model245 model2045 model255 model2055  						 													 	using "$results/TableA14.csv", delimiter(";") keep(  T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
+	estout model245 model845 model945 model2545 model2645 model255 model855 model955 model2555 model2655			 									using "$results/TableA18.csv"  , delimiter(";") keep(  		T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space media space space mediaT space space mediaC									, fmt(%9.0g %9.3f %9.2f) labels("Obs" "R2" " " "Pooled Sample" "Mean" " " "Treatment Group" "Mean" " " "Comparison Group" "Mean")) replace
 
-	//Placebo (model1), placebo triple dif (model 26), dif in dif (model 2), triple dif (model20).
+		
+	//Placebo (model1), placebo triple dif (model 30), dif in dif (model 2)
 	//subs 6, 7 and 8
 	//grade 5
-	estout model165 model2665 model265 model2065 model175 model2675 model275 model2075 model185 model2685 model285 model2085   	using "$results/TableA15.csv", delimiter(";") keep(T2008  T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
-
-	//Interactions, dif in dif, model2, model5, model6, model7
-	estout model225 model525 model625 model725 model235 model535 model635 model735 												using "$results/TableA16.csv", delimiter(";") keep(  T2009*)   label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
-
-	//Interations, triple-dif, model20, 22, 23 and 24
-	estout  model2025 model2225 model2325 model2425 model2035 model2235 model2335 model2435 using "$results/TableA17.csv", delimiter(";") keep(  T2009*)   label cells(b(star   fmt(3)) p  ) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
+	estout model3165 model965 model2565 model2665 model3175 model975 model2575 model2675 model3185 model965 model2585 model2685 						using "$results/TableA19.csv"  , delimiter(";") keep(T2008  T2009*) label cells(b(star pvalue(pvalueboots) fmt(3)) pvalueboots) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f) labels("Obs" "R2" " " "Pooled Sample" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Treatment Group" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Comparison Group" "Mean" "Standard Deviation" "Estimate of ATT(in sd)")) replace
 
 	
-	estout  model2025 model2525  model2035 model2535  using "$results/TableA18.csv", delimiter(";") keep(  T2009*)   label cells(b(star   fmt(3)) p  ) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2_a space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f)) replace
-/*
-		
+	//Interations, triple-dif
+	estout model2525 model2625 model2725 model2825 model2925 model2535 model2635 model2735 model2835 model2935											using "$results/TableA20.csv"  , delimiter(";") keep( 		T2009*) label cells(b(star   fmt(3)) p) 							starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space media sd att_sd space space mediaT sdT att_sdT space space mediaC sdC att_sdC, fmt(%9.0g %9.3f %9.2f) labels("Obs" "R2" " " "Pooled Sample" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Treatment Group" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Comparison Group" "Mean" "Standard Deviation" "Estimate of ATT(in sd)")) replace
+ 
+
 *____________________________________________________________________________________________________________________________________________________________________________________*
 **
 **	
@@ -677,15 +753,15 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 				xline(2.5, lpattern(shortdash) lcolor(navy)) 																																	///
 				xline(4.5, lpattern(shortdash) lcolor(navy)) 																																	///
 				xtitle("", size(medsmall)) 											  																											///
-				ytitle("{&gamma}, in standard deviation", size(small)) ylabel(-0.4(0.1)0.2, labsize(small) gmax angle(horizontal) format (%4.1fc))  														///					
+				ytitle("{&gamma}, in standard deviation", size(small)) ylabel(-0.4(0.1)0.2, labsize(small) gmax angle(horizontal) format (%4.1fc))  											///					
 				xlabel(1 `" "2007" "versus 2005" "' 2 `" "2009" "versus 2007" "' 3 `" "2007" "versus 2005" "' 4 `" "2009" "versus 2007" "' 5 `" "2007" "versus 2005" "' 6 `" "2009" "versus 2007" "', labsize(small) ) 									///
 				title(, size(medsmall) color(black)) 																																			///
 				graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 																		///
 				plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 																				///						
 				legend(order(1 "Robustness" 2 "Extended winter break" 3 "95% CI" ) cols(3) region(lstyle(none) fcolor(none)) size(medsmall))  													///
 				text(0.2 1.6 "Portuguese & Math") 																																				///
-				text(0.2 3.5 "Math") 																																						///
-				text(0.2 5.5 "Portuguese" ) 																																							///
+				text(0.2 3.5 "Math") 																																							///
+				text(0.2 5.5 "Portuguese" ) 																																					///
 				ysize(4) xsize(6)  ///
 				note("", color(black) fcolor(background) pos(7) size(small)) 
 				graph export "$figures/ATT-port&math-standard-deviation.pdf", as(pdf) replace
@@ -694,27 +770,36 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 	*Impact on Math/Portuguese by percentile
 	*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 		use "$final/Regression Results.dta", clear
-		keep if model == 7 //changes in changes estimator
+	
+		
+		foreach model in 14 30 {
+		
+		if `model' == 14 local modelo = "DiD"
+		if `model' == 30 local modelo = "Triple-DiD"
+		
 		foreach sub in 2 3  {	
 
 				*Title & cor
 				*--------------------------------------------------------------------------------------------------------------------------------------------------------------------*
 					if `sub' == 3  local title = "Portuguese"
 					if `sub' == 2  local title = "Math"
+					if `sub' == 2  local min = -10
+					if `sub' == 3  local min = -8
 		
 					set scheme economist
-					twoway 	scatter ATT quantile if sub == `sub', msymbol(O) msize(medium) color(cranberry) || rcap lower upper quantile if sub == `sub', lcolor(navy)  lwidth(medthick)	///
+					twoway 	scatter ATT quantile if sub == `sub' & model == `model', msymbol(O) msize(medium) color(cranberry) || rcap lower upper quantile if sub == `sub' & model == `model', lcolor(navy)  lwidth(medthick)	///
 					yline(0, lp(shortdash) lcolor(gray)) ///
 					xtitle("Percentiles of test score distribution", size(small)) xlabel(10(10)90, labsize(small))										  									///
-					ytitle("{&gamma}, SAEB scale", size(medsmall)) ylabel(, labsize(small) gmax angle(horizontal) format (%4.1fc))  														///					
+					ytitle("{&gamma}, SAEB scale", size(medsmall)) ylabel(`min'(2)2, labsize(small) gmax angle(horizontal) format (%4.1fc))  														///					
 					title(, size(large) color(black)) 																																		///
 					graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 																///
 					plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 																		///						
-					legend(order(1 "Extended winter break" 2 "95% CI" ) cols(2) region(lstyle(none) fcolor(none)) size(medsmall)) 	  																									///
+					legend(order(1 "Extended winter break" 2 "95% CI" ) cols(2) region(lstyle(none) fcolor(none)) size(medsmall)) 	  														///
 					ysize(4) xsize(5)  		///																											
 					note("Source: Author's estimate.", color(black) fcolor(background) pos(7) size(small)) 
-					graph export "$figures/CIC-`title'.pdf", as(pdf) replace
+					graph export "$figures/CIC-`title'-`modelo'.pdf", as(pdf) replace
 			}
+		}
 
 *ritest T _b[T2009], seed(1) reps(1000) cluster(codmunic): reg `subject' T2009 i.T i.codmunic i.year $controls2007  if network == 3 & year >= 2007 & year <= 2009, cluster(codmunic)
 *matrix ri = ri\[1, `sub', el(r(p),1,1)] 	

@@ -596,12 +596,12 @@
 			
 			if `year' == 2007 {
 				rename (Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q12 Q13 Q14 Q16 Q17 Q15 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40 Q41 Q42 Q43 ) ///
-					   (gender skincolor month_birth age number_tv number_radio dvd number_fridge freezer wash_mash number_car computer_internet number_bath number_room n_family_members maid live_mother mother_edu mother_literate mother_reads live_father father_edu father_literate father_reads parents_sch_meetings incentive_study incentive_homework incentive_read incentive_school incentive_talk time_tv_games time_clean_house work enter_school type_school number_repetitions number_dropouts do_homework_port homework_corrected_port do_homework_math homework_corrected_math )
+					   (gender skincolor month_birth age number_tv number_radio dvd number_fridge freezer wash_mash number_car computer_internet number_bath number_room n_family_members maid live_mother mother_edu mother_literate mother_reads live_father father_edu father_literate father_reads parents_sch_meetings incentive_study incentive_homework incentive_read incentive_school incentive_talk time_tv_games time_clean_house work enter_school type_school number_repetitions number_dropouts do_homework_port hw_corrected_port do_homework_math hw_corrected_math )
 			}
 			
 			if `year' == 2009 {
 				rename (Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q10 Q11 Q12 Q13 Q14 Q16 Q17 Q15 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40 Q41 Q42 Q43 ) ///
-					   (gender skincolor month_birth age number_tv number_radio dvd number_fridge freezer wash_mash number_car computer_internet number_bath number_room n_family_members maid live_mother mother_edu mother_literate mother_reads live_father father_edu father_literate father_reads parents_sch_meetings incentive_study incentive_homework incentive_read incentive_school incentive_talk time_tv_games time_clean_house work enter_school type_school number_repetitions number_dropouts do_homework_port homework_corrected_port do_homework_math homework_corrected_math )			
+					   (gender skincolor month_birth age number_tv number_radio dvd number_fridge freezer wash_mash number_car computer_internet number_bath number_room n_family_members maid live_mother mother_edu mother_literate mother_reads live_father father_edu father_literate father_reads parents_sch_meetings incentive_study incentive_homework incentive_read incentive_school incentive_talk time_tv_games time_clean_house work enter_school type_school number_repetitions number_dropouts do_homework_port hw_corrected_port do_homework_math hw_corrected_math )			
 			}
 			
 			drop Q*
@@ -618,12 +618,12 @@
 			
 			if `year' == 2007 {
 				rename (Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q9 Q10 Q12 Q13 Q14 Q16 Q17 Q15 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40 Q41 Q42 Q43 Q44 Q45 Q47 ) ///			
-					   (gender skincolor month_birth year_birth number_tv number_radio dvd number_fridge freezer wash_mash number_car computer_internet number_bath number_room n_family_members maid live_mother mother_edu mother_literate mother_reads live_father father_edu father_literate father_reads parents_sch_meetings incentive_study incentive_homework incentive_read incentive_school incentive_talk time_tv_games time_clean_house work enter_school type_school number_repetitions number_dropouts like_port do_homework_port homework_corrected_port like_math do_homework_math homework_corrected_math aspiration )			
+					   (gender skincolor month_birth year_birth number_tv number_radio dvd number_fridge freezer wash_mash number_car computer_internet number_bath number_room n_family_members maid live_mother mother_edu mother_literate mother_reads live_father father_edu father_literate father_reads parents_sch_meetings incentive_study incentive_homework incentive_read incentive_school incentive_talk time_tv_games time_clean_house work enter_school type_school number_repetitions number_dropouts like_port do_homework_port hw_corrected_port like_math do_homework_math hw_corrected_math aspiration )			
 			}
 			
 			if `year' == 2009 {
 				rename (Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8 Q10 Q11 Q12 Q13 Q14 Q16 Q17 Q15 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q33 Q34 Q35 Q36 Q37 Q38 Q39 Q40 Q41 Q42 Q43 Q44 Q45 Q47 ) ///					   
-					   (gender skincolor month_birth year_birth number_tv number_radio dvd number_fridge freezer wash_mash number_car computer_internet number_bath number_room n_family_members maid live_mother mother_edu mother_literate mother_reads live_father father_edu father_literate father_reads parents_sch_meetings incentive_study incentive_homework incentive_read incentive_school incentive_talk time_tv_games time_clean_house work enter_school type_school number_repetitions number_dropouts like_port do_homework_port homework_corrected_port like_math do_homework_math homework_corrected_math aspiration )		
+					   (gender skincolor month_birth year_birth number_tv number_radio dvd number_fridge freezer wash_mash number_car computer_internet number_bath number_room n_family_members maid live_mother mother_edu mother_literate mother_reads live_father father_edu father_literate father_reads parents_sch_meetings incentive_study incentive_homework incentive_read incentive_school incentive_talk time_tv_games time_clean_house work enter_school type_school number_repetitions number_dropouts like_port do_homework_port hw_corrected_port like_math do_homework_math hw_corrected_math aspiration )		
 			}
 			
 			drop Q*
@@ -813,7 +813,7 @@
 			label  val 	 time_tv_games time_tv_games
 
 			label  define time_clean_house	 	 1 "Don't clean house or less than one" 2 "A couple hours" 3 "More than 3 hours" 
-			label  val 	 time_clean_house time_clean_house
+			label  val    time_clean_house time_clean_house
 			
 			
 			*Number of household members
@@ -891,12 +891,12 @@
 			
 			*Teachers' effort
 			*-----------------------------------------------------------------------------------------------------------------------*
-			recode 		homework_corrected_port  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (homework_corrected_port_always)
-			recode 		homework_corrected_math  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (homework_corrected_math_always)
-			recode 		homework_corrected_port  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 			gen (teacher_motivation_port) 
-			recode 		homework_corrected_math  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 			gen (teacher_motivation_math) 
-			gen     	homework_corrected_both_always = 1 			   	 	if valid_score!= 0 &  	 homework_corrected_port_always == 1 & homework_corrected_math_always == 1
-			replace 	homework_corrected_both_always = 0 			    	if valid_score!= 0 & 	(homework_corrected_port_always == 0 | homework_corrected_math_always == 0) & !missing(homework_corrected_port_always) & !missing(homework_corrected_math_always)
+			recode 		hw_corrected_port  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (hw_corrected_port_always)
+			recode 		hw_corrected_math  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (hw_corrected_math_always)
+			recode 		hw_corrected_port  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 			gen (teacher_motivation_port) 
+			recode 		hw_corrected_math  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 			gen (teacher_motivation_math) 
+			gen     	hw_corrected_both_always = 1 			   	 	if valid_score!= 0 &  	 hw_corrected_port_always == 1 & hw_corrected_math_always == 1
+			replace 	hw_corrected_both_always = 0 			    	if valid_score!= 0 & 	(hw_corrected_port_always == 0 | hw_corrected_math_always == 0) & !missing(hw_corrected_port_always) & !missing(hw_corrected_math_always)
 
 			
 			*Parents in school meetings
@@ -1015,8 +1015,8 @@
 			label variable number_dropouts					"Number of dropouts"
 			label variable do_homework_port 				"Frequency that you do your Portuguese homework"
 			label variable do_homework_math  				"Frequency that you do your Math homework"
-			label variable homework_corrected_port  		"Frequency that your Portuguese teacher corrects the homework"
-			label variable homework_corrected_math  		"Frequency that your Math teacher corrects the homework"
+			label variable hw_corrected_port  		"Frequency that your Portuguese teacher corrects the homework"
+			label variable hw_corrected_math  		"Frequency that your Math teacher corrects the homework"
 			label variable aspiration 						"Student aspiration after middle school"
 			label variable number_tv 						"Number of TVs in the household"
 			label variable number_radio 					"Number of radios in the household"
@@ -1065,9 +1065,9 @@
 			label variable do_homework_port_always 			"Children always finish the homework"
 			label variable do_homework_math_always 			"Children always finish the homework"
 			label variable do_homework_both_always 			"Children always finish the homework"
-			label variable homework_corrected_port_always   "Teacher always corrects Portuguese homework"
-			label variable homework_corrected_math_always 	"Teacher always corrects Math homework"
-			label variable homework_corrected_both_always 	"Teacher always corrects the homework"
+			label variable hw_corrected_port_always  		"Teacher always corrects Portuguese homework"
+			label variable hw_corrected_math_always 		"Teacher always corrects Math homework"
+			label variable hw_corrected_both_always 		"Teacher always corrects the homework"
 			label variable private_school 					"Already attended Private School"
 			label variable preschool						"Student did preschool"
 			label variable teacher_motivation_math			"Teacher motivation to correct the math homework"
@@ -1424,18 +1424,18 @@
 			label variable teacher_years_graduation			"Years since graduation"
 			label variable type_university					"1: Federal. 2: State. 3: Municipal. 4: Private"
 			label variable type_education					"1: Face to face. 2: Face to face/distance. 3: Distance learning"
-			label variable def_schoolinfra					"Deficit in student learning is due to: poor school infra/pedagogic"
-			label variable def_curricula					"Deficit in student learning is due to: no adequate curricula"
-			label variable def_cover_curricula				"Deficit in student learning is due to: not covering the curricula"
-			label variable def_2muchwork					"Deficit in student learning is due to: teachers don't have time to plan"
-			label variable def_teacher_insatisfaction		"Deficit in student learning is due to: teachers insatisfaction with teacher_wages"
-			label variable def_student_socioback			"Deficit in student learning is due to: socioeconomic background"
-			label variable def_parents_culturalback			"Deficit in student learning is due to: cultural background of the parents"
-			label variable def_noparents_support			"Deficit in student learning is due to: no parents support"
-			label variable def_low_selfesteem				"Deficit in student learning is due to: students' low self esteem"
-			label variable def_student_loweffort			"Deficit in student learning is due to:	students' low effort"
-			label variable def_bad_behavior					"Deficit in student learning is due to: students' bad behavior"
-			label variable def_absenteeism					"Deficit in student learning is due to: student missing the classes"
+			label variable def_schoolinfra					"Deficit in learning is due to: poor school infra/pedagogic"
+			label variable def_curricula					"Deficit in learning is due to: no adequate curricula"
+			label variable def_cover_curricula				"Deficit in learning is due to: not covering the curricula"
+			label variable def_2muchwork					"Deficit in learning is due to: teachers don't have time to plan"
+			label variable def_teacher_insatisfaction		"Deficit in learning is due to: teachers insatisfaction with wages"
+			label variable def_student_socioback			"Deficit in learning is due to: socioeconomic background"
+			label variable def_parents_culturalback			"Deficit in learning is due to: cultural background of the parents"
+			label variable def_noparents_support			"Deficit in learning is due to: no parents support"
+			label variable def_low_selfesteem				"Deficit in learning is due to: students' low self esteem"
+			label variable def_student_loweffort			"Deficit in learning is due to:	students' low effort"
+			label variable def_bad_behavior					"Deficit in learning is due to: students' bad behavior"
+			label variable def_absenteeism					"Deficit in learning is due to: students' absenteeism"
 			label variable violence_lifethreat  			"Teacher have ever had their life threatened in this school"
 			label variable violence_student_threat  		"Teacher already had a student threatening your life in school" 
 			label variable violence_theft  					"Teacher victim of theft in school? (no violence) "
@@ -1629,7 +1629,7 @@
 					
 			*Principal Experience
 			*------------------------------------------------------------------------------------------------------------------------*
-			label    define experience 		  		    	1 "Less than 2 years"    	2 "3-5 years"     	   3"6-10 years"  4 "11-15 years" 5 "More than 15 years"
+			label    define experience 		  		    1 "Less than 2 years"    	2 "3-5 years"     	   3"6-10 years"  4 "11-15 years" 5 "More than 15 years"
 			label    val principal_exp_educ 			 experience 
 			label    val experience_asprincipal_total 	 experience 
 			label    val experience_asprincipal_school   experience 
@@ -1832,14 +1832,14 @@
 			replace treated    = 0 if treated == .
 			
 			
-			label variable student_effort 				  	"Student motivation - Principals' view"
+			label variable student_effort 				  	"Student motivation from principal perspective"
 			label variable teacher_effort 				  	"Teacher effort - Principals' view"
 			label variable implementation_projects_mean  	"Mean principal effort - projects to reduce dropout/repetition and increase learning"
 			label variable implementation_projects_all   	"Full principal effort - projects to reduce dropout/repetition and increase learning"
 			label variable external_support_mean 		 	"Mean external stakeholder's suppport - Principals' view"
 			label variable external_support_all  		  	"Full external stakeholder's suppport - Principals' view"
 			label variable principal_male					"Male principal"
-			label variable principal_white							"White principal" 
+			label variable principal_white					"White principal" 
 			label variable principal_age_range				"Principals' age range"
 			label variable principal_years_graduation		"Years since graduation"
 			label variable type_university					"1: Federal. 2: State. 3: Municipal. 4: Private"

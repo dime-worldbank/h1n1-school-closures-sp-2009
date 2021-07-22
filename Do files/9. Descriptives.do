@@ -5,6 +5,15 @@
 	*________________________________________________________________________________________________________________________________* 
 	
 	
+	use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & network == 3 & math5 != ., clear
+
+	gen return = "16/08/2009"
+	gen return_class = date(return, "DMY")
+	format return_class %td
+	
+	gen dif = (cfim_letivo - return_class)
+	
+	
 	*--------------------------------------------------------------------------------------------------------------------------------*
 	**
 	*Share of teachers working in both state and locally-managed schools; and teachers included in the Managerial Practices Program
@@ -87,8 +96,8 @@
 		erase wage1.gph
 		erase wage0.gph
 		graph export "$figures/homework-corrected-teacher-wages.pdf", as(pdf) replace	
-		/*
 		
+		use "$inter/Teachers in state and municipal networks.dta", clear
 		
 		
 		use enrollment5grade codschool codmunic year network coduf using "$inter/Enrollments.dta" if year == 2009 & coduf == 35 & (network == 2 | network == 3), clear
@@ -109,24 +118,24 @@
 		keep if enrollment5grade !=.
 		
 		bys T: su share_teacher_both_networks 		if network == 3 & year == 2009, detail
-		bys T: su share_teacher_management_program bif network == 3 & year == 2009, detail
+		bys T: su share_teacher_management_program  if network == 3 & year == 2009, detail
 		
 		bys network: su share_teacher_management_program		if G == 1 & year == 2009 & school_management_program == 0,   detail
-		
-		
-		
-		
-		bys T: su share_teacher_management_program bif network == 3 & year == 2009, detail
 
+		bys T: su share_teacher_management_program if network == 3 & year == 2009, detail
+
+		
+		
+		
 		
 		bys T: su share_teacher_management_program if network == 3 & year == 2009, detail
 		
 		
 		
 		
+		use "$inter/Teachers Managerial Practices Program.dta", clear
 		
-		
-		
+		su share_teacher_management_program if school_management_program == 0
 		
 		
 		
@@ -404,13 +413,17 @@
 	*Balance test
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
-		use "$final/h1n1-school-closures-sp-2009.dta" if year == 2007 & !missing(math5) & uf == "SP" & network == 3	, clear
+		use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & !missing(math5) & uf == "SP" & network == 3	, clear
+		collapse (sum)enrollment5*, by(T)
+
 		
+		use "$final/h1n1-school-closures-sp-2009.dta" if year == 2007 & !missing(math5) & uf == "SP" & network == 3	, clear
+
 		foreach var of varlist $matching_schools	{
 			replace `var' = `var'*100
 		}	
 
-		foreach var of varlist $balance_students5 $matching_schools {
+		foreach var of varlist $balance_students5 $matching_schools def_student_loweffort5 def_absenteeism5 def_bad_behavior5 $balance_teachers $balance_principals {
 			di "`var'"
 			ttest `var', by (T) //ttest by treatment and comparison groups
 		}
@@ -420,8 +433,6 @@
 		foreach var of varlist $matching_schools	{
 			replace `var' = `var'*100
 		}	
-
-		iebaltab  $balance_students5  $matching_schools			    enrollmentTotal pib_pcap if network == 3					, format(%12.2fc) grpvar(T) savetex("$tables/TableA3") 	rowvarlabels replace 
 		
 		*=============> Locally-managed schools in treated versus non-treated municipalities 
 		iebaltab  $balance_students5  $matching_schools school_year enrollmentTotal pib_pcap if network == 3					, format(%12.2fc) grpvar(T) savetex("$tables/TableA3") 	rowvarlabels replace 
@@ -450,7 +461,6 @@
 			local    l`v' : variable label `v'
 			label var `v' "`l`v'', %"
 		}
-		
 		
 		foreach var of varlist covered_curricula45 {
 			di "`var'"
@@ -760,10 +770,11 @@
 	*OLS, 2007 at municipalily level, probability of closing schools according to  characteristics of the municipalities
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
-		use "$inter/H1N1.dta" if substr(string(codmunic2), 1,2) == "35", clear		
-		bys T: su hosp_h1n1_july
+		use 	"$inter/H1N1.dta" if substr(string(codmunic2), 1,2) == "35", clear		
+		bys 	T: su hosp_h1n1_july
 		
 		use  "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP" & network == 3 & year == 2007, clear
+		rename 	share_teacher_management_program s_tea_manag_program //if the name of the variable is too big the following code does not work
 		foreach v of var * {
 		local l`v' : variable label `v'
 			if `"`l`v''"' == "" {
@@ -788,9 +799,9 @@
 		estimates clear
 		eststo: reg T math5 port5 repetition5 dropout5 ///
 		classhour5 spt5 lack_books quality_books45 ///
-		share_students_books55 covered_curricula45 ///
-		student_effort_index5 principal_effort5 teacher_tenure5 absenteeism_students3 ///
-		absenteeism_teachers3 classrooms_similar_ages pib_pcap pop  hosp_h1n1_july 
+		covered_curricula45 ///
+		principal_effort5 absenteeism_students3 ///
+		absenteeism_teachers3 def_student_loweffort5 def_bad_behavior5 classrooms_similar_ages pib_pcap pop  hosp_h1n1_july 
 		estout * using "$tables/TableA13.csv",  delimiter(";") label varlabels(_cons Constant) cells(b(star fmt(3))  se(fmt(3))) stats(N r2_a, labels ("Obs" "Adj. R-squared") fmt(%9.0g %9.4f)) replace
 		
 		
@@ -859,9 +870,9 @@
 		foreach var in math5 port5 math9 port9 {
 		
 		if "`var'" == "math5" local title = "Math performance, fifth-graders"
-		if "`var'" == "port5" local title = "Math performance, fifth-graders"
+		if "`var'" == "port5" local title = "Portuguese performance, fifth-graders"
 		if "`var'" == "math9" local title = "Math performance, ninth-graders"
-		if "`var'" == "port9" local title = "Math performance, ninth-graders"
+		if "`var'" == "port9" local title = "Portuguese performance, ninth-graders"
 				
 			tw 	///
 			(line  `var' year if network == 2, lwidth(0.5) color(emidblue) lp(solid) connect(direct) recast(connected) 	 												///  
@@ -935,43 +946,45 @@
 	*IDEB estimate after Covid
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
-		use "$inter/IDEB by municipality.dta" if network == 3, clear
-		gen T = 0
-		foreach munic in $treated_municipalities {
-			replace T = 1 if codmunic == `munic'
-		}
+		foreach network in 2 3 {
+		
+			if `network' == 2 {
+			local rede = "state-managed"
+			local att = 0.14*(37.6/3)
+			}
+			if `network' == 3  {
+			local rede = "locally-managed"
+			local att = 0.10*(37.6/3)
+			}
+		
+			use "$inter/IDEB by municipality.dta" if network == `network', clear
+			collapse (mean) idebEF1 targetEF1 math5 port5 approval5 spEF1, by (year)
+			sort year
+			replace   approval5 	 = approval5[_n-1] 					if year == 2021 //assuming approval rates will remain constant
+			replace   spEF1   		 = spEF1[_n-1] - `att'  if year == 2021 
+			replace   idebEF1 		 = spEF1*(approval5/100) 			if year == 2021
 
-		keep if treated
-		collapse (mean) idebEF1 targetEF1 math5 port5 approval5 spEF1, by (year)
-		sort year
-		replace   math5 		 = math5[_n-1] - 20  				if year == 2021  //considering that we will lose one year of learning, which is estimated do be equivalent to 20 points in the SAEB score scale. 
-		replace   port5 		 = port5[_n-1] - 20  				if year == 2021 
-		replace   approval5      = approval5[_n-1] 					if year == 2021 
-		gen 	  media_nota 	 = (math5+port5)/2
-		gen var = media_nota[_n]/media_nota[_n-1] - 1
-		replace   spEF1   		 = spEF1[_n-1] + spEF1[_n-1]*var 	if year == 2021 
-		replace   idebEF1 		 = spEF1*approval5 			  		if year == 2021
-
-		tw 	///
-		(line idebEF1 year if year < 2021, lwidth(0.5) color(navy) lp(solid) connect(direct) recast(connected) 	 													///  
-		ml() mlabcolor(gs2) msize(2) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
-		(line targetEF1  year, lwidth(0.5) color(emidblue) lp(shortdash) connect(direct) recast(connected) 	 														///  
-		ml() mlabcolor(gs2) msize(2) ms(o) mlabposition(12)  mlabsize(2.5))																							///
-		(line idebEF1 year if year > 2017, lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 										///  
-		ml() mlabcolor(gs2) msize(2) ms(o) mlabposition(12)  mlabsize(2.5)																							///
-		ylabel(, labsize(small) gmax angle(horizontal) format(%4.1fc))											     												///
-		yscale( alt )  																																				///
-		title(, pos(12) size(medium) color(black))													 																///
-		ytitle("IDEB, 1{sup:st} to 5{sup:th} grades", size(medium))																									/// 																																				///
-		xtitle("") 																																					///
-		xlabel(2005(2)2021, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
-		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
-		plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
-		legend(order(1 "Education Development Index" 2 "Target" 3 "After Covid" ) cols(1) size(large) region(lwidth(none) color(white) fcolor(none))) 				///
-		ysize(5) xsize(7) 																										 									///
-		note("", color(black) fcolor(background) pos(7) size(small)))  
-		*graph export "$figures/ideb_projected.pdf", as(pdf) replace
-				
+			tw 	///
+			(line idebEF1 year if year < 2021, lwidth(0.5) color(navy) lp(solid) connect(direct) recast(connected) 	 													///  
+			ml() mlabcolor(gs2) msize(2) ms(o) mlabposition(12)  mlabsize(2.5)) 																						///
+			(line targetEF1  year, lwidth(0.5) color(emidblue) lp(shortdash) connect(direct) recast(connected) 	 														///  
+			ml() mlabcolor(gs2) msize(2) ms(o) mlabposition(12)  mlabsize(2.5))																							///
+			(line idebEF1 year if year > 2017, lwidth(0.5) color(cranberry) lp(shortdash) connect(direct) recast(connected) 	 										///  
+			ml() mlabcolor(gs2) msize(2) ms(o) mlabposition(12)  mlabsize(2.5)																							///
+			ylabel(, labsize(small) gmax angle(horizontal) format(%4.1fc))											     												///
+			ylabel(4.5(0.5)7)	///
+			yscale( alt )  																																				///
+			title(, pos(12) size(medium) color(black))													 																///
+			ytitle("IDEB, 1{sup:st} to 5{sup:th} grades", size(medium))																									/// 																																				///
+			xtitle("") 																																					///
+			xlabel(2005(2)2021, labsize(small) gmax angle(horizontal) format(%4.0fc))											     									///
+			graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))		 													///
+			plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
+			legend(order(1 "Education Development Index" 2 "Target" 3 "After Covid" ) cols(1) size(large) region(lwidth(none) color(white) fcolor(none))) 				///
+			ysize(5) xsize(7) 																										 									///
+			note("", color(black) fcolor(background) pos(7) size(small)))  
+			graph export "$figures/ideb-projected-`rede'.pdf", as(pdf) replace
+		}	
 				
 	*--------------------------------------------------------------------------------------------------------------------------------*
 	**

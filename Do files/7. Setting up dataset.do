@@ -7,13 +7,13 @@
 
 	
 	**
-	*IDESP at school level																											
+	*IDESP at school level	(Performance Assessment of state-managed schools in Sao Paulo)																										
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**	
 	
 	*In 2008, the state government implemented a management program in low-performing schools in Sao Paulo.
 	*We use data from the performance assessment of the state to identify the treated schools
-	foreach etapa in AI AF EM {
+	foreach etapa in AI AF EM { //AI -> 5grade, AF -> 9 grade, EM - > High School
 		
 			import delimited "$raw/IDESP/IDESP por Escola - 2007_2019_`etapa'.csv", delimiter(";")  clear 
 			
@@ -45,10 +45,10 @@
 		save 	"$inter/IDESP.dta", replace
 				
 	**
-	*Bottom 5% schools -> schools included in the program
+	*Bottom 5% schools are the ones included in the program
 	*-------------------------------------------------------------------------------------------------------------------------------*
-		
-		*2007
+		**
+		*Bottom 5% in 2007, included in 2008
 		use 		"$inter/IDESP.dta" if year == 2007, clear 		//selected schools in 2008 
 		by			year, sort: quantiles idesp_EM,     gen(percentile_EM)      stable  nq(100)
 		by	 		year, sort: quantiles idesp_5grade, gen(percentile_5grade)  stable  nq(100)
@@ -60,10 +60,12 @@
 		
 		keep 		if school_management_program == 1 
 		keep 		codschool  school_management_program
+		
 		tempfile 	treatment_management_program
-		save 		`treatment_management_program'
+		save 	   `treatment_management_program'
 	
-		*2008
+		**
+		*Bottom 5% in 2008, included in 2009
 		use 	   	"$inter/IDESP.dta" if year == 2008, clear  		//selected schools in 2009
 		by 			year, sort: quantiles idesp_EM,     gen(percentile_EM)      stable  nq(100)
 		by 			year, sort: quantiles idesp_5grade, gen(percentile_5grade)  stable  nq(100)
@@ -75,50 +77,110 @@
 		
 		keep 		if school_management_program == 1
 		keep 		codschool  school_management_program idesp*
-		append 		using `treatment_management_program'	//	the schools included in 2008 were also included in 2009
-		duplicates 	drop codschool, force
+		
+		append 		using `treatment_management_program'			//the schools included in 2008 were also included in 2009
+		
+		duplicates 	drop codschool, force							//each row in a school included in the Program
 		save 		"$inter/Managerial Practices Program.dta", replace
 		
 	**
-	*Identifying teachers that were in charge of schools in treatment and comparison groups of the Managerial Program
+	*Some teachers working in the state-managed school that was part of the Management Program can also work in a state-school
+	//not included in the intervention or in a locally-manged school. We are going to identify the schools that have at least 
+	//one teacher in this situation and also the % of teachers in this situation. 
 	*-------------------------------------------------------------------------------------------------------------------------------*
-		use 		"$inter/Código de Identificação dos professores" if (network == 2 | network == 3) & (year == 2009 | year  == 2008) & coduf == 35, clear
-		merge 		m:1 codschool using "$inter/Managerial Practices Program.dta", nogen
-		bys 		codteacher year: egen teacher_management_program = max(school_management_program)
-		replace 	teacher_management_program = 0 if teacher_management_program == .
-		clonevar 	share_teacher_management_program = teacher_management_program 
-		collapse 	(max) teacher_management_program (mean)share_teacher_management_program (max) school_management_program , by(codschool year) 		
+		use 		"$inter/Código de Identificação dos professores" if (network == 2 | network == 3) & (year == 2009 | year  == 2008) & coduf == 35, clear		//Censo Escolar Data, each row is a teacher and a school where he/she works
+																																								//the same codteacher can be in more than a row if the teacher works in different schools
+		merge 		m:1 codschool using "$inter/Managerial Practices Program.dta", nogen keepusing(school_management_program)									//identifying the schools included in the Management Program. 
+
+
 		
+		
+		bys 		year codteacher : egen teacher_management_program = max(school_management_program)															//identifying the teachers that work in state-managed schools included in the Management Program. 
+		
+		replace 	teacher_management_program 		 = 0 if teacher_management_program == .
+		clonevar 	share_teacher_management_program = 		teacher_management_program 
+		
+		
+
+		
+				gen T   				= .										//1 for closed schools, 0 otherwise
+		gen G	  				= 1										//0 for the 13 municipalities that extended the winter break, 1 otherwise
+		foreach munic in $treated_municipalities {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+			replace T   		= 1 		if codmunic == `munic' & network == 3
+			replace G	  	  	= 0 		if codmunic == `munic'
+		}		
+		replace T    			= 1 		if network == 2
+		replace T    			= 0 		if T == .
+
+		tab year teacher_management_program if network == 3 & LTeacher5grade == 1 & T == 1
+		tab year teacher_management_program if network == 3 & LTeacher5grade == 1 & T == 0
+		
+		
+		
+		
+		
+		
+		
+		
+		collapse 	(max) teacher_management_program (mean)share_teacher_management_program (max)school_management_program , by(codschool network year) 				
+		
+		replace 	school_management_program = 0 if school_management_program == .
+
 		preserve
-		keep 		if year == 2008
+		keep 		if year == 2008 //a few schools are listed in 2008 but not in 2009. To include all schools that already participated of the intervention, we are selecting those schools here to append with the schools included in 2009 
 		tempfile 	2008
-		save 		`2008'
+		save 	   `2008'
 		restore
+		
 		keep 		if year == 2009 
 		merge 		1:1 codschool using `2008', nogen
+		
 		replace  	share_teacher_management_program = share_teacher_management_program*100
 		format   	share_teacher_management_program %4.2fc
-		replace 	school_management_program = 0 if school_management_program == .
-		save 		"$inter/Teachers Managerial Practices Program.dta", replace
+		
+		
+		
+		
+		save 		"$inter/Teachers Managerial Practices Program.dta", replace			//share of teachers per school participating in the Management Program
 		
 		
 	**
-	*Teachers that work in state and municipal schools																									
+	*Some teachers work in state and locally-managed schools																								
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**	
 		use 	"$inter/Código de Identificação dos professores" if (network == 2 | network == 3) & coduf == 35, clear
-		bys 	year codteacher: egen min_network = min(network)
-		bys 	year codteacher: egen max_network = max(network)
+		bys 	year codteacher: egen min_network = min(network) 						//2 if state-managed
+		bys 	year codteacher: egen max_network = max(network)						//3 if locally-managed
+		
+		
+				
+						gen T   				= .										//1 for closed schools, 0 otherwise
+		gen G	  				= 1										//0 for the 13 municipalities that extended the winter break, 1 otherwise
+		foreach munic in $treated_municipalities {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+			replace T   		= 1 		if codmunic == `munic' & network == 3
+			replace G	  	  	= 0 		if codmunic == `munic'
+		}		
+		replace T    			= 1 		if network == 2
+		replace T    			= 0 		if T == .
+		
+		
+		
 		gen 	teacher_both_networks = 1 if min_network == 2 & max_network == 3
 		replace teacher_both_networks = 0 if teacher_both_networks == .
+	
+		tab year teacher_both_networks if network == 3 & LTeacher5grade == 1
+		tab year teacher_both_networks if network == 2 & LTeacher5grade == 1 & G == 1
+			
+			
 		clonevar share_teacher_both_networks = teacher_both_networks
-		collapse (max) teacher_both_networks (mean) share_teacher_both_networks, by(codschool year codmunic) 		
+		collapse (max) teacher_both_networks (mean) share_teacher_both_networks, by(codschool year network codmunic) 		
 		
 		preserve
 		keep if year == 2007
 		tempfile 2007
 		save 	`2007'
 		restore
+		
 		preserve
 		keep if year == 2008
 		tempfile 2008
@@ -131,7 +193,10 @@
 		
 		replace  share_teacher_both_networks = share_teacher_both_networks*100
 		format   share_teacher_both_networks %4.2fc
-		save "$inter/Teachers in state and municipal networks.dta", replace
+		
+
+
+		save "$inter/Teachers in state and municipal networks.dta", replace				//share of teachers per school that work in a state and in a locally-managed school
 
 		**
 		**The majority of teachers of 5th grade students work in both state and municipal networks
@@ -140,22 +205,27 @@
 			replace G	  	  	= 0 		if codmunic == `munic'
 		}		
 		merge 1:1 codschool year using "$inter/Enrollments.dta", keep(3) nogen
+		
 		tab year teacher_both_networks if enrollment5grade != . 
-
+		tab year teacher_both_networks if enrollment5grade != . & network == 3 
 	
 	**
 	*Socioeconomic characteristics of the students at school level																													
 	*-------------------------------------------------------------------------------------------------------------------------------*
 	**
 		use 	   "$inter/Students - Prova Brasil.dta" if (network == 2 | network == 3) & (year == 2007 | year == 2009) & coduf == 35, clear
+		egen 		teacher_motivation = rowmean(teacher_motivation*)
+		label var   teacher_motivation "Teacher motivation from students' perspective"
+
 		foreach v of var * {
 		local l`v' : variable label `v'
 			if `"`l`v''"' == "" {
 			local l`v' "`v'"
 			}
 		}
-		collapse   (mean) $socioeco_variables teacher_motivation_* number_dropouts number_repetitions, by(grade year codschool)
-		foreach v of var * {÷
+		collapse   (mean) $socioeco_variables teacher_motivation* number_dropouts number_repetitions, by(grade year codschool)
+		
+		foreach v of var * {
 			label var `v' "`l`v''"
 		}
 		
@@ -165,14 +235,14 @@
 		} 
 		format 		incentive* number* teacher_motivation* %4.2fc
 		
-		foreach v  of varlist  incentive_study-number_repetitions {
+		foreach v  of varlist  incentive_study-teacher_motivation{
 			local l`v'5 : variable label `v'
 			local l`v'9 : variable label `v'
 
 		}
 		reshape 	wide $socioeco_variables teacher_motivation* number_dropouts number_repetitions, i(codschool year) j(grade)
 		
-		foreach v of varlist  incentive_study5-number_repetitions9 {
+		foreach v of varlist  incentive_study5-teacher_motivation5 {
 			if substr("`v'", -1, .) == "5" {
 			local new = 1
 			}
@@ -284,19 +354,19 @@
 		foreach v of var * {
 			label var `v' "`l`v''"
 		}
-		foreach v  of varlist grade-quality_books4 {
+		foreach v  of varlist grade-def_bad_behavior {
 			local l`v'5 : variable label `v'
 			local l`v'9 : variable label `v'
 
 		}
 		
-		foreach var of varlist teacher_more10yearsexp-teacher_less3min_wages almost_all_finish_grade9-quality_books4 {
+		foreach var of varlist teacher_more10yearsexp-teacher_less3min_wages almost_all_finish_grade9-def_bad_behavior {
 			replace `var' = `var'*100
 		}
 		
 		reshape wide $teachers, 		   				i(codschool year) j(grade)
 
-		foreach v of varlist teacher_more10yearsexp5-quality_books49 {
+		foreach v of varlist teacher_more10yearsexp5-def_bad_behavior9 {
 			if substr("`v'", -1, .) == "5" {
 			local new = 1
 			}
@@ -308,7 +378,7 @@
 			if `new' == 2 label var `v' "`l`z'9' - %" 
 		}
 		
-		format teacher_more10yearsexp5-quality_books49 %4.2fc
+		format teacher_more10yearsexp5-def_bad_behavior9 %4.2fc
 		tempfile teachers
 		save	`teachers'
 
@@ -670,10 +740,20 @@
 	
 		label 	var classrooms_similar_ages  	 "Students allocated into classrooms according to similar age"
 		label 	var classrooms_het_performance 	 "Students allocated into classrooms according to hetero. performance"
-
-
+	
+	
+	*-------------------------------------------------------------------------------------------------------------------------------*
+	**
+	*Delta performance
 	*-------------------------------------------------------------------------------------------------------------------------------*	
-		sort 		codschool year
+	sort 		codschool year
+
+	foreach subject in math5 port5 {
+	gen 	delta_`subject' = `subject'[_n+1] - `subject'[_n] if year[_n] == 2007 & year[_n+1] == 2009 & codschool[_n] == codschool[_n+1] 
+	replace delta_`subject' = `subject'[_n+2] - `subject'[_n] if year[_n] == 2007 & year[_n+2] == 2009 & codschool[_n] == codschool[_n+2] 
+	}
+	
+	*-------------------------------------------------------------------------------------------------------------------------------*	
 		xtset 		codschool year 	
 		compress
 		save "$final/h1n1-school-closures-sp-2009.dta", replace
