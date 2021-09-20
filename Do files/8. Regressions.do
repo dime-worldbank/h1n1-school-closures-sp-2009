@@ -209,14 +209,19 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 	**Dataset
 	
 		use "$final/h1n1-school-closures-sp-2009.dta", clear					
-		foreach grade in 5 9 {
+		foreach grade in 5 {
 		clonevar stuptea`grade' 	   	 	= spt`grade' 						//just renaming the variables because their names were too long for the matrix of pvalues after we run boottest
 		clonevar T2009_stuptea`grade'  		= T2009_spt`grade' 
 		clonevar prin`grade'  	  			= principal_effort`grade' 
 		clonevar T2009_prin`grade'   		= T2009_principal_effort`grade' 
 		clonevar absen`grade' 	    		= absenteeism_issue`grade' 
-		clonevar T2009_absen`grade' 		= T2009_absenteeism_issue`grade' 
+		clonevar T2009_absen`grade' 		= T2009_absenteeism_issue`grade' 		
 		}
+		
+		clonevar adeqport5 			= formacao_adequada_port5
+		clonevar adeqmath5 			= formacao_adequada_math5
+		clonevar T2009_adeqport5 	= T2009_formacao_adequada_port5
+		clonevar T2009_adeqmath5 	= T2009_formacao_adequada_math5
 
 		label var T2007 	"ATT - 2007 versus 2005"
 		label var T2009 	"ATT - 2009 versus 2007"
@@ -446,6 +451,15 @@ global figures "C:\Users\wb495845\OneDrive - WBG\Desktop"
 						}
 					}
 					
+					if `grade' == 5 & (`sub' == 2 | `sub' == 3) {
+						foreach variable in adeq { //
+							
+							reg 	`subject' T2009 T2009_`adeq'`subjetct'`grade' `variable'`subject'`grade'  i.T i.codmunic i.year $controls2007 						if (year == 2007 | year == 2009) & share_teacher_management_program == 0  [aw = `weight'], cluster(codmunic)
+							eststo 		model`model'`sub'`grade', title("Dif-in-dif")   
+							mat_res, 	model(`model') sub(`sub') var1(T2009) var2(T2009_`variable'`grade') var3(`variable'`grade')  dep_var(`subject') grade(`grade')
+							local 		model = `model' + 1
+						}
+					}					
 					
 				*=============================> 
 				**

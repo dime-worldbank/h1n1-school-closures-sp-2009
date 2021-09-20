@@ -16,7 +16,7 @@
 		**
 		
 		**
-		*Socioeconomic 
+		*Socioeconomic Questionnarie
 		*----------------------------------------------------------------------------------------------------------------------------*
 		clear
 		#delimit;
@@ -123,8 +123,9 @@
 		use `socioeconomic_2007', clear
 			merge 1:1 ID_ALUNO using `geral_2007', nogen 
 			destring ID_* CO* NU* PK*, replace
+			
 			*================================>
-			*keep if SIGLA_UF == "SP"
+			keep if SIGLA_UF == "SP"
 			*================================>
 			compress
 			save "$inter/Prova Brasil Questionnaire_2007.dta", replace
@@ -136,7 +137,7 @@
 		**
 		
 		**
-		*Socioeconomic 
+		*Socioeconomic questionnarie
 		*----------------------------------------------------------------------------------------------------------------------------*
 		clear
 		insheet using "$raw/Prova Brasil/2009/DADOS/TS_QUEST_ALUNO.txt", names delimiter(";")
@@ -162,8 +163,9 @@
 		use `socioeconomic_2009', clear
 			merge 1:1 id_aluno using `geral_2009', nogen 
 			destring id_* co* nu* pk*, replace
+			
 			*================================>
-			*keep if sigla_uf == "SP"
+			keep if sigla_uf == "SP"
 			*================================>
 			compress
 		save "$inter/Prova Brasil Questionnaire_2009.dta", replace
@@ -325,7 +327,7 @@
 				str Q131 211-211
 			using "$raw/Prova Brasil/2007/DADOS/TS_QUEST_PROFESSOR.txt";
 			*================================>
-			*keep if SIGLA_UF == "SP";
+			keep if SIGLA_UF == "SP";
 			*================================>
 			compress;
 			save  "$inter/Teachers_2007.dta", replace;
@@ -342,8 +344,9 @@
 				gen Q`i' = substr(tx_resp_questionario,`i',1)
 			}
 			drop tx_resp_questionario
+			
 			*================================>
-			*keep if sigla_uf == "SP"
+			keep if sigla_uf == "SP"
 			*================================>
 			compress
 			save  "$inter/Teachers_2009.dta", replace
@@ -531,8 +534,9 @@
 				str Q160 231-231
 				str Q161 232-232
 			using "$raw/Prova Brasil/2007/DADOS/TS_QUEST_DIRETOR.txt";
+			
 			*================================>
-			*keep if SIGLA_UF == "SP";
+			keep if SIGLA_UF == "SP";
 			*================================>
 			compress;
 			save  "$inter/Principals_2007.dta", replace;
@@ -550,6 +554,7 @@
 				gen Q`i' = substr(tx_resp_questionario,`i',1)
 			}
 			drop tx_resp_questionario
+			
 			*================================>
 			*keep if sigla_uf == "SP"
 			*================================>
@@ -659,9 +664,9 @@
 				drop 	start_class end_class
 			}
 
-			order 	year coduf codmunic codschool network location id_class class_time id_student grade month_birth year_birth age score_port-sd_saeb_math
-			global 	variables age month_birth year_birth gender-aspiration
-			format score* sd_* %12.2fc
+			order 		year coduf codmunic codschool network location id_class class_time id_student grade month_birth year_birth age score_port-sd_saeb_math
+			global 		variables age month_birth year_birth gender-aspiration
+			format 		score* sd_* %12.2fc
 				
 				
 			*Network
@@ -672,10 +677,10 @@
 			
 			*Urban/rural
 			*-----------------------------------------------------------------------------------------------------------------------*
-			recode location (2 = 0)
-			rename location urban
-			label  define   urban 1 "Urban" 0 "Rural"
-			label  val 	    urban urban
+			recode 		location (2 = 0)
+			rename 		location urban
+			label  		define   urban 1 "Urban" 0 "Rural"
+			label  		val 	 urban urban
 			
 			
 			*State
@@ -730,14 +735,16 @@
 			
 			*9th graders
 			label  val month_birth year_birth
-			if `year' == 2007 | `year' == 2009 local year_b = 1994												//for 9th graders, instead of asking their age, they ask the year of birth
+			
+			if 	`year' == 2007 | `year' == 2009 local year_b = 1994												//for 9th graders, instead of asking their age, they ask the year of birth
 			forvalues i = 1(1)8 { 																				//student has 8 options with years of birth
-				replace  year_birth   = `year_b'	 	if grade == 9 & year_birth == `i'						//since the test is applied in the end of the year, I will not make any age adjustment based on the month of birth
-				local 	 year_b       = `year_b' - 1 
+					replace  year_birth   = `year_b'	 	if grade == 9 & year_birth == `i'						//since the test is applied in the end of the year, I will not make any age adjustment based on the month of birth
+					local 	 year_b       = `year_b' - 1 
 			}
-			if `year' == 2007 | `year' == 2009	replace year_birth   = . if year_birth == 1994 | year_birth == 1987	
-			replace age  = `year' - year_birth 	  		if grade == 9 & !missing(year_birth)
-			drop 	month_birth year_birth	
+			
+			if 	`year' == 2007 | `year' == 2009	replace year_birth   = . if year_birth == 1994 | year_birth == 1987	
+			replace age  = `year' - year_birth 	  			if grade == 9 & !missing(year_birth)
+			drop 	month_birth     year_birth	
 			
 			
 			*Number of tv, radios, fridge, cars, baths, rooms
@@ -799,28 +806,28 @@
 			
 			*Mother and Father education
 			*-----------------------------------------------------------------------------------------------------------------------*
-			label define parents_edu 1 "Never studied or did not finish primary education" 2 "Elementar Education" 3 "Incomplete High School"  4 "Complete High School" 5 "Higher Education" 6 "Don't know"
-			label val mother_edu parents_edu
-			label val father_edu parents_edu
+			label define 	parents_edu 1 "Never studied or did not finish primary education" 2 "Elementar Education" 3 "Incomplete High School"  4 "Complete High School" 5 "Higher Education" 6 "Don't know"
+			label val 		mother_edu parents_edu
+			label val 		father_edu parents_edu
 			
 			
 			*Time with tv or cleaning the house
 			*-----------------------------------------------------------------------------------------------------------------------*
-			recode time_tv_games    (1 5 = 1) (2 3 = 2) (4 = 3) 
-			recode time_clean_house (1 5 = 1) (2 3 = 2) (4 = 3) 
+			recode 			time_tv_games    (1 5 = 1) (2 3 = 2) (4 = 3) 
+			recode 			time_clean_house (1 5 = 1) (2 3 = 2) (4 = 3) 
 			
-			label  define time_tv_games			 1 "Don't watch or less than one hour"  2 "A couple hours" 3 "More than 3 hours" 
-			label  val 	 time_tv_games time_tv_games
+			label  define 	time_tv_games			 1 "Don't watch or less than one hour"  2 "A couple hours" 3 "More than 3 hours" 
+			label  val 	  	time_tv_games 	time_tv_games
 
-			label  define time_clean_house	 	 1 "Don't clean house or less than one" 2 "A couple hours" 3 "More than 3 hours" 
-			label  val    time_clean_house time_clean_house
+			label  define 	time_clean_house	 	 1 "Don't clean house or less than one" 2 "A couple hours" 3 "More than 3 hours" 
+			label  val    	time_clean_house 	time_clean_house
 			
 			
 			*Number of household members
 			*-----------------------------------------------------------------------------------------------------------------------*
-			recode n_family_members (5 6 = 4)
-			label define  n_family_members   1 "1 or 2" 2 "3" 3 "4" 4 "5 or more"
-			label val 	  n_family_members n_family_members
+			recode 					n_family_members (5 6 = 4)
+			label define  	n_family_members   1 "1 or 2" 2 "3" 3 "4" 4 "5 or more"
+			label val     	n_family_members n_family_members
 
 			
 			*Other
@@ -834,14 +841,14 @@
 			label define enter_school 		    1 "Daycare" 	  2 "Pre-school" 3 "Grade 1" 			   	  4 "After grade 1"
 			label val 	 enter_school enter_school
 			
-			clonevar A = type_school
-			replace type_school = .  if year < 2011 & grade == 5
-			replace type_school = 1  if year < 2011 & grade == 5 & A == 2 					//only public school
-			replace type_school = 1  if year < 2011 & grade == 5 & A == 1 & network <  4	//only public school		
-			replace type_school = 2  if year < 2011 & grade == 5 & A == 1 & network == 4 	//current school is private and the student has always studied here. 
-			replace type_school = 3  if year < 2011 & grade == 5 & A == 3 & network <  4 	//public and private
-			replace type_school = 3  if 			  grade == 9 & A == 2 & network <  4	//there are 9th grade students that answered that only studied in private schools but the current school they are enrolled in is public....
-			drop A
+			clonevar 	A = type_school
+			replace 	type_school = .  if year < 2011 & grade == 5
+			replace 	type_school = 1  if year < 2011 & grade == 5 & A == 2 					//only public school
+			replace 	type_school = 1  if year < 2011 & grade == 5 & A == 1 & network <  4	//only public school		
+			replace 	type_school = 2  if year < 2011 & grade == 5 & A == 1 & network == 4 	//current school is private and the student has always studied here. 
+			replace 	type_school = 3  if year < 2011 & grade == 5 & A == 3 & network <  4 	//public and private
+			replace 	type_school = 3  if 			  grade == 9 & A == 2 & network <  4	//there are 9th grade students that answered that only studied in private schools but the current school they are enrolled in is public....
+			drop 		A
 			
 			label define type_school		    1 "Only public school" 		     2 "Only in private school"   3 "Public and private schools" 		
 			label val 	 type_school type_school
@@ -849,8 +856,8 @@
 			label define aspiration 		    1 "Only study" 				     2 "Only work"  			  3 "Study and work" 			4 "Don't know" 
 			label val 	 aspiration aspiration
 			
-			gen 	only_intend_work =		  aspiration == 2 & grade == 9
-			replace only_intend_work = . if  (aspiration == 4 & grade == 9) | (grade == 5)
+			gen 		 only_intend_work =		   aspiration == 2 & grade == 9
+			replace 	 only_intend_work = . if  (aspiration == 4 & grade == 9) | (grade == 5)
 					
 			foreach var of varlist gender-ever_repeated {
 				tab `var', mis
@@ -893,8 +900,8 @@
 			*-----------------------------------------------------------------------------------------------------------------------*
 			recode 		hw_corrected_port  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (hw_corrected_port_always)
 			recode 		hw_corrected_math  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (hw_corrected_math_always)
-			recode 		hw_corrected_port  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 			gen (teacher_motivation_port) 
-			recode 		hw_corrected_math  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 			gen (teacher_motivation_math) 
+			recode 		hw_corrected_port  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 				gen (teacher_motivation_port) 
+			recode 		hw_corrected_math  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 				gen (teacher_motivation_math) 
 			gen     	hw_corrected_both_always = 1 			   	 	if valid_score!= 0 &  	 hw_corrected_port_always == 1 & hw_corrected_math_always == 1
 			replace 	hw_corrected_both_always = 0 			    	if valid_score!= 0 & 	(hw_corrected_port_always == 0 | hw_corrected_math_always == 0) & !missing(hw_corrected_port_always) & !missing(hw_corrected_math_always)
 
@@ -1015,8 +1022,8 @@
 			label variable number_dropouts					"Number of dropouts"
 			label variable do_homework_port 				"Frequency that you do your Portuguese homework"
 			label variable do_homework_math  				"Frequency that you do your Math homework"
-			label variable hw_corrected_port  		"Frequency that your Portuguese teacher corrects the homework"
-			label variable hw_corrected_math  		"Frequency that your Math teacher corrects the homework"
+			label variable hw_corrected_port  				"Frequency that your Portuguese teacher corrects the homework"
+			label variable hw_corrected_math  				"Frequency that your Math teacher corrects the homework"
 			label variable aspiration 						"Student aspiration after middle school"
 			label variable number_tv 						"Number of TVs in the household"
 			label variable number_radio 					"Number of radios in the household"

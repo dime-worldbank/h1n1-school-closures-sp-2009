@@ -427,6 +427,7 @@
 			di "`var'"
 			ttest `var', by (T) //ttest by treatment and comparison groups
 		}
+
 		
 		use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & !missing(math5) & uf == "SP", clear
 		

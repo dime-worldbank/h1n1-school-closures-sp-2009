@@ -26,8 +26,10 @@
 		
 		**
 		In 2009, amid the Swine flu, part of the schools in the state had their winter-breaj extended: 
-			-> All schools managed by the state government across the 645 municipalities of the state
-			-> + locally-managed schools of thirteen municipalities: Sao Paulo (the capital of the state), 
+		
+			-> All schools managed by the state government across the 645 municipalities of the state.
+			
+			-> Locally-managed schools of thirteen municipalities: Sao Paulo (the capital of the state), 
 			   Campinas, Diadema, Embu das Artes, Indaiatuba, Mairiporã, Osasco, São Bernardo do Campo, Santo André,
 			   São Caetano do Sul, Sumaré, Ribeirao Preto, Taboao da Serra.
 		
@@ -45,13 +47,18 @@
 
 		-> Period: 2005, 2007 (pre-treatment) and 2009 (post-treatment)
 
-		-> Treatment Group: 
-			schools managed by local authorities in the 13 municipalities that opted to extended the winter break
+		-> Treatment Groups: 
+		
+			**
+			Schools managed by local authorities in the 13 municipalities that opted to extended the winter break
 			+ 
-			schools managed by the state government across the 645 municipalities of the state
+			**
+			Schools managed by the state government across the 645 municipalities of the state
 	
 		-> Comparison Group:
-			schools managed by the local authorities in the 632 municipalities that did not opt to extend the winter break
+			
+			**
+			Schools managed by the local authorities in the 632 municipalities that did not opt to extend the winter break
 			
 	    -> The treatment dummy is whether the school was closed in 2009
 
@@ -316,67 +323,10 @@
 				2 .dta files named 'IDEB by school.dta' 'IDEB by municipality.dta' saved in: h1n1-school-closures-sp-2009/DataWork/Datasets/Intermediate	
 	
 	
-		**
-		**
-		- 7. RAIS
-		**---------------------------------------------------------------------------------------------------------------------------
-			-> How long it takes to run? 
-				
-	
-			-> What it does?
-				The code imports the microdata of RAIS (Relação Anual de Informações Sociais) and harmonizes.
-				The data collected are total wages of teachers and total number of hours worked. 
-				Teachers from state and locally-managed schools
-				Data by municipality.
-				
-					**
-					** We download and work on .csvfiles from https://bi.mte.gov.br/bgcaged/rais.php
-					User: basico
-					Password: 12345678
-					
-					Select RAIS -> RAIS VÍNCULOS -> then select 'Ano corrente a 2002'
-					
-					(A)
-					On the right hand side:
-						In 'Ano'   		, select years: 2007, 2008 and 2009
-						In 'Linha' 		, select 'Município'
-						In 'Coluna'		, select 'Ano'
-						In 'Subcoluna'	, select 'Natureza Jurídica Especial'
-					(B)
-					
-					On the left hand side:
-						In 'Seleções por assunto', select -> 'CBO 2002 Subgrupo'.
-					
-						In 'CBO 2002 Subgrupo', select 'Professores de nivel superior na educacao infantil e no ensino fundamental'
-						(Do not forget to click on right arrow (->) and then select on the green bottom. 
-						In 'Estabelecimento', select 'Natureza Jurídica Especial, then select on 'Setor Público Estadual' and
-						select 'Setot Público Municipal' 
-						(Do not forget to click on right arrow (->) and then click on the green bottom. 
-					
-					*====> For total hours teachers'  work
-					Back on the right hand side:
-						In 'Conteúdo', select "Qtd Hora Contr', then 'Soma'
-						Then Click in 'Execução da Consulta' (lightning bolt), then click in 'Transfere aquivo .csv' 
-						Save the file as 'Teachers hours of work.xlsx' in
-						h1n1-school-closures-sp-2009/DataWork/Datasets/Raw/RAIS
-						(Do not forget to change the file extention to '.xlsx')
-						
-					*====> For total teachers' wage 
-					Repeat steps (A) and (B) above. 
-					Back on the right hand side:
-						In 'Conteúdo', select "Vl Remun Média Nom', then 'Soma'
-						Then Click in 'Execução da Consulta' (lightning bolt), then click in 'Transfere aquivo .csv' 
-						Save the file as 'Teachers wage.xlsx' in 
-						h1n1-school-closures-sp-2009/DataWork/Datasets/Raw/RAIS
-						(Do not forget to change the file extention to '.xlsx')
-	
-			-> What does it create?
-				One .dta file named 'RAIS' saved in h1n1-school-closures-sp-2009/DataWork/Datasets/Intermediate
-	
 	
 		**
 		**
-		- 8. Setting up dataset
+		- 7. Setting up dataset
 		**---------------------------------------------------------------------------------------------------------------------------
 			-> How long it takes to run? 
 				
@@ -390,7 +340,7 @@
 
 		**
 		**
-		- 9. Descriptives
+		- 8. Descriptives
 		**---------------------------------------------------------------------------------------------------------------------------
 			-> How long it takes to run? 
 				
@@ -404,7 +354,7 @@
 
 		**
 		**
-		- 10. Regressions
+		- 9. Regressions
 		**---------------------------------------------------------------------------------------------------------------------------
 			-> How long it takes to run? 
 				
@@ -415,6 +365,8 @@
 			-> What does it create?
 				Regression tables saved in h1n1-school-closures-sp-2009/DataWork/Output/Tables
  
+		**Não testamos se monitores ajudam porque vi por ex que em 2009 não havia monitores em SP nas turmas de 5o ano. 
+		**Também não testamos se 
  
 		**
 		**	
@@ -539,3 +491,63 @@
 		do "$dofiles/7. Setting up dataset.do"
 		do "$dofiles/8. Descriptives.do"
 		do "$dofiles/9. Regressions.do"
+		
+		
+		
+		
+				**
+		**
+		- 7. RAIS
+		**---------------------------------------------------------------------------------------------------------------------------
+			-> How long it takes to run? 
+				
+	
+			-> What it does?
+				The code imports the microdata of RAIS (Relação Anual de Informações Sociais) and harmonizes.
+				The data collected are total wages of teachers and total number of hours worked. 
+				Teachers from state and locally-managed schools
+				Data by municipality.
+				
+					**
+					** We download and work on .csvfiles from https://bi.mte.gov.br/bgcaged/rais.php
+					User: basico
+					Password: 12345678
+					
+					Select RAIS -> RAIS VÍNCULOS -> then select 'Ano corrente a 2002'
+					
+					(A)
+					On the right hand side:
+						In 'Ano'   		, select years: 2007, 2008 and 2009
+						In 'Linha' 		, select 'Município'
+						In 'Coluna'		, select 'Ano'
+						In 'Subcoluna'	, select 'Natureza Jurídica Especial'
+					(B)
+					
+					On the left hand side:
+						In 'Seleções por assunto', select -> 'CBO 2002 Subgrupo'.
+					
+						In 'CBO 2002 Subgrupo', select 'Professores de nivel superior na educacao infantil e no ensino fundamental'
+						(Do not forget to click on right arrow (->) and then select on the green bottom. 
+						In 'Estabelecimento', select 'Natureza Jurídica Especial, then select on 'Setor Público Estadual' and
+						select 'Setot Público Municipal' 
+						(Do not forget to click on right arrow (->) and then click on the green bottom. 
+					
+					*====> For total hours teachers'  work
+					Back on the right hand side:
+						In 'Conteúdo', select "Qtd Hora Contr', then 'Soma'
+						Then Click in 'Execução da Consulta' (lightning bolt), then click in 'Transfere aquivo .csv' 
+						Save the file as 'Teachers hours of work.xlsx' in
+						h1n1-school-closures-sp-2009/DataWork/Datasets/Raw/RAIS
+						(Do not forget to change the file extention to '.xlsx')
+						
+					*====> For total teachers' wage 
+					Repeat steps (A) and (B) above. 
+					Back on the right hand side:
+						In 'Conteúdo', select "Vl Remun Média Nom', then 'Soma'
+						Then Click in 'Execução da Consulta' (lightning bolt), then click in 'Transfere aquivo .csv' 
+						Save the file as 'Teachers wage.xlsx' in 
+						h1n1-school-closures-sp-2009/DataWork/Datasets/Raw/RAIS
+						(Do not forget to change the file extention to '.xlsx')
+	
+			-> What does it create?
+				One .dta file named 'RAIS' saved in h1n1-school-closures-sp-2009/DataWork/Datasets/Intermediate
