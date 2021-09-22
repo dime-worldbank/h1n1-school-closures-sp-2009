@@ -20,7 +20,7 @@
 	
 	We use data from the performance assessment of the state to identify the treated schools since the intervention was implemented 
 	
-	in the bottom 5%
+	in the bottom 5%.
 	*/
 	
 	*-------------------------------------------------------------------------------------------------------------------------------*
@@ -150,7 +150,7 @@
 	*________________________________________________________________________________________________________________________________* 
 	**	
 	/*
-	Some teachers of state-managed schools included in the Management Program can also work in a state-school
+	Some teachers of state-managed schools included in the Management Program also work in a state-school
 	
 	not included in the intervention or in a locally-manged school. We are going to identify the schools that have at least 
 	
@@ -158,12 +158,12 @@
 	*-------------------------------------------------------------------------------------------------------------------------------*
 		use 		"$inter/Código de Identificação dos professores" 				if (network == 2 | network == 3) & (year == 2009 | year  == 2008) & coduf == 35, clear		//Censo Escolar Data, each row is a teacher and a school where he/she works
 																																												//the same codteacher can be in more than a row if the teacher works in different schools
-		merge 		m:1 codschool using "$inter/Managerial Practices Program.dta", nogen keepusing(school_management_program) keep (1 3)													//identifying the schools included in the Management Program. 
+		merge 		m:1 codschool using "$inter/Managerial Practices Program.dta", nogen keepusing(school_management_program) keep (1 3)										//identifying the schools included in the Management Program. 
 
 		
 		**
 		**
-		bys 		year codteacher : egen teacher_management_program =   max(school_management_program)																			//identifying the teachers that work in state-managed schools included in the Management Program. 
+		bys 		year codteacher : egen teacher_management_program =   max(school_management_program)																		//identifying the teachers that work in state-managed schools included in the Management Program. 
 					
 		replace 						   teacher_management_program = 0 if teacher_management_program == .
 		clonevar 					 share_teacher_management_program = 	 teacher_management_program 
@@ -183,8 +183,8 @@
 		
 		**
 		**
-		tab 		year teacher_management_program if network == 3 & Teacher5grade == 1 & T == 1 //teachers included in the management program intervention that are also working in locally-managed schools
-		tab 		year teacher_management_program if network == 3 & Teacher5grade == 1 & T == 0
+		tab 		year teacher_management_program if network == 3 & Teacher5grade == 1 & T == 1 //teachers included in the management program intervention that are also working in locally-managed schools in T == 1
+		tab 		year teacher_management_program if network == 3 & Teacher5grade == 1 & T == 0 //teachers included in the management program intervention that are also working in locally-managed schools in T == 0
 		
 		
 		**
@@ -243,7 +243,7 @@
 		**
 		**
 		gen 			 teacher_both_networks = 1  	if min_network == 2 & max_network == 3
-		replace 		 teacher_both_networks = 0  	if 	 teacher_both_networks == .
+		replace 		 teacher_both_networks = 0  	if teacher_both_networks == .
 	
 	
 		**
@@ -401,7 +401,7 @@
 	*________________________________________________________________________________________________________________________________* 
 	**	
 		use 	   "$inter/Flow Indicators.dta", clear
-		keep 		*5grade* *9grade* codschool year
+		keep 		*5grade* approval9grade codschool year
 		
 		**
 		tempfile    	flow_index
@@ -440,8 +440,8 @@
 		}
 		
 		**
-		tempfile    enrollments
-		save       `enrollments'	
+		tempfile    	enrollments
+		save       	   `enrollments'	
 	
 	
 	*________________________________________________________________________________________________________________________________* 
@@ -450,11 +450,11 @@
 	*Class hours																								
 	*________________________________________________________________________________________________________________________________* 
 	**	
-		use 		classhour5grade classhour9grade  year codschool network coduf using "$inter/Class-Hours.dta" 			if (network == 2 | network == 3) & codschool !=. & coduf == 35, clear
+		use 		classhour5grade  year codschool network coduf using "$inter/Class-Hours.dta" 			if (network == 2 | network == 3) & codschool !=. & coduf == 35, clear
 		
 		**
-		tempfile    class_hours
-		save       `class_hours'	
+		tempfile    	class_hours
+		save       	   `class_hours'	
 	
 	
 	*________________________________________________________________________________________________________________________________* 
@@ -463,11 +463,11 @@
 	*Students per class																								
 	*________________________________________________________________________________________________________________________________* 
 	**	
-		use 	    tclass5grade tclass9grade 		 year codschool network coduf using "$inter/Class-Size.dta" 			if (network == 2 | network == 3) & codschool !=. & coduf == 35, clear
+		use 	    tclass5grade 	 year codschool network coduf using "$inter/Class-Size.dta" 			if (network == 2 | network == 3) & codschool !=. & coduf == 35, clear
 		
 		**
-		tempfile    class_size
-		save       `class_size'	
+		tempfile    	class_size
+		save       	   `class_size'	
 	
 		
 	*________________________________________________________________________________________________________________________________* 
@@ -476,11 +476,11 @@
 	*Students per teacher																						
 	*________________________________________________________________________________________________________________________________* 
 	**	
-		use 	    spt5grade spt9grade 	  		 year codschool network	uf    using "$inter/Students per teacher.dta"   if (network == 2 | network == 3) & codschool !=. & uf == "SP", clear
+		use 	    spt5grade   		 year codschool network	uf    using "$inter/Students per teacher.dta"   if (network == 2 | network == 3) & codschool !=. & uf == "SP", clear
 		
 		**
-		tempfile    students_teacher
-		save       `students_teacher'	
+		tempfile    	students_teacher
+		save       	   `students_teacher'	
 		
 	
 	*________________________________________________________________________________________________________________________________* 
@@ -494,8 +494,8 @@
 		drop 		flowindexEF* target* approval*
 		
 		**
-		tempfile    ideb
-		save       `ideb'
+		tempfile    	ideb
+		save       	   `ideb'
 		
 		
 	*________________________________________________________________________________________________________________________________* 
@@ -508,8 +508,8 @@
 		keep 	 		codschool
 		
 		**
-		tempfile data
-		save 	`data'
+		tempfile 		data
+		save 		   `data'
 	
 	
 	*________________________________________________________________________________________________________________________________* 
@@ -633,9 +633,9 @@
 		use 		`school_infra'	, clear
 		merge   	1:1 codschool year using `flow_index'											, nogen
 		merge   	1:1 codschool year using `enrollments'	 										, nogen keepusing(dif_age_5grade enrollment5grade enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentTotal)
-		merge   	1:1 codschool year using `class_hours'	 										, nogen keepusing(classhour5grade classhour9grade)
-		merge   	1:1 codschool year using `class_size'	 										, nogen keepusing(tclass5grade tclass9grade)
-		merge   	1:1 codschool year using `students_teacher'	 									, nogen keepusing(spt5grade spt9grade)
+		merge   	1:1 codschool year using `class_hours'	 										, nogen keepusing(classhour5grade)
+		merge   	1:1 codschool year using `class_size'	 										, nogen keepusing(tclass5grade   )
+		merge   	1:1 codschool year using `students_teacher'	 									, nogen keepusing(spt5grade      )
 		merge 		1:1 codschool year using `ideb'													, nogen
 		merge 		1:1 codschool year using `socio_economic'										, nogen 
 		merge 		1:1 codschool year using `teachers'												, nogen 
@@ -646,8 +646,8 @@
 		merge 		m:1 codschool 	   using "$inter/Teachers Managerial Practices Program.dta"		, nogen keepusing(teacher_management_program share*)
 		merge 		m:1 codschool 	   using "$inter/Teachers in state and municipal networks.dta"	, nogen 
 		merge 		m:1 codschool 	   using `data'													, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
-		sort 		codschool year 
-		xtset   	codschool year  
+		sort 			codschool year 
+		xtset   		codschool year  
 
 		
 		**
@@ -660,7 +660,7 @@
 	
 		**
 		**
-		drop 		school
+		drop 		school operation
 		replace 	n_munic = n_munic[_n-1] if codmunic[_n] == codmunic[_n-1] & n_munic[_n] == "" & n_munic[_n-1] != ""		//name of municipalities
 		replace 	n_munic = n_munic[_n+1] if codmunic[_n] == codmunic[_n+1] & n_munic[_n] == "" & n_munic[_n+1] != ""
 		
@@ -671,7 +671,8 @@
 		**
 		**
 		order 		year-codmunic2 n_munic location codschool-mes_fim_letivo school_year CICLOS
-
+		
+		
 		**
 		*Labels
 		**
@@ -684,8 +685,7 @@
 		label 		var codmunic								"Code of the municipality"
 		label 		var codmunic2 								"Code of the municipality-6 digits"
 		label 		var pop 									"Population of the municipality"
-		label 		var n_munic									"Name of the municipality"
-		label 		var operation 								"1 escolas em atividade em t, 2 escolas fora de atividade, 3 escolas extintas e 4 escolas extintas no ano anterior"
+		label 		var n_munic									"Name of the municipality"		
 		label 		var cinicio_letivo 							"Início do ano letivo"
 		label 		var cfim_letivo 							"Fim do ano letivo"
 		label 		var dia_fim_letivo 							"Dia em que terminou o ano letivo"
@@ -696,25 +696,19 @@
 		label 		var repetition5 							"Repetition - %" 
 		label 		var dropout5 								"Dropout - %" 
 		label 		var approval5								"Approval - %" 
-		label 		var repetition9 							"Repetition - %" 
-		label 		var dropout9 								"Dropout - %" 
-		label 		var approval9								"Approval - %" 
+		label 		var approval9								"Approval 9th grade - %" 
 		label 		var ComputerLab 							"Schools with computer lab - %" 
 		label 		var ScienceLab 								"Schools with science lab - %" 
 		label 		var Library 								"Schools with library - %" 
 		label 		var InternetAccess 							"Schools internet access - %" 
 		label 		var SportCourt 								"Schools sport court - %"
 		label 		var enrollment5 							"Enrollments 5th grade"
-		label 		var enrollment9 							"Enrollments 9th grade"
 		label 		var classhour5 								"Class hours per day"
 		label 		var tclass5 								"Students per class"
-		label 		var classhour9 								"Class hours per day"
-		label 		var tclass9									"Students per class"
 		label 		var pop										"Population of the municipality, in thousands"
 		label 		var pib_pcap								"GDP per capita of the municipality, in 2019 BRL"
 		label 		var spt5									"Students per teacher"
-		label 		var spt9									"Students per teacher"
-		foreach 	x in 5 9 {
+		foreach 	x in 9 {
 		label 		var math`x'        							"Math, `x'th grade"
 		label 		var port`x' 		 						"Portuguese, `x'th grade"
 		label 		var sp`x'									"Standardized Performance, `x'th grade"
@@ -727,32 +721,46 @@
 		label 		var CICLOS									"Schools with automatic approval" 
 		label 		var enrollmentTotal							"Total enrollment, all grades"
 		label 		var school_year								"Length of the school year (days)"
-	
+		label 		var formacao_adequada_port5					"Teachers with the correct degree to teach Portuguese - %" 
+		label 		var formacao_adequada_math5					"Teachers with the correct degree to teach Math - %" 
+		label 		var school_management_program 				"School included in the managerial practices intervention"
+		label 		var teacher_management_program 				"School has at least 1 teacher in the managerial practices intervention" 
+		label 		var share_teacher_management_program		"Teachers in the managerial practices intervention - %" 
+		label 		var teacher_both_networks 					"School has at least 1 teacher working in a state and a locally-managed school" 
+		label 		var share_teacher_both_networks				"Teachers working in state and locally managed school - %" 
+		label       var dif_age_5								"Difference in years between the youngest and oldest student of classroom" 
+		
+		label 		define simnao 1 "Yes" 0 "No" 
+		label 		val 			teacher_management_program simnao
+		label 		val 			school_management_program  simnao
+		label 		val 			teacher_both_networks      simnao
+		
+
 		**
 		**
 		*Treatment and Comparison Groups
 		**
 		gen 		T   				= .										//1 for closed schools, 0 otherwise
 		gen 		G	  				= 1										//0 for the 13 municipalities that extended the winter break, 1 otherwise
-		gen 		E 					= network == 2
+		gen 		E 					= network == 2							//1 for a state managed school and 0, otherwise
 		gen 		id_13_mun 			= 0										//1 for the 13 municipalities that extended the winter break, 0 otherwise
 		foreach 	munic in $treated_municipalities {
-			replace T   			= 1 		if codmunic == `munic' & network == 3
-			replace id_13_mun 		= 1 		if codmunic == `munic'
-			replace G	  	  		= 0 		if codmunic == `munic'
+			replace T   				= 1 		if codmunic == `munic' & network == 3
+			replace id_13_mun 			= 1 		if codmunic == `munic'
+			replace G	  	  			= 0 		if codmunic == `munic'
 		}		
-		replace 	T    			= 1 		if network == 2
-		replace 	T    			= 0 		if T == .
-		gen 		post_treat 		= (year >  2007)
-		gen 		T2007 	   		=  year == 2007  & T == 1
-		gen 		T2008	   		=  year == 2008  & T == 1
-		gen 		T2009 	   		=  year == 2009  & T == 1
+		replace 	T    				= 1 		if network == 2				//all state-managed schools were closed
+		replace 	T    				= 0 		if T == .
+		gen 		post_treat 			= (year >  2008)						//after treatment period
+		gen 		T2007 	   			=  year == 2007  & T == 1
+		gen 		T2008	   			=  year == 2008  & T == 1
+		gen 		T2009 	   			=  year == 2009  & T == 1
 		
 		**
 		**
 		label 		var T 				"Schools that extended the winter break"
-		label 		var G				"School in municipality that didnt extend the winter break of their local schools" 
-		label 		var id_13_mun		"School in municipality that extend the winter break of their local schools" 
+		label 		var G				"School in a municipality that didnt extend the winter break of their local schools" 
+		label 		var id_13_mun		"School in a municipality that extend the winter break of their local schools" 
 		label 		var E				"State-managed schools"
 		label 		var post_treat		"Pos-treatment"
 		label 		var T2007			"1 for treated schools in 2007"
@@ -762,14 +770,14 @@
 		
 		**
 		**
-		label 		define id_13_mun   0 "Locally-managed schools without winter break extended" 1 "Locally-managed schools with winter break extended" 
-		label 		define G		   1 "Local authorities did not extend winter break" 		 0 "Local authoritied extend winter break"
-		label 		define T		   0 "Comparison Group" 1 "Treatment Group"
-		label		define E		   0 "Locally-managed"  1 "State-managed"
-		label 		val id_13_mun id_13_mun
-		label 		val G G
-		label 		val T T
-		label 		val E	E
+		label 		define 	id_13_mun   0 "Locally-managed schools without winter break extended" 	1 "Locally-managed schools with winter break extended" 
+		label 		define 	G		    1 "Local authorities did not extend winter break" 		 	0 "Local authoritied extend winter break"
+		label 		define 	T		    0 "Comparison Group" 										1 "Treatment Group"
+		label		define 	E		    0 "Locally-managed"  										1 "State-managed"
+		label 		val 	id_13_mun id_13_mun
+		label 		val 	G G
+		label 		val 	T T
+		label 		val 	E E
 	
 			
 		**
@@ -812,15 +820,15 @@
 		
 		**
 		**
-		label 		define 	tipo_municipio_ef1 		1 "State and locally-managed schools offering 1st to 5th grade"					 	 	2  "No state-managed schools but locally-managed schools offering 1st to 5th grade" ///
-													3 "State-managed schools but no locally-managed schools offering 1st to 5th grade"  	4  "Without schools offering 1st to 5th grade" 
-		label 		define 	tipo_municipio_ef2 		1 "State and locally-managed schools offering 6th to 9th grade"					 		2  "No state-managed schools but locally-managed schools offering 6th to 9th grade" ///
-													3 "State-managed schools but no locally-managed schools offering 6th to 9th grade"  	4  "Without schools offering 6th to 9th grade" 
+		label 		define 	tipo_municipio_ef1 			1 "State and locally-managed schools offering 1st to 5th grade"					 	 	2  "No state-managed schools but locally-managed schools offering 1st to 5th grade" ///
+														3 "State-managed schools but no locally-managed schools offering 1st to 5th grade"  	4  "Without schools offering 1st to 5th grade" 
+		label 		define 	tipo_municipio_ef2 			1 "State and locally-managed schools offering 6th to 9th grade"					 		2  "No state-managed schools but locally-managed schools offering 6th to 9th grade" ///
+														3 "State-managed schools but no locally-managed schools offering 6th to 9th grade"  	4  "Without schools offering 6th to 9th grade" 
 		
 		**
 		**
-		label 		val 	tipo_municipio_ef2 		tipo_municipio_ef2
-		label 		val 	tipo_municipio_ef1 		tipo_municipio_ef1
+		label 		val 	tipo_municipio_ef2 			tipo_municipio_ef2
+		label 		val 	tipo_municipio_ef1 			tipo_municipio_ef1
 		
 		**
 		**
@@ -858,7 +866,7 @@
 		**
 		*Students with basic or adequate performance 
 		**
-		foreach 	grade in 5 9 {
+		foreach 	grade in 5 {
 			egen 	port_basic_more_`grade' = rowtotal(port_basic`grade' port_adequ`grade'), missing
 			egen 	math_basic_more_`grade' = rowtotal(math_basic`grade' math_adequ`grade'), missing
 		}
@@ -867,8 +875,6 @@
 		**
 		label 		var port_basic_more_5			"Basic or adequate performance in Portuguese, 5th grade - %" 
 		label 		var math_basic_more_5			"Basic or adequate performance in Mathm, 5th grade - %" 
-		label 		var port_basic_more_9			"Basic or adequate performance in Portuguese, 9th grade - %" 
-		label 		var math_basic_more_9			"Basic or adequate performance in Portuguese, 9th grade - %" 
 		
 		
 		**
@@ -943,33 +949,25 @@
 		Treatment status versus students per teacher, principal effort, teacher tenure, teachers with formacao adequada para lecionar para 5a serie
 		*/
 		
-		foreach variable in spt principal_effort teacher_tenure formacao_adequada_port formacao_adequada_math { 				//students per teacher, principal_effort_index teacher_tenure 
-			foreach grade in 5 {
-				gen 	T2009_`variable'`grade'   = T2009*`variable'`grade'	
-			}
+		foreach variable in spt5 principal_effort5 teacher_tenure5 formacao_adequada_port5 formacao_adequada_math5 dif_age_5 { 		//students per teacher, principal_effort_index teacher_tenure 
+				gen 	T2009_`variable'  = T2009*`variable'
 		}
 		
-		clonevar  			absenteeism_issue5 = absenteeism_teachers3  			//*Treatment status versus teacher absenteeism
+		clonevar  			absenteeism_issue5 = absenteeism_teachers3  															//*Treatment status versus teacher absenteeism
 		gen 		  T2009_absenteeism_issue5 = T2009*absenteeism_issue5
 		
 		
-		*gen 		  T2009_absenteeism_issue9 = T2009*absenteeism_issue9
-		*clonevar  			absenteeism_issue9 = absenteeism_teachers3 
-
-		
-		
 		**
 		**
-		label 		var T2009_spt5  			 	"ATT versus students per teacher" 
-		label 		var T2009_spt9  			 	"ATT versus students per teacher" 
-		label 		var T2009_principal_effort5   	"ATT versus principal effort" 
-		label 		var T2009_teacher_tenure5  		"ATT versus % teachers with tenure" 
-		label 		var T2009_absenteeism_issue5 	"ATT versus teacher absenteeism" 
-		*label 		var T2009_absenteeism_issue9 	"ATT versus teacher absenteeism"  
-		*label 		var T2009_principal_effort9  	"ATT versus principal effort" 
-		*label 		var T2009_teacher_tenure9  	"ATT versus % teachers with tenure"
+		label 		var T2009_spt5  			 		"ATT versus students per teacher" 
+		label 		var T2009_principal_effort5   		"ATT versus principal effort" 
+		label 		var T2009_teacher_tenure5  			"ATT versus % teachers with tenure" 
+		label 		var T2009_absenteeism_issue5 		"ATT versus teacher absenteeism" 		
+		label 		var T2009_formacao_adequada_port5	"ATT versus teacher with the correct degree to teach Portuguese"
+		label 		var T2009_formacao_adequada_math5	"ATT versus teacher with the correct degree to teach math"
+		label 		var T2009_dif_age_5					"ATT versus age difference between youngest and oldest of the class" 
 		
-				
+		
 		**
 		**
 		format 		T2009_* %4.2fc
@@ -987,10 +985,18 @@
 		label 		var classrooms_het_performance 	 "Students allocated into classrooms according to hetero. performance"
 	
 
+		foreach		var of varlist classrooms_het_performance classrooms_similar_ages  mun_escolas_estaduais_ef1 mun_escolas_estaduais_ef2 ///
+					mun_escolas_municipais_ef1 mun_escolas_municipais_ef2 offers_ef1 offers_ef2 offers_ef1_ef2									{
+					label val `var' simnao
+		}
+
 		**
 		**
 		xtset 		codschool year 	
 		compress
+		
+		br codschool year T2009 enrollment5 math5 spt5 principal_effort5 teacher_tenure5 formacao_adequada_port5 formacao_adequada_math5 ///
+						  absenteeism_teachers absenteeism_teachers3   dif_age_5 T2009*
 		save "$final/h1n1-school-closures-sp-2009.dta", replace
 
 

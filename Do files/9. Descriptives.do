@@ -4,283 +4,132 @@
 	**
 	*________________________________________________________________________________________________________________________________* 
 	
-	
-	use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & network == 3 & math5 != ., clear
-
-	gen return = "16/08/2009"
-	gen return_class = date(return, "DMY")
-	format return_class %td
-	
-	gen dif = (cfim_letivo - return_class)
-	
-	
-	*--------------------------------------------------------------------------------------------------------------------------------*
 	**
-	*Share of teachers working in both state and locally-managed schools; and teachers included in the Managerial Practices Program
-	*implemented by the state government of Sao Paulo in 2008. 
+	**
+	*Table 1: enrollments and number of schools
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		
-		
-		*use			"$inter/Principals - Prova Brasil.dta"  if year == 2009 & coduf == 35 & (network == 2 | network == 3) , clear
-		*tab 		absenteeism_teachers, gen(absenteeism_teachers)
-		*collapse (mean)absenteeism_teachers1-absenteeism_teachers2, by(G network)
-		
-		
-		
-		
-		use			"$inter/Students - Prova Brasil.dta"    if year == 2009 & coduf == 35 & (network == 2 | network == 3) & grade == 5, clear
-		tab 		homework_corrected_port, gen(homework_corrected_port)
-		tab 		homework_corrected_math, gen(homework_corrected_math)
-		collapse 	(mean)homework_corrected_port1-homework_corrected_math3 score*, by(id_class codschool network codmunic G)
-		duplicates  report id_class codschool
-		tempfile 	students
-		save 	   `students'
-		
-		
-		use		 	"$inter/Teachers - Prova Brasil.dta"   if year == 2009 & coduf == 35 & (network == 2 | network == 3) & grade == 5 & !missing(teacher_tenure), clear
-		duplicates 	report codschool id_class					//sometimes we have two teachers answering questions for the same classrooms
-		bys 	   		   codschool id_class: gen T = _N
-		drop 	   	if T == 2									//we are going to drop these two rows because we do not know who is the main teacher of the class
-		merge 		1:1 codschool id_class using `students', keep(3)
-		
-		gen 		teacher_wage1 = inlist(teacher_wage, 1,2,3,4,5	)
-		gen 		teacher_wage2 = inlist(teacher_wage, 6,7,8	)
-		gen 		teacher_wage3 = inlist(teacher_wage, 9,10,11)
-		foreach var of varlist teacher_wage {
-			replace `var' = . if teacher_wage == .
-		}
-		collapse 	(mean)homework_corrected_port1-homework_corrected_math3 teacher_wage1-teacher_wage3, by(G network teacher_tenure)
-		recode 		teacher_tenure (0 = 2)
-		
-		foreach var of varlist homework_corrected_port1-homework_corrected_math3 teacher_wage1-teacher_wage3 {
-			replace `var' = `var'*100
-		}
-
-		label 		drop   yesno network
-		label 		define network 			2 "State-managed" 	3 "Locally-managed"
-		label 		define teacher_tenure 	1 "Tenure" 			2 "Other"
-		label 		val    teacher_tenure teacher_tenure
-		label 		val    network 		  network
-		
-		forvalues G = 0(1)1 {
-		graph bar (asis) homework_corrected_math1 homework_corrected_math2 homework_corrected_math3 if G == `G', bar(1, color(gs12)  fintensity(inten60) ) bar(2, color(navy) fintensity(inten30)) ///
-		over(teacher_tenure,  label(labsize(small))) over(network, label(labsize(medsmall)))															///
-		blabel(bar, position(outside) orientation(horizontal) size(vsmall) color(black) format (%4.1fc))   								 				///
-		ytitle("%", size(medsmall)) ylabel(, labsize(small) gmax angle(horizontal) format (%4.0fc) )  													///
-		yscale(line)	 																																///
-		title({bf:G = `G'}, size(large)) ///
-		subtitle({bf:Frequency teacher corrects Math homework}, color(navy) size(medsmall)) ///
-		legend(order(1 "Always" 2 "Sometimes" 3 "Never" ) region(lwidth(white) lcolor(white) fcolor(white)) cols(4) size(small) position(12))     		///
-		note("" , span color(black) fcolor(background) pos(7) size(small)) saving(homework`G'.gph,replace) 							 					///
-		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 							 					///
-		plotregion( color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 							 					///
-		ysize(7) xsize(7) 
-		
-		
-		graph bar (asis) teacher_wage1 teacher_wage2 teacher_wage3 if G == `G', bar(1, color(gs12)  fintensity(inten40) )  bar(2, color(erose) fintensity(inten80))  bar(3, color(cranberry) fintensity(inten80)) ///
-		over(teacher_tenure,  label(labsize(small))) over(network, label(labsize(medsmall)))															///
-		blabel(bar, position(outside) orientation(horizontal) size(vsmall) color(black) format (%4.1fc))   								 				///
-		ytitle("%", size(medsmall)) ylabel(, labsize(small) gmax angle(horizontal) format (%4.0fc) )  													///
-		yscale(line)	 																																///
-		subtitle({bf:Teachers' wage}, color(navy) size(medsmall)) ///
-		legend(order(1 "Up to 3 Minimum Wages" 2 "Between 3 and 5" 3 "More than 5" ) region(lwidth(white) lcolor(white) fcolor(white)) cols(4) size(small) position(12))     	///
-		note("" , span color(black) fcolor(background) pos(7) size(small)) 	saving(wage`G'.gph, replace)							 					///
-		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 							 					///
-		plotregion( color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 							 					///
-		ysize(5) xsize(7) 
-		}
-		graph combine homework1.gph homework0.gph wage1.gph wage0.gph, rows(2) xsize(8) ysize(5)
-		erase homework1.gph
-		erase homework0.gph
-		erase wage1.gph
-		erase wage0.gph
-		graph export "$figures/homework-corrected-teacher-wages.pdf", as(pdf) replace	
-		
-		use "$inter/Teachers in state and municipal networks.dta", clear
-		
-		
-		use enrollment5grade codschool codmunic year network coduf using "$inter/Enrollments.dta" if year == 2009 & coduf == 35 & (network == 2 | network == 3), clear
-		merge 1:1 codschool year 	using "$inter/IDEB by school.dta"							, nogen keep (1 3) keepusing(math5 port5 idebEF1)
-		merge 1:1 codschool year 	using "$inter/IDESP.dta"									, nogen keep (1 3)		
-		merge 1:1 codschool year    using "$inter/Teachers Managerial Practices Program.dta"	, nogen keep (1 3)
-		merge 1:1 codschool year    using "$inter/Teachers in state and municipal networks.dta"	, nogen keep (1 3)
-
-		gen T   				= .										//1 for closed schools, 0 otherwise
-		gen G	  				= 1										//0 for the 13 municipalities that extended the winter break, 1 otherwise
-		foreach munic in $treated_municipalities {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-			replace T   		= 1 		if codmunic == `munic' & network == 3
-			replace G	  	  	= 0 		if codmunic == `munic'
-		}		
-		replace T    			= 1 		if network == 2
-		replace T    			= 0 		if T == .
-
-		keep if enrollment5grade !=.
-		
-		bys T: su share_teacher_both_networks 		if network == 3 & year == 2009, detail
-		bys T: su share_teacher_management_program  if network == 3 & year == 2009, detail
-		
-		bys network: su share_teacher_management_program		if G == 1 & year == 2009 & school_management_program == 0,   detail
-
-		bys T: su share_teacher_management_program if network == 3 & year == 2009, detail
-
-		
-		
-		
-		
-		bys T: su share_teacher_management_program if network == 3 & year == 2009, detail
-		
-		
-		
-		
-		use "$inter/Teachers Managerial Practices Program.dta", clear
-		
-		su share_teacher_management_program if school_management_program == 0
-		
-		
-		
-		
-		
-		
-		
-		tab G teacher_management_program
-		tab G teacher_both_networks
-	
-		twoway (histogram share_teacher_both_networks  if year == 2009 & G == 1,  bin(42) fcolor(emidblue) lcolor(black) percent) 							///
-			   (histogram share_teacher_both_networks  if year == 2009 & G == 0,  bin(30) percent    																						///
-		title("Teachers working in both state and municipal networks", pos(12) size(medium) color(black))																					///
-		subtitle("" , pos(12) size(medsmall) color(black))  																								///
-		ylabel(, labsize(small)) xlabel(, format (%12.0fc) labsize(small) gmax angle(horizontal)) 															///
-		yscale(alt) 																																		///
-		xtitle("Test score", size(medsmall) color(black))  																									///
-		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
-		plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
-		ysize(5) xsize(7) 																																	///
-		fcolor(none) lcolor(black)), legend(order(1 "G = 1" 2 "G = 0") region(lwidth(none) color(white) fcolor(none)) cols(4) size(large) position(6)) ///
-		note("Source: Censo Escolar, 2009.", span color(black) fcolor(background) pos(7) size(small)) 
-		graph export "$figures/share-teachers-both-networks.pdf", as(pdf) replace	
-		
-		drop if school_management_program == 1
-		
-		su 		share_teacher_management_program 	 if G == 1 & network == 2, detail
-		replace share_teacher_management_program = . if G == 1 & network == 2 & share_teacher_management_program >= r(p95)
-		
-		su 		share_teacher_management_program 	 if G == 0 & network == 2, detail
-		replace share_teacher_management_program = . if G == 0 & network == 2 & share_teacher_management_program >= r(p95)
-		
-		su 		share_teacher_management_program 	 if G == 1 & network == 3, detail
-		replace share_teacher_management_program = . if G == 1 & network == 3 & share_teacher_management_program >= r(p95)
-		
-		su 		share_teacher_management_program 	 if G == 0 & network == 3, detail
-		replace share_teacher_management_program = . if G == 0 & network == 3 & share_teacher_management_program >= r(p95)
-		
-			
-		twoway (histogram share_teacher_management_program  if year == 2009 & G == 1 & network == 3,  bin(35) fcolor(emidblue) lcolor(black) percent) 							///
-			   (histogram share_teacher_management_program  if year == 2009 & G == 0 & network == 3,  bin(30) percent    																						///
-		title("Teachers working in both state and municipal networks", pos(12) size(medium) color(black))																					///
-		subtitle("" , pos(12) size(medsmall) color(black))  																								///
-		ylabel(, labsize(small)) xlabel(, format (%12.0fc) labsize(small) gmax angle(horizontal)) 															///
-		yscale(alt) 																																		///
-		xtitle("Test score", size(medsmall) color(black))  																									///
-		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
-		plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
-		ysize(5) xsize(7) 																																	///
-		fcolor(none) lcolor(black)), legend(order(1 "G = 1" 2 "G = 0") region(lwidth(none) color(white) fcolor(none)) cols(4) size(large) position(6)) ///
-		note("Source: Censo Escolar, 2009.", span color(black) fcolor(background) pos(7) size(small)) 
-		graph export "$figures/share-teachers-both-networks.pdf", as(pdf) replace	
-	
-	
-	*--------------------------------------------------------------------------------------------------------------------------------*
-	**
-	*Enrollments and number of schools
-	**
-	*--------------------------------------------------------------------------------------------------------------------------------*
+		**
+		**
 		use 	"$inter/Enrollments.dta" if year == 2009 & (network == 2 | network == 3), clear
-		gen T = 0
-			foreach munic in $treated_municipalities {											//13 municipalities that opted to extend the winter break in their schools
-			replace T = 1 if codmunic == `munic'
-		}
+			
+			gen 		T = 0
+			foreach munic in $treated_municipalities {													//13 municipalities that opted to extend the winter break in their schools
+				replace T = 1 if codmunic == `munic'
+			}
 	
-		egen 	mat    = rowtotal(enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal)	//total enrollment at school level	
-		gen 	escola = school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1	
-		gen 	affected = (T ==1 | network == 2) & escola == 1									//affected network by winter break extention -> 
-																								//locally managed schools in the 13 municipalities that opted to extend the winter break
-																								// + state-state managed schools in all municipalities of the state of Sao Paulo. 
-																								
-		keep if escola == 1 																	//schools offering preschool, 1st to 9th grade or high school	
-		
-		collapse (sum) mat enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal school_*, by(affected network) //total number of schools and enrollment by state and local networks, affected and non-affected by the shutdowns
-		drop 	mat school_EF
-		sort 	affected network 
-		
-		set obs 6
-		
-		gen 	network2 = "Local" if network == 3
-		replace network2 = "State" if network == 2
-		
-		replace network2 = "Affected"   in 4
-		replace network2 = "Unaffected" in 5
-		
-		foreach var of varlist * {
-			tostring `var', replace
-		}
-		
-		replace enrollmentEI  		= "Pre-K" 				in 6
-		replace enrollmentEF1 		= "Elementary"  		in 6
-		replace enrollmentEF2 		= "Lower sec" 			in 6
-		replace enrollmentEMtotal 	= "High School"  		in 6
-		replace school_EI  			= "Pre-K"				in 6
-		replace school_EF1 			= "Elementary"  		in 6
-		replace school_EF2 			= "Lower sec"  			in 6
-		replace school_EM 			= "High School"  		in 6
-		
-		gen 	order = 1 in 6
-		replace order = 2 in 5
-		replace order = 3 in 1
-		replace order = 4 in 4
-		sort order 
-		
-		drop 	network affected order
-		order 	network*
+			**
+			egen 	mat    		= rowtotal(enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal)	//total enrollment at school level	
+			
+			**
+			gen 	escola 		= school_EI == 1 | school_EF1 == 1 | school_EF2 == 1 | school_EM == 1	
+			
+			**
+			gen 	affected 	= (T 		== 1 | network 	  == 2) & escola 	== 1					//affected network by winter break extention -> 
+																										//locally managed schools in the 13 municipalities that opted to extend the winter break
+																										// + state-state managed schools in all municipalities of the state of Sao Paulo. 
+			**																			
+			keep if escola == 1 																		//schools offering preschool, 1st to 9th grade or high school	
+			
+			
+			**
+			collapse (sum) mat enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal school_*, by(affected network) //total number of schools and enrollment by state and local networks, affected and non-affected by the shutdowns
+			
+			**
+			drop 	mat school_EF
+			
+			**
+			sort 	affected network 
+			
+			**
+			set obs 6
+			
+			**
+			gen 	network2 = "Local" 		if network == 3
+			replace network2 = "State" 		if network == 2
+			replace network2 = "Affected"   					in 4
+			replace network2 = "Unaffected" 					in 5
+			
+			**
+			foreach 	  var of varlist * {
+				tostring `var', replace
+			}
+			
+			
+			**
+			replace enrollmentEI  		= "Pre-K" 				in 6
+			replace enrollmentEF1 		= "Elementary"  		in 6
+			replace enrollmentEF2 		= "Lower sec" 			in 6
+			replace enrollmentEMtotal 	= "High School"  		in 6
+			replace school_EI  			= "Pre-K"				in 6
+			replace school_EF1 			= "Elementary"  		in 6
+			replace school_EF2 			= "Lower sec"  			in 6
+			replace school_EM 			= "High School"  		in 6
+			
+			**
+			gen 	order = 1 in 6
+			replace order = 2 in 5
+			replace order = 3 in 1
+			replace order = 4 in 4
+			sort 	order 
+			
+			**
+			drop 	network affected order
+			order 	network*
 
-		export 	excel "$tables/Table1.xlsx", replace
+			**
+			export 	excel "$tables/Table1.xlsx", replace
 		
 		
-	*--------------------------------------------------------------------------------------------------------------------------------*
+	**	
 	**
-	*Number of municipalities and schools in our sample
+	*Table A1 and A2: number of municipalities and schools in our sample, disaggregated by network and G = 1/G = 0
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		
-		*===========>
-		use"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
+		**
+		**
+		use	 "$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
 			codebook codmunic  if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of municipalities (among the ones that did not extend the winter break) with at lest one state school
 			codebook codschool if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of state schools in the municipalities that opted to not extend the winter break
 			codebook codschool if id_13_mun == 0 & network == 3 & !missing(math5) & mun_escolas_estaduais_ef1 == 1  //number of municipal schools in the municipalities that opted to not extend the winter break
 
-		*===========>
-		use"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
-			duplicates drop codmunic, force
-			gen ind = 1
-			collapse (sum) ind 						  , by (id_13_mun tipo_municipio_ef1)						   //number of municipalities offering 1st to 5th grade
-			tempfile munef1
-			save    `munef1'
-		
-		*===========>
-		use"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
-			duplicates drop codmunic, force
-			gen ind = 1
-			collapse (sum) ind 						  , by (id_13_mun tipo_municipio_ef2)  							//number of municipalities offering 6th to 9th grade
-			tempfile munef2
-			save    `munef2'
+		**
+		**
+		use	"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
+			duplicates 	drop codmunic, force
 			
-		*===========>
+			gen 			  ind = 1
+			collapse 	(sum) ind 					  , by (id_13_mun tipo_municipio_ef1)						   //number of municipalities offering 1st to 5th grade
+			tempfile 	munef1
+			save       `munef1'
+		
+		**
+		**
 		use"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
+			duplicates	 drop codmunic, force
+			gen 			  ind = 1
+			collapse 	(sum) ind 					  , by (id_13_mun tipo_municipio_ef2)  							//number of municipalities offering 6th to 9th grade
+			tempfile 	munef2
+			save       `munef2'
+			
+		**
+		*--------------------->>
+		*Table A1
+		**
+		use	"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
+			
+			**
 			gen ind_estadual  = 1 if network == 2 & !missing(approval5)
 			gen ind_municipal = 1 if network == 3 & !missing(approval5)
-			collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef1)							 //number of schools offering 1st to 5th grade 
-			merge 1:1 id_13_mun tipo_municipio_ef1 using `munef1', nogen
 			
+			**
+			collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef1)							 //number of schools offering 1st to 5th grade 
+
+			merge 										1:1 id_13_mun tipo_municipio_ef1 	using `munef1', nogen
+			
+			**
 			gen 	order = 1 in 4
 			replace order = 2 in 5
 			replace order = 3 in 1
@@ -288,31 +137,37 @@
 			replace order = 5 in 3
 			sort	order
 			
+			**
 			mkmat  ind		    , matrix(ind)
 			matrix ind			 = ind'
 			mkmat  ind_estadual , matrix(ind_estadual)
 			mkmat  ind_municipal, matrix(ind_municipal)
 		
+			**
 			matrix B = (el(ind_estadual,1,1), el(ind_municipal,1,1), el(ind_municipal,2,1), el(ind_estadual,3,1), el(ind_municipal,3,1), el(ind_municipal,4,1), el(ind_estadual,5,1))
-			matrix A = (el(ind,1,1), 0, el(ind,1,2), el(ind,1,3), 0, el(ind,1,4), el(ind,1,5))\B
+			matrix A = (el(ind,1,1)			, 0					   , el(ind,1,2)		  , el(ind,1,3)			, 0					   , el(ind,1,4)		  , el(ind,1,5)		    )\B
 			
+			**
 			clear
 			svmat A
-			foreach var of varlist * { 
-			tostring `var', replace
-			replace  `var' = "" if `var' == "0" 		in 1
+			foreach 	var of varlist * { 
+			tostring   `var', replace
+			replace    `var' = "" if `var' == "0" 		in 1
 			}
 			
+			**
 			gen 	name = "Number of municipalities"  	in 1
 			replace name = "Number of schools" 			in 2
 			
-			foreach var of varlist A1 A4 A7 {
+			**
+			foreach  var of varlist A1 A4 A7    {
 			replace `var' = `var' + " - state" in 2
 			}
-			foreach var of varlist A2 A3 A5 A6 {
+			foreach  var of varlist A2 A3 A5 A6 {
 			replace `var' = `var' + " - local" in 2
 			}			
 			
+			**
 			set obs 5
 			replace A1  = "13 municipalities in which " 		in 3
 			replace A2  = "the local governments"  				in 3
@@ -330,7 +185,8 @@
 			replace A7  = "Only with state schools " 			in 4 	
 			replace A1  = "" 									in 5
 			
-			order name 
+			**
+			order 	name 
 			gen 	order = 1 in 3
 			replace order = 2 in 4
 			replace order = 3 in 1
@@ -338,16 +194,26 @@
 			replace order = 5 in 2
 			sort 	order
 			drop    order
+			
+			**
 			export excel "$tables/TableA1.xlsx", replace
 	
 	
-		*===========>
+		**
+		*--------------------->>
+		*Table A2
+		**
 		use"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
+			
+			**
 			gen ind_estadual  = 1 if network == 2 & !missing(approval9)
 			gen ind_municipal = 1 if network == 3 & !missing(approval9)
-			collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef2) 							//number of schools offering 6th to 9th grade 
-			merge 1:1 id_13_mun tipo_municipio_ef2 using `munef2'
 			
+			**
+			collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef2) 							//number of schools offering 6th to 9th grade 
+			merge 										1:1 id_13_mun tipo_municipio_ef2 	using `munef2'
+			
+			**
 			gen 	order = 1 in 4
 			replace order = 2 in 5
 			replace order = 3 in 1
@@ -355,31 +221,37 @@
 			replace order = 5 in 3
 			sort	order
 			
+			**
 			mkmat  ind		    , matrix(ind)
 			matrix ind			 = ind'
 			mkmat  ind_estadual , matrix(ind_estadual)
 			mkmat  ind_municipal, matrix(ind_municipal)
 		
+			**
 			matrix B = (el(ind_estadual,1,1), el(ind_municipal,1,1), el(ind_estadual,2,1), el(ind_estadual,3,1), el(ind_municipal,3,1), el(ind_municipal,4,1), el(ind_estadual,5,1))
-			matrix A = (el(ind,1,1), 0, el(ind,1,2), el(ind,1,3), 0, el(ind,1,4), el(ind,1,5))\B
+			matrix A = (el(ind,1,1)			, 0					   , el(ind,1,2)		 , el(ind,1,3)		  , 0					  , el(ind,1,4)			 , el(ind,1,5)		   )\B
 			
+			**
 			clear
-			svmat A
-			foreach var of varlist * { 
+			svmat 	A
+			foreach   var of varlist * { 
 			tostring `var', replace
 			replace  `var' = "" if `var' == "0" 		in 1
 			}
 			
+			**
 			gen 	name = "Number of municipalities"  	in 1
 			replace name = "Number of schools" 			in 2
 			
-			foreach var of varlist A1 A4 A7 {
+			**
+			foreach var of varlist A1 A4 A7    {
 			replace `var' = `var' + " - state" in 2
 			}
 			foreach var of varlist A2 A3 A5 A6 {
 			replace `var' = `var' + " - local" in 2
 			}			
 			
+			**
 			set obs 5
 			replace A1  = "13 municipalities in which " 		in 3
 			replace A2  = "the local governments"  				in 3
@@ -396,98 +268,178 @@
 			replace A6  = "Only with local schools" 			in 4 
 			replace A7  = "Only with state schools " 			in 4 	
 			replace A1  = "" 									in 5
-			order name 
+			
+			**
+			order   name 
 			gen 	order = 1 in 3
 			replace order = 2 in 4
 			replace order = 3 in 1
 			replace order = 5 in 2
 			replace order = 4 in 5			
 			sort 	order
-			drop order 
+			drop    order 
+			
+			**
 			export excel "$tables/TableA2.xlsx", replace
 		
-	
 		
+	**
+	**
+	*Enrollment in locally-managed schools
+	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
+		
+		**
+		use 		"$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & !missing(math5) & uf == "SP" & network == 3	, clear
+		
+			**
+			collapse 	(sum)enrollment5*, by(T)			//total enrollment in treatment and comparison schools
+		
+		
+		
+	**
 	**
 	*Balance test
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
-		use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & !missing(math5) & uf == "SP" & network == 3	, clear
-		collapse (sum)enrollment5*, by(T)
+		*
+		**
+		use 	"$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & !missing(math5) & uf == "SP", clear
 
-		
-		use "$final/h1n1-school-closures-sp-2009.dta" if year == 2007 & !missing(math5) & uf == "SP" & network == 3	, clear
+			foreach 		var of varlist $matching_schools	{
+				replace    `var' = `var'*100
+			}	
 
-		foreach var of varlist $matching_schools	{
-			replace `var' = `var'*100
-		}	
+			foreach 	    var of varlist formacao_adequada_math5 formacao_adequada_port5 dif_age_5  { // $balance_students5 $matching_schools def_student_loweffort5 def_absenteeism5 def_bad_behavior5 $balance_teachers $balance_principals
+				di as red "`var'"
+				ttest 	   `var' if network == 3, by (T) 			  //ttest by treatment and comparison groups
+			}
 
-		foreach var of varlist $balance_students5 $matching_schools def_student_loweffort5 def_absenteeism5 def_bad_behavior5 $balance_teachers $balance_principals {
-			di "`var'"
-			ttest `var', by (T) //ttest by treatment and comparison groups
-		}
-
-		
+			foreach 	    var of varlist formacao_adequada_math5 formacao_adequada_port5 dif_age_5   { 
+				di as red "`var'"
+				ttest 	   `var' if G == 1 & tipo_municipio_ef1 == 1, by (network) 											
+			}
+			
+			foreach 	    var of varlist formacao_adequada_math5 formacao_adequada_port5 dif_age_5   { 
+				di as red "`var'"
+				ttest 	   `var' if G == 0 & tipo_municipio_ef1 == 1, by (network) 											
+			}			
+	**
+	**
+	*Tables A3, A4, A5, A6: balance test
+	**
+	*--------------------------------------------------------------------------------------------------------------------------------*
 		use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & !missing(math5) & uf == "SP", clear
 		
-		foreach var of varlist $matching_schools	{
-			replace `var' = `var'*100
-		}	
+			**
+			foreach 	 var of varlist $matching_schools	{
+				replace `var' = `var'*100
+			}	
 		
-		*=============> Locally-managed schools in treated versus non-treated municipalities 
-		iebaltab  $balance_students5  $matching_schools school_year enrollmentTotal pib_pcap if network == 3					, format(%12.2fc) grpvar(T) savetex("$tables/TableA3") 	rowvarlabels replace 
+			*
+			*-------------------> Locally-managed schools in treated versus non-treated municipalities 
+			*
+				iebaltab  $balance_students5  $matching_schools school_year enrollmentTotal pib_pcap if network == 3					, format(%12.2fc) grpvar(T) savetex("$tables/TableA3") 	rowvarlabels replace 
 
-		
-		*=============> Locally-managed schools versus state managed schools across all municipalities that did not extend the winter break of their local schools
-		iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 1 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(E) savetex("$tables/TableA4") 	rowvarlabels replace 
+			*
+			*-------------------> Locally-managed schools versus state managed schools across all municipalities that did not extend the winter break of their local schools (G = 1)
+			*	
+				iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 1 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(E) savetex("$tables/TableA4") 	rowvarlabels replace 
 
-		
-		*=============> Locally-managed schools versus state managed schools across all municipalities that did extend the winter break of their local schools
-		iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 0 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(E) savetex("$tables/TableA5") 	rowvarlabels replace 
+			*
+			*-------------------> Locally-managed schools versus state managed schools across all municipalities that did extend the winter break of their local schools     (G = 0) 
+			*	
+				iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 0 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(E) savetex("$tables/TableA5") 	rowvarlabels replace 
 
-		
-		*=============> State managed schools in G = 1 and G = 0
-		label drop G
-		label define G 0 "State-managed in G = 0" 1 "State-managed in G = 1"
-		label val    G G
-		iebaltab  $balance_students5 $matching_schools school_year enrollmentTotal pib_pcap if network == 2						, format(%12.2fc) grpvar(G)	savetex("$tables/TableA6") 	rowvarlabels replace 
-		
-		
-		*=============> Teachers and principals
-		use "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP", clear
-		foreach v of varlist $balance_principals {
-			replace   `v' = `v'*100
-			format    `v' %4.2fc
-			local    l`v' : variable label `v'
-			label var `v' "`l`v'', %"
-		}
-		
-		foreach var of varlist covered_curricula45 {
-			di "`var'"
-			ttest `var' if G == 0 & tipo_municipio_ef1 == 1 & year == 2007, by (E)
-		}
-
-		*=============> Locally-managed schools in treated versus non-treated municipalities 
-		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3				    	, format(%12.2fc) grpvar(T) savetex("$tables/TableA7")   rowvarlabels replace 
 			
-	
-		*=============> Locally-managed schools versus state managed schools across all municipalities that did not extend the winter break of their local schools
-		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 1 & tipo_municipio_ef1 == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA8")   rowvarlabels replace 
+			*
+			*-------------------> State managed schools in G = 1 and G = 0
+			*	
+				label drop 		G
+				label define 	G 0 "State-managed in G = 0" 1 "State-managed in G = 1"
+				label val    	G G
 				
-		
-		*=============> Locally-managed schools versus state managed schools across all municipalities that did extend the winter break of their local schools
-		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 0 & tipo_municipio_ef1 == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA9")   rowvarlabels replace 
-				
-				
-		*=============> State managed schools in G = 1 and G = 0
-		label drop G
-		label define G 0 "State-managed, G=0" 1 "State-managed, G=1"
-		label val    G G
-		iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 2						, format(%12.2fc) grpvar(G) savetex("$tables/TableA10")  rowvarlabels replace 
-				
+				iebaltab  $balance_students5 $matching_schools school_year enrollmentTotal pib_pcap if network == 2						, format(%12.2fc) grpvar(G)	savetex("$tables/TableA6") 	rowvarlabels replace 
 
+			
+	**
+	**
+	*Tables A7, A8, A9, A10: balance test
+	**
+	*--------------------------------------------------------------------------------------------------------------------------------*
+		
+		use "$final/h1n1-school-closures-sp-2009.dta" if uf == "SP", clear
+		
+			**
+			foreach 		 v of varlist $balance_principals {
+				replace   	`v' = `v'*100
+				format    	`v' %4.2fc
+				local      l`v' : variable label `v'
+				label var 	`v' "`l`v'', %"
+			}
+		
+			**
+			foreach var of varlist covered_curricula45 {
+				di as red  "`var'"
+				ttest 	    `var' if G == 0 & tipo_municipio_ef1 == 1 & year == 2007, by (E)
+			}
+			
+			*
+			*-------------------> Locally-managed schools in treated versus non-treated municipalities 
+			*
+
+				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3				    	, format(%12.2fc) grpvar(T) savetex("$tables/TableA7")   rowvarlabels replace 
+			
+			*
+			*-------------------> Locally-managed schools versus state managed schools across all municipalities that did not extend the winter break of their local schools
+			*
+			
+				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 1 & tipo_municipio_ef1 == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA8")   rowvarlabels replace 
+
+			
+			*
+			*-------------------> Locally-managed schools versus state managed schools across all municipalities that did extend the winter break of their local schools
+			*
+			
+				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 0 & tipo_municipio_ef1 == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA9")   rowvarlabels replace 
+
+			
+			*
+			*-------------------> State managed schools in G = 1 and G = 0
+			*
+			
+			
+				label drop 		G
+				label define 	G 0 "State-managed, G=0" 1 "State-managed, G=1"
+				label val    	G G
 				
+				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 2						, format(%12.2fc) grpvar(G) savetex("$tables/TableA10")  rowvarlabels replace 
+
+
+	
+
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 	*--------------------------------------------------------------------------------------------------------------------------------*
 	**
 	*Dif-in-dif -> Checking parallel trends of locally managed schools affected and non-affected by the school shutdowns
@@ -1286,3 +1238,186 @@
 		by 		 T, sort: quantiles math5, gen(quintile) stable  nq(10)
 		collapse (mean)mother_edu_highschool5 ever_repeated5 ever_dropped5 number_repetitions5 math_insuf5, by(quintile T)
 		
+	use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & network == 3 & math5 != ., clear
+
+	gen return = "16/08/2009"
+	gen return_class = date(retur																																																			n, "DMY")
+	format return_class %td
+	
+	gen dif = (cfim_letivo - return_class)
+	
+	
+	*--------------------------------------------------------------------------------------------------------------------------------*
+	**
+	*Share of teachers working in both state and locally-managed schools; and teachers included in the Managerial Practices Program
+	*implemented by the state government of Sao Paulo in 2008. 
+	**
+	*--------------------------------------------------------------------------------------------------------------------------------*
+		
+		
+		*use			"$inter/Principals - Prova Brasil.dta"  if year == 2009 & coduf == 35 & (network == 2 | network == 3) , clear
+		*tab 		absenteeism_teachers, gen(absenteeism_teachers)
+		*collapse (mean)absenteeism_teachers1-absenteeism_teachers2, by(G network)
+		
+		
+		
+		
+		use			"$inter/Students - Prova Brasil.dta"    if year == 2009 & coduf == 35 & (network == 2 | network == 3) & grade == 5, clear
+		tab 		homework_corrected_port, gen(homework_corrected_port)
+		tab 		homework_corrected_math, gen(homework_corrected_math)
+		collapse 	(mean)homework_corrected_port1-homework_corrected_math3 score*, by(id_class codschool network codmunic G)
+		duplicates  report id_class codschool
+		tempfile 	students
+		save 	   `students'
+		
+		
+		use		 	"$inter/Teachers - Prova Brasil.dta"   if year == 2009 & coduf == 35 & (network == 2 | network == 3) & grade == 5 & !missing(teacher_tenure), clear
+		duplicates 	report codschool id_class					//sometimes we have two teachers answering questions for the same classrooms
+		bys 	   		   codschool id_class: gen T = _N
+		drop 	   	if T == 2									//we are going to drop these two rows because we do not know who is the main teacher of the class
+		merge 		1:1 codschool id_class using `students', keep(3)
+		
+		gen 		teacher_wage1 = inlist(teacher_wage, 1,2,3,4,5	)
+		gen 		teacher_wage2 = inlist(teacher_wage, 6,7,8	)
+		gen 		teacher_wage3 = inlist(teacher_wage, 9,10,11)
+		foreach var of varlist teacher_wage {
+			replace `var' = . if teacher_wage == .
+		}
+		collapse 	(mean)homework_corrected_port1-homework_corrected_math3 teacher_wage1-teacher_wage3, by(G network teacher_tenure)
+		recode 		teacher_tenure (0 = 2)
+		
+		foreach var of varlist homework_corrected_port1-homework_corrected_math3 teacher_wage1-teacher_wage3 {
+			replace `var' = `var'*100
+		}
+
+		label 		drop   yesno network
+		label 		define network 			2 "State-managed" 	3 "Locally-managed"
+		label 		define teacher_tenure 	1 "Tenure" 			2 "Other"
+		label 		val    teacher_tenure teacher_tenure
+		label 		val    network 		  network
+		
+		forvalues G = 0(1)1 {
+		graph bar (asis) homework_corrected_math1 homework_corrected_math2 homework_corrected_math3 if G == `G', bar(1, color(gs12)  fintensity(inten60) ) bar(2, color(navy) fintensity(inten30)) ///
+		over(teacher_tenure,  label(labsize(small))) over(network, label(labsize(medsmall)))															///
+		blabel(bar, position(outside) orientation(horizontal) size(vsmall) color(black) format (%4.1fc))   								 				///
+		ytitle("%", size(medsmall)) ylabel(, labsize(small) gmax angle(horizontal) format (%4.0fc) )  													///
+		yscale(line)	 																																///
+		title({bf:G = `G'}, size(large)) ///
+		subtitle({bf:Frequency teacher corrects Math homework}, color(navy) size(medsmall)) ///
+		legend(order(1 "Always" 2 "Sometimes" 3 "Never" ) region(lwidth(white) lcolor(white) fcolor(white)) cols(4) size(small) position(12))     		///
+		note("" , span color(black) fcolor(background) pos(7) size(small)) saving(homework`G'.gph,replace) 							 					///
+		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 							 					///
+		plotregion( color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 							 					///
+		ysize(7) xsize(7) 
+		
+		
+		graph bar (asis) teacher_wage1 teacher_wage2 teacher_wage3 if G == `G', bar(1, color(gs12)  fintensity(inten40) )  bar(2, color(erose) fintensity(inten80))  bar(3, color(cranberry) fintensity(inten80)) ///
+		over(teacher_tenure,  label(labsize(small))) over(network, label(labsize(medsmall)))															///
+		blabel(bar, position(outside) orientation(horizontal) size(vsmall) color(black) format (%4.1fc))   								 				///
+		ytitle("%", size(medsmall)) ylabel(, labsize(small) gmax angle(horizontal) format (%4.0fc) )  													///
+		yscale(line)	 																																///
+		subtitle({bf:Teachers' wage}, color(navy) size(medsmall)) ///
+		legend(order(1 "Up to 3 Minimum Wages" 2 "Between 3 and 5" 3 "More than 5" ) region(lwidth(white) lcolor(white) fcolor(white)) cols(4) size(small) position(12))     	///
+		note("" , span color(black) fcolor(background) pos(7) size(small)) 	saving(wage`G'.gph, replace)							 					///
+		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 							 					///
+		plotregion( color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 							 					///
+		ysize(5) xsize(7) 
+		}
+		graph combine homework1.gph homework0.gph wage1.gph wage0.gph, rows(2) xsize(8) ysize(5)
+		erase homework1.gph
+		erase homework0.gph
+		erase wage1.gph
+		erase wage0.gph
+		graph export "$figures/homework-corrected-teacher-wages.pdf", as(pdf) replace	
+		
+		use "$inter/Teachers in state and municipal networks.dta", clear
+		
+		
+		use enrollment5grade codschool codmunic year network coduf using "$inter/Enrollments.dta" if year == 2009 & coduf == 35 & (network == 2 | network == 3), clear
+		merge 1:1 codschool year 	using "$inter/IDEB by school.dta"							, nogen keep (1 3) keepusing(math5 port5 idebEF1)
+		merge 1:1 codschool year 	using "$inter/IDESP.dta"									, nogen keep (1 3)		
+		merge 1:1 codschool year    using "$inter/Teachers Managerial Practices Program.dta"	, nogen keep (1 3)
+		merge 1:1 codschool year    using "$inter/Teachers in state and municipal networks.dta"	, nogen keep (1 3)
+
+		gen T   				= .										//1 for closed schools, 0 otherwise
+		gen G	  				= 1										//0 for the 13 municipalities that extended the winter break, 1 otherwise
+		foreach munic in $treated_municipalities {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+			replace T   		= 1 		if codmunic == `munic' & network == 3
+			replace G	  	  	= 0 		if codmunic == `munic'
+		}		
+		replace T    			= 1 		if network == 2
+		replace T    			= 0 		if T == .
+
+		keep if enrollment5grade !=.
+		
+		bys T: su share_teacher_both_networks 		if network == 3 & year == 2009, detail
+		bys T: su share_teacher_management_program  if network == 3 & year == 2009, detail
+		
+		bys network: su share_teacher_management_program		if G == 1 & year == 2009 & school_management_program == 0,   detail
+
+		bys T: su share_teacher_management_program if network == 3 & year == 2009, detail
+
+		
+		
+		
+		
+		bys T: su share_teacher_management_program if network == 3 & year == 2009, detail
+		
+		
+		
+		
+		use "$inter/Teachers Managerial Practices Program.dta", clear
+		
+		su share_teacher_management_program if school_management_program == 0
+		
+		
+		
+		
+		
+		
+		
+		tab G teacher_management_program
+		tab G teacher_both_networks
+	
+		twoway (histogram share_teacher_both_networks  if year == 2009 & G == 1,  bin(42) fcolor(emidblue) lcolor(black) percent) 							///
+			   (histogram share_teacher_both_networks  if year == 2009 & G == 0,  bin(30) percent    																						///
+		title("Teachers working in both state and municipal networks", pos(12) size(medium) color(black))																					///
+		subtitle("" , pos(12) size(medsmall) color(black))  																								///
+		ylabel(, labsize(small)) xlabel(, format (%12.0fc) labsize(small) gmax angle(horizontal)) 															///
+		yscale(alt) 																																		///
+		xtitle("Test score", size(medsmall) color(black))  																									///
+		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
+		plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
+		ysize(5) xsize(7) 																																	///
+		fcolor(none) lcolor(black)), legend(order(1 "G = 1" 2 "G = 0") region(lwidth(none) color(white) fcolor(none)) cols(4) size(large) position(6)) ///
+		note("Source: Censo Escolar, 2009.", span color(black) fcolor(background) pos(7) size(small)) 
+		graph export "$figures/share-teachers-both-networks.pdf", as(pdf) replace	
+		
+		drop if school_management_program == 1
+		
+		su 		share_teacher_management_program 	 if G == 1 & network == 2, detail
+		replace share_teacher_management_program = . if G == 1 & network == 2 & share_teacher_management_program >= r(p95)
+		
+		su 		share_teacher_management_program 	 if G == 0 & network == 2, detail
+		replace share_teacher_management_program = . if G == 0 & network == 2 & share_teacher_management_program >= r(p95)
+		
+		su 		share_teacher_management_program 	 if G == 1 & network == 3, detail
+		replace share_teacher_management_program = . if G == 1 & network == 3 & share_teacher_management_program >= r(p95)
+		
+		su 		share_teacher_management_program 	 if G == 0 & network == 3, detail
+		replace share_teacher_management_program = . if G == 0 & network == 3 & share_teacher_management_program >= r(p95)
+		
+			
+		twoway (histogram share_teacher_management_program  if year == 2009 & G == 1 & network == 3,  bin(35) fcolor(emidblue) lcolor(black) percent) 							///
+			   (histogram share_teacher_management_program  if year == 2009 & G == 0 & network == 3,  bin(30) percent    																						///
+		title("Teachers working in both state and municipal networks", pos(12) size(medium) color(black))																					///
+		subtitle("" , pos(12) size(medsmall) color(black))  																								///
+		ylabel(, labsize(small)) xlabel(, format (%12.0fc) labsize(small) gmax angle(horizontal)) 															///
+		yscale(alt) 																																		///
+		xtitle("Test score", size(medsmall) color(black))  																									///
+		graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
+		plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 													///
+		ysize(5) xsize(7) 																																	///
+		fcolor(none) lcolor(black)), legend(order(1 "G = 1" 2 "G = 0") region(lwidth(none) color(white) fcolor(none)) cols(4) size(large) position(6)) ///
+		note("Source: Censo Escolar, 2009.", span color(black) fcolor(background) pos(7) size(small)) 
+		graph export "$figures/share-teachers-both-networks.pdf", as(pdf) replace	

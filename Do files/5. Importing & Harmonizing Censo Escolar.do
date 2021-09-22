@@ -721,7 +721,7 @@
 	**Harmonizing Teacher Data
 	**
 	*________________________________________________________________________________________________________________________________* 
-		foreach year in 2007 2008 2009 	{
+		foreach year in 2009 	{
 			
 			foreach region in SP  		{
 			
@@ -905,6 +905,11 @@
 			**
 			**
 			collapse 	(mean)formacao* [w = enrollments], by(codschool year network coduf codmunic)			//proporcao de turmas com docentes com formacao adequada, ponderado pelo numero de alunos da turma 
+			
+			replace 	formacao_adequada_math5 = formacao_adequada_math5*100
+			replace 	formacao_adequada_port5 = formacao_adequada_port5*100
+			
+			format 		formacao* %4.2fc
 			
 			**
 			sort 		codschool year

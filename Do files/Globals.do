@@ -32,7 +32,8 @@ global teachers 		  		  teacher_more10yearsexp  teacher_male  teacher_white  tea
 global balance_teachers 		  teacher_tenure5 teacher_less_40years5 ///
 								  principal_effort5  violence_index5 almost_all_finish_grade95   					 													///
 								  almost_all_finish_highschool5 covered_curricula45	participation_decisions45															///
-								  share_students_books55 quality_books45  teacher_less3min_wages5 def_student_loweffort5 def_absenteeism5 def_bad_behavior5
+								  share_students_books55 quality_books45  teacher_less3min_wages5 def_student_loweffort5 def_absenteeism5 def_bad_behavior5				///
+								  formacao_adequada_port5 formacao_adequada_math5
 		  
 global principals				  student_effort-absenteeism_students3 principal_male principal_white principal_college_degree support_secretary_edu support_community  ///
 								  lack_books principal_gender principal_age_range principal_skincolor principal_edu_level		 										///
@@ -42,3 +43,5 @@ global principals				  student_effort-absenteeism_students3 principal_male princ
 
 global balance_principals		  org_training lack_books principal_selection_work4 absenteeism_teachers3 																///
 								  absenteeism_students3 classrooms_similar_ages classrooms_het_performance
+
+								  
