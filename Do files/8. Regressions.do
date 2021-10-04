@@ -617,7 +617,7 @@
 						drop 	  T2008
 						clonevar  T2008 = beta7P2
 						label var T2008 "ATT, 2008 versus 2007"
-							reg 	`subject' T2008											 beta1P2-beta6P2 i.codmunic $controls2008  	  [aw = `weight']  if (year == 2007 | year == 2008) & ((G == 1 & share_teacher_both_networks < 10) 		| (G == 0)) & share_teacher_management_program == 0, cluster(codmunic)
+							reg 	`subject' T2008											 beta1P2-beta6P2 i.codmunic $controls2008  	  [aw = `weight']  if (year == 2007 | year == 2008) & ((G == 1 & share_teacher_both_networks < 25) 		| (G == 0)) & share_teacher_management_program == 0, cluster(codmunic)
 							eststo 		model`model'`sub'`grade', title("Triple-dif")   
 							mat_res, 	model(`model') sub(`sub') var1(T2008) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
 							local		model = `model' + 1
