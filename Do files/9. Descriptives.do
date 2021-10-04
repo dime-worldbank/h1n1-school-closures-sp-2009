@@ -250,6 +250,7 @@
 			foreach var of varlist A2 A3 A5 A6 {
 			replace `var' = `var' + " - local" in 2
 			}			
+			ss
 			
 			**
 			set obs 5
