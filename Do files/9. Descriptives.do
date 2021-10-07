@@ -6,7 +6,7 @@
 	
 	**
 	**
-	*Table 1: enrollments and number of schools
+	*Table 1: enrollments and number of schools affected and unaffected by the shutdowns in Sao Paulo
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		
@@ -27,11 +27,9 @@
 			
 			**
 			gen 	affected 	= (T 		== 1 | network 	  == 2) & escola 	== 1					//affected network by winter break extention -> 
-																										//locally managed schools in the 13 municipalities that opted to extend the winter break
 																										// + state-state managed schools in all municipalities of the state of Sao Paulo. 
 			**																			
-			keep if escola == 1 																		//schools offering preschool, 1st to 9th grade or high school	
-			
+			keep 	if escola == 1 																		//schools offering preschool, 1st to 9th grade or high school	
 			
 			**
 			collapse (sum) mat enrollmentEI enrollmentEF1 enrollmentEF2 enrollmentEMtotal school_*, by(affected network) //total number of schools and enrollment by state and local networks, affected and non-affected by the shutdowns
@@ -43,7 +41,7 @@
 			sort 	affected network 
 			
 			**
-			set obs 6
+			set 	obs 6
 			
 			**
 			gen 	network2 = "Local" 		if network == 3
@@ -55,7 +53,6 @@
 			foreach 	  var of varlist * {
 				tostring `var', replace
 			}
-			
 			
 			**
 			replace enrollmentEI  		= "Pre-K" 				in 6
@@ -83,7 +80,7 @@
 		
 		
 	**	
-	**
+	*
 	*Table A1 and A2: number of municipalities and schools in our sample, disaggregated by network and G = 1/G = 0
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
@@ -91,9 +88,9 @@
 		**
 		**
 		use	 "$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
-			codebook codmunic  if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of municipalities (among the ones that did not extend the winter break) with at lest one state school
-			codebook codschool if id_13_mun == 0 & network == 2 & !missing(math5) 									//number of state schools in the municipalities that opted to not extend the winter break
-			codebook codschool if id_13_mun == 0 & network == 3 & !missing(math5) & mun_escolas_estaduais_ef1 == 1  //number of municipal schools in the municipalities that opted to not extend the winter break
+			codebook codmunic  if id_13_mun == 0 & network == 2 & !missing(math5) 										//number of municipalities (among the ones that did not extend the winter break) with at lest one state school
+			codebook codschool if id_13_mun == 0 & network == 2 & !missing(math5) 										//number of state schools in the municipalities that opted to not extend the winter break
+			codebook codschool if id_13_mun == 0 & network == 3 & !missing(math5) & mun_escolas_estaduais_ef1 == 1  	//number of municipal schools in the municipalities that opted to not extend the winter break
 
 		**
 		**
@@ -101,19 +98,10 @@
 			duplicates 	drop codmunic, force
 			
 			gen 			  ind = 1
-			collapse 	(sum) ind 					  , by (id_13_mun tipo_municipio_ef1)						   //number of municipalities offering 1st to 5th grade
+			collapse 	(sum) ind 					  , by (id_13_mun tipo_municipio_ef1)						   		//number of municipalities offering 1st to 5th grade
 			tempfile 	munef1
 			save       `munef1'
 		
-		**
-		**
-		use"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
-			duplicates	 drop codmunic, force
-			gen 			  ind = 1
-			collapse 	(sum) ind 					  , by (id_13_mun tipo_municipio_ef2)  							//number of municipalities offering 6th to 9th grade
-			tempfile 	munef2
-			save       `munef2'
-			
 		**
 		*--------------------->>
 		*Table A1
@@ -121,11 +109,11 @@
 		use	"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
 			
 			**
-			gen ind_estadual  = 1 if network == 2 & !missing(approval5)
-			gen ind_municipal = 1 if network == 3 & !missing(approval5)
+			gen ind_estadual  = 1 if network == 2 & !missing(enrollment5)												//state-managed school
+			gen ind_municipal = 1 if network == 3 & !missing(enrollment5)												//local-managed school
 			
 			**
-			collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef1)							 //number of schools offering 1st to 5th grade 
+			collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef1)								//number of schools offering 1st to 5th grade 
 
 			merge 										1:1 id_13_mun tipo_municipio_ef1 	using `munef1', nogen
 			
@@ -138,26 +126,26 @@
 			sort	order
 			
 			**
-			mkmat  ind		    , matrix(ind)
-			matrix ind			 = ind'
-			mkmat  ind_estadual , matrix(ind_estadual)
-			mkmat  ind_municipal, matrix(ind_municipal)
+			mkmat 	ind		    , matrix(ind)
+			matrix 	ind			 = ind'
+			mkmat  	ind_estadual , matrix(ind_estadual)
+			mkmat  	ind_municipal, matrix(ind_municipal)
 		
 			**
-			matrix B = (el(ind_estadual,1,1), el(ind_municipal,1,1), el(ind_municipal,2,1), el(ind_estadual,3,1), el(ind_municipal,3,1), el(ind_municipal,4,1), el(ind_estadual,5,1))
-			matrix A = (el(ind,1,1)			, 0					   , el(ind,1,2)		  , el(ind,1,3)			, 0					   , el(ind,1,4)		  , el(ind,1,5)		    )\B
+			matrix 	B = (el(ind_estadual,1,1), el(ind_municipal,1,1), el(ind_municipal,2,1), el(ind_estadual,3,1), el(ind_municipal,3,1), el(ind_municipal,4,1), el(ind_estadual,5,1))
+			matrix 	A = (el(ind,1,1)			, 0					   , el(ind,1,2)		  , el(ind,1,3)			, 0					   , el(ind,1,4)		  , el(ind,1,5)		    )\B
 			
 			**
 			clear
-			svmat A
+			svmat 	A
 			foreach 	var of varlist * { 
 			tostring   `var', replace
-			replace    `var' = "" if `var' == "0" 		in 1
+			replace    `var' = "" if `var' == "0" 				in 1
 			}
 			
 			**
-			gen 	name = "Number of municipalities"  	in 1
-			replace name = "Number of schools" 			in 2
+			gen 	name = "Number of municipalities"  			in 1
+			replace name = "Number of schools" 					in 2
 			
 			**
 			foreach  var of varlist A1 A4 A7    {
@@ -168,7 +156,7 @@
 			}			
 			
 			**
-			set obs 5
+			set 	obs 5
 			replace A1  = "13 municipalities in which " 		in 3
 			replace A2  = "the local governments"  				in 3
 			replace A3  = "extended the winter break" 			in 3
@@ -202,99 +190,200 @@
 		**
 		*--------------------->>
 		*Table A2
-		**
-		use"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
-			
-			**
-			gen ind_estadual  = 1 if network == 2 & !missing(approval9)
-			gen ind_municipal = 1 if network == 3 & !missing(approval9)
-			
-			**
-			collapse (sum) ind_estadual ind_municipal , by (id_13_mun tipo_municipio_ef2) 							//number of schools offering 6th to 9th grade 
-			merge 										1:1 id_13_mun tipo_municipio_ef2 	using `munef2'
-			
-			**
-			gen 	order = 1 in 4
-			replace order = 2 in 5
-			replace order = 3 in 1
-			replace order = 4 in 2
-			replace order = 5 in 3
-			sort	order
-			
-			**
-			mkmat  ind		    , matrix(ind)
-			matrix ind			 = ind'
-			mkmat  ind_estadual , matrix(ind_estadual)
-			mkmat  ind_municipal, matrix(ind_municipal)
 		
+			*..................................................................................................*
 			**
-			matrix B = (el(ind_estadual,1,1), el(ind_municipal,1,1), el(ind_estadual,2,1), el(ind_estadual,3,1), el(ind_municipal,3,1), el(ind_municipal,4,1), el(ind_estadual,5,1))
-			matrix A = (el(ind,1,1)			, 0					   , el(ind,1,2)		 , el(ind,1,3)		  , 0					  , el(ind,1,4)			 , el(ind,1,5)		   )\B
+			*Dif-in-dif sample
+			**
+			use"$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & network == 3 & math5 != .,  clear
+
+				**
+				keep if sample_dif == 1	//municipalities with 5th grade scores in 2005, so we can check parallel trends 
+	
+				**
+				gen 	id_escola	 = 1 	
+				egen 	id_mun = tag(codmunic)
+				rename 	enrollment5 id_mat
+				
+				**
+				*Baseline
+				**				
+					preserve
+					
+					**
+					collapse 	(sum) id_mun id_escola id_mat, by (T)									 			//number of schools offering 1st to 5th grade 
+					
+					**
+					gen 		sample = "Baseline"
+					
+					**
+					tempfile 		 	  baseline
+					save 				 `baseline'
+					
+					restore
+
+				**
+				*Robustness : no teacher in the managerial interventions
+				**
+					preserve
+					
+					**
+					drop 		if school_management_program == 1 | share_teacher_management_program == 0 
+					
+					**
+					collapse 	(sum) id_mun id_escola id_mat, by (T)									 			//number of schools offering 1st to 5th grade 
+					
+					**
+					gen 		sample = "II"
+					
+					**
+					tempfile 		 robust1
+					save 			`robust1'
+					
+					restore
+				
+				**
+				*Robusteness: restricting the percentage of teachers that also work on the state-managed network
+				**
+					keep 		if (T == 1) | (T == 0 & share_teacher_both_networks < 25)
+					
+					**
+					collapse 	(sum) id_mun id_escola id_mat, by (T)									 			//number of schools offering 1st to 5th grade 
+					
+					**
+					gen 		sample = "III" 
+					
+					**
+					append 		using `baseline' 
+					append 		using `robust1' 
+				
+					**
+					sort 		sample T
+					
+					reshape 	long id_, i(T sample) j(desc) string
+					
+					reshape 	wide id_, i(  sample    desc) j(T)
+					
+					rename 	   (id_0 id_1) (G1_mun G0_mun)
+					
+					gen 		G0_est = .
+					gen 		G1_est = .
+					
+					gen 		met  = "DiD"
+					
+					order       met sample desc G0_est G0_mun G1_est G1_mun
+					
+					tempfile 	dif
+					save 	   `dif'
 			
-			**
-			clear
-			svmat 	A
-			foreach   var of varlist * { 
-			tostring `var', replace
-			replace  `var' = "" if `var' == "0" 		in 1
-			}
 			
+			*..................................................................................................*
 			**
-			gen 	name = "Number of municipalities"  	in 1
-			replace name = "Number of schools" 			in 2
+			*Triple Dif-in-dif sample
+			**
+		
 			
-			**
-			foreach var of varlist A1 A4 A7    {
-			replace `var' = `var' + " - state" in 2
-			}
-			foreach var of varlist A2 A3 A5 A6 {
-			replace `var' = `var' + " - local" in 2
-			}			
-			ss
+				use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & math5 != . & tipo_municipio_ef1 == 1,  clear
+				
+					**
+					keep 	if sample_triple_dif == 1		
 			
-			**
-			set obs 5
-			replace A1  = "13 municipalities in which " 		in 3
-			replace A2  = "the local governments"  				in 3
-			replace A3  = "extended the winter break" 			in 3
-			replace A4  = "Other municipalities"  			 	in 3 
-			replace A5  = "of the state in which "  			in 3 
-			replace A6  = "local authorities did not"			in 3 
-			replace A7  = "change the school calendar"			in 3 
-			replace A1  = "With state" 							in 4 
-			replace A2  = "and local schools"					in 4 
-			replace A3  = "Only with state schools" 			in 4
-			replace A4  = "With state" 							in 4 
-			replace A5  = "and local schools" 					in 4 
-			replace A6  = "Only with local schools" 			in 4 
-			replace A7  = "Only with state schools " 			in 4 	
-			replace A1  = "" 									in 5
-			
-			**
-			order   name 
-			gen 	order = 1 in 3
-			replace order = 2 in 4
-			replace order = 3 in 1
-			replace order = 5 in 2
-			replace order = 4 in 5			
-			sort 	order
-			drop    order 
-			
-			**
-			export excel "$tables/TableA2.xlsx", replace
+					**
+					drop 	if school_management_program 		 == 1	
+					
+					**
+					keep 	if share_teacher_management_program == 0
+
+					**
+					keep 	if ((G == 1 & share_teacher_both_networks < 25) 	 | (G == 0)) 
+					
+					**
+					egen 	id_mun = tag(codmunic network)
+					
+					**
+					gen 				id_escola = 1
+					
+					**
+					rename 	enrollment5 id_mat
+
+					**
+					collapse (sum)id_mun id_escola id_mat, by(G network)
+
+					**
+					reshape long id_ , i(network G) j(desc) string
+					
+					reshape wide id_ , i(network desc) j(G)
+					
+					reshape wide id_*, i(		 desc) j(network)
+
+					rename (id_02 id_12 id_03 id_13) (G0_est G1_est G0_mun G1_mun)
+					
+					gen sample 	= "Baseline"
+					
+					gen met		= "Triple DiD"
+					
+					order met sample desc G0_est G0_mun G1_est G1_mun
+					
+					append using `dif'
+					
+					keep if sample == "Baseline"
+					
+					set 	obs 9
+					tostring *, replace force
+					
+					replace G0_est = "13 municipalities in which the local" 				in 7
+					replace G0_mun = "governments extended the winter break"  				in 7
+					replace G1_est = "Other municipalities of the state in which"  			in 7
+					replace G1_mun = "local authorities did notchange the school calendar"	in 7 				
+
+					replace G0_est = "State schools" in 8 
+					replace G1_est = "State schools" in 8 
+					
+					replace G0_mun = "Local schools" in 8 
+					replace G1_mun = "Local schools" in 8 
+										
+					
+					
+					gen 	ordem = 1 in 7
+					replace ordem = 2 in 8
+					
+					
+					
+					replace ordem = 3 in 1
+					replace ordem = 4 in 2
+					
+					replace ordem = 5 in 3
+					
+					
+					replace ordem = 6 in 9
+					replace ordem = 7 in 4
+					replace ordem = 8 in 5
+					replace ordem = 8 in 6
+					
+					
+					sort ordem
+					
+					drop ordem sample 
+					
+					replace desc = "Enrollments, fifth-grade" if desc == "mat"
+					replace desc = "Number of municipalities" if desc == "mun"
+					replace desc = "Number of schools" 		  if desc == "escola"
+					
+					export excel "$tables/TableA2.xlsx", replace
 		
 		
 	**
 	**
-	*Enrollment in locally-managed schools
+	*Sample for dif-in-dif -> enrollments end number of schools - locally-managed schools
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
 		
 		**
 		use 		"$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & !missing(math5) & uf == "SP" & network == 3	, clear
-		
-			**
-			collapse 	(sum)enrollment5*, by(T)			//total enrollment in treatment and comparison schools
+		drop 		if codmunic == 3509502 | codmunic == 3520509 | codmunic == 3548807 
+		sort		codschool 
+		gen 		id = 1 
+		collapse 	(sum)enrollment5* id, by(T)			//total enrollment in treatment and comparison schools
 		
 		
 		
@@ -324,7 +413,9 @@
 			foreach 	    var of varlist formacao_adequada_math5 formacao_adequada_port5 dif_age_5   { 
 				di as red "`var'"
 				ttest 	   `var' if G == 0 & tipo_municipio_ef1 == 1, by (network) 											
-			}			
+		}	
+		
+		
 	**
 	**
 	*Tables A3, A4, A5, A6: balance test
@@ -429,11 +520,15 @@
 			
 			
 			
+		use 		"$inter/IDEB by school.dta" if (year == 2005 | year == 2007 | year == 2009) & network == 3 & codschool !=. & coduf == 35, clear
+		gen T = .
+		foreach 	munic in $treated_municipalities {
+			replace T   				= 1 		if codmunic == `munic' 
+		}	
 			
+			codebook codmunic if math5!= . & year == 2005 & T == 1 
 			
-			
-			
-			
+			codebook codmunic if math5!= . & year == 2005 & T == .
 			
 			
 			
