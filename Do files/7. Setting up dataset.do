@@ -7,6 +7,58 @@
 	*________________________________________________________________________________________________________________________________* 
 
 	
+	/*
+	
+	**
+	*Student dataset, Prova Brasil
+	
+		-> Teacher Motivation in Math/Teacher Motivation in Port.  Variable defined based on how frequently the teacher corrects the homework. 
+				Sempre 				(1 = 1) 
+				De vez em quando 	(2 = 0.5)
+				Nunca				(3 = 0) 
+				
+				The dataset is organized at student level. The teacher motivation at school level would be an average of student's answers. 
+
+				
+	**
+	*Teacher dataset, Prova Brasil
+	
+		-> Principal Effort. Variable defined based on teacher's anwers of how frequenfly the principal: 
+			
+			Motivates them. 
+			If they fell the principal trust them. 
+			If the principal suggest innovations
+			IF the principal pays attention to students learning
+			if The principal follows the norms
+			If the principal pays attention to school's mantainence
+			If the principal treats them with respect. 
+			If the principals let them participate of work decisions
+			If the principal support their ideas. 
+			
+				Sempre 				(1 = 1) 
+				Frequentemente		(2 = 0.66)
+				De vez em quando 	(3 = 0.33)
+				Nunca				(4 = 0) 
+				
+		-> Parent's effort
+		
+				1 if the parents support children and 0 otherwise. 
+			
+			Since the dataset is at teacher level, the variable principal effort and teacher effort at school level is an average of teacher's answers. 
+				
+	**
+	*Principal's dataset
+	
+		-> Teacher Effort. Based on teacher absenteeism and turnover
+		
+		-> Student Effort. Based on students absenteeism and bad behavior in class. 
+
+			Not an issue 			(0 = 1)
+			Small issue  			(2 = 0.5)
+			A moderate/big issue 	(3 = 0)
+
+	*/
+
 	
 	*________________________________________________________________________________________________________________________________* 
 	**

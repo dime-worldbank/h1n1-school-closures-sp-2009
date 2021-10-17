@@ -23,10 +23,10 @@
 			destring, 		replace
 			expand 			2, 					gen(REP)
 			replace 		year = 2005 	if  	REP == 1	
-			drop 								REP
+			drop 									REP
 			expand 			2 if year == 2007, 	gen(REP)
 			replace 		year =  2008 	if  	REP == 1
-			drop 								REP		
+			drop 									REP		
 			tempfile  		 pop_2007
 			save     		`pop_2007'							//pop 2005 and 2008 = pop 2007 so we can use the GDP at municipality level to calculate the GDP per capita. 
 		

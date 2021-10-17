@@ -14,7 +14,7 @@
 		*2007*
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
-		
+		{
 		**
 		*Socioeconomic Questionnarie
 		*----------------------------------------------------------------------------------------------------------------------------*
@@ -129,14 +129,15 @@
 			*================================>
 			compress
 			save "$inter/Prova Brasil Questionnaire_2007.dta", replace
-			
+		}	
+	
 	
 		**
 		*2009*
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
-		
 		**
+		{
 		*Socioeconomic questionnarie
 		*----------------------------------------------------------------------------------------------------------------------------*
 		clear
@@ -169,7 +170,7 @@
 			*================================>
 			compress
 		save "$inter/Prova Brasil Questionnaire_2009.dta", replace
-		
+	}
 		
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -181,6 +182,7 @@
 		*2007*
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		{
 		clear
 		#delimit;
 			infix
@@ -333,11 +335,13 @@
 			save  "$inter/Teachers_2007.dta", replace;
 			clear;	
 		#delimit cr	
-
+		}
+		
 		**
 		*2009*
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		{
 		clear
 		insheet using "$raw/Prova Brasil/2009/DADOS/TS_QUEST_PROFESSOR.txt", names delimiter(";")
 			forvalues i = 1/135 {
@@ -350,7 +354,7 @@
 			*================================>
 			compress
 			save  "$inter/Teachers_2009.dta", replace
-	
+		}
 	
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -362,6 +366,7 @@
 		*2007*
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		{
 		clear
 		#delimit;
 			infix
@@ -542,12 +547,13 @@
 			save  "$inter/Principals_2007.dta", replace;
 			*clear;	
 		#delimit cr	
-
+		}
 		
 		**
 		*2009*
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		{
 		clear
 		insheet using "$raw/Prova Brasil/2009/DADOS/TS_QUEST_DIRETOR.txt", names delimiter(";")
 			forvalues i = 1/146 {
@@ -560,6 +566,8 @@
 			*================================>
 			compress
 			save  "$inter/Principals_2009.dta", replace
+		}
+		
 		
 		
 	*________________________________________________________________________________________________________________________________* 
@@ -597,6 +605,7 @@
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
 		forvalues year = 2007(2)2009 {
+		
 			use  "$inter/Prova Brasil Questionnaire_`year'.dta" if grade == 4 | grade == 5, clear
 			
 			if `year' == 2007 {
@@ -619,6 +628,7 @@
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
 		forvalues year = 2007(2)2009 {
+		
 			use  "$inter/Prova Brasil Questionnaire_`year'.dta" if grade == 8 | grade == 9, clear
 			
 			if `year' == 2007 {
@@ -665,7 +675,11 @@
 			}
 
 			order 		year coduf codmunic codschool network location id_class class_time id_student grade month_birth year_birth age score_port-sd_saeb_math
+			
+			**
 			global 		variables age month_birth year_birth gender-aspiration
+			
+			**
 			format 		score* sd_* %12.2fc
 				
 				
@@ -704,8 +718,7 @@
 			recode 		 grade (4 = 5) (8 = 9)
 			label define grade 5 "5{sub:th} grade" 9 "9{sub:th} grade"
 			label val 	 grade grade
-			
-			
+						
 			*Enconding
 			*-----------------------------------------------------------------------------------------------------------------------*
 			foreach var of varlist $variables {
@@ -723,27 +736,34 @@
 			
 			*Skin color
 			*-----------------------------------------------------------------------------------------------------------------------*
-			recode skincolor (6 = .)		//6 = "dont know my color"
-			label define skincolor 1 "White" 2 "Brown" 3 "Black" 4 "Yellow" 5 "Indigenous"
-			label val	 skincolor skincolor
+			recode 			skincolor (6 = .)		//6 = "dont know my color"
+			label 	define 	skincolor 1 "White" 2 "Brown" 3 "Black" 4 "Yellow" 5 "Indigenous"
+			label 	val	 	skincolor skincolor
 			
 			
 			*Age
 			*-----------------------------------------------------------------------------------------------------------------------*
-			*5th graders
+			**
+			*5th graders			
 			recode age (1 = .) (2 = 9) (3 = 10) (4 = 11) (5 = 12) (6 = 13) (7 = 14) (8 = .)  if grade == 5		//1 = 8 or less /// 8 = 15 or more
 			
+			**
 			*9th graders
 			label  val month_birth year_birth
 			
+			*
 			if 	`year' == 2007 | `year' == 2009 local year_b = 1994												//for 9th graders, instead of asking their age, they ask the year of birth
+			
 			forvalues i = 1(1)8 { 																				//student has 8 options with years of birth
-					replace  year_birth   = `year_b'	 	if grade == 9 & year_birth == `i'						//since the test is applied in the end of the year, I will not make any age adjustment based on the month of birth
+					replace  year_birth   = `year_b'	 	if grade == 9 & year_birth == `i'					//since the test is applied in the end of the year, I will not make any age adjustment based on the month of birth
 					local 	 year_b       = `year_b' - 1 
 			}
 			
+			*
 			if 	`year' == 2007 | `year' == 2009	replace year_birth   = . if year_birth == 1994 | year_birth == 1987	
 			replace age  = `year' - year_birth 	  			if grade == 9 & !missing(year_birth)
+			
+			**
 			drop 	month_birth     year_birth	
 			
 			
@@ -758,10 +778,12 @@
 			label  define number_fridge		1 "One" 2 "Two or more"  		   4 "Don't have"
 			label  define computer_internet 1 "Computer + Internet" 2 "Computer, no internet" 3 "Don't have computer"	
 
+			**
 			recode number_bath 		(4 = 3) (5 = 4)	//4 = 4 or more baths/rooms
 			recode number_room 		(4 = 3) (5 = 4)
 			recode number_fridge 			(3 = 4)
 			
+			**
 			foreach variable in number_tv number_radio number_car number_bath number_room number_fridge computer_internet {
 					label val `variable' `variable' 
 			}
@@ -777,70 +799,84 @@
 			recode number_repetitions 	(1 = 0) (2 = 1) (3 = 2)  
 			recode number_dropouts		(1 = 0) (2 = 1) (3 = 2)  
 			
+			**
 			foreach var of varlist mother_reads father_reads mother_literate father_literate {
 				recode `var'        	(3 = .)					//3 = don't know. 
 			}
 
+			**
 			foreach item in tv radio car bath room fridge {		 //have or dont have in the house
 				gen 	`item' = 0 if number_`item' == 4
 				replace `item' = 1 if number_`item' <  4
 			}
 			
-			gen     computer 	  		= 1				    if computer_internet  == 1 |  computer_internet == 2
-			replace computer 	  		= 0 				if computer_internet  == 3
-			gen 	ever_dropped  		= 1 				if number_dropouts    >= 1 & !missing(number_dropouts)
-			replace ever_dropped  		= 0 				if number_dropouts    == 0 
-			gen 	ever_repeated 		= 1 				if number_repetitions >= 1 & !missing(number_repetitions)
-			replace ever_repeated 		= 0 				if number_repetitions == 0 
+			**
+			gen     		computer 	  		= 1				    if computer_internet  == 1 |  computer_internet == 2
+			replace 		computer 	  		= 0 				if computer_internet  == 3
+			gen 			ever_dropped  		= 1 				if number_dropouts    >= 1 & !missing(number_dropouts)
+			replace 		ever_dropped  		= 0 				if number_dropouts    == 0 
+			gen 			ever_repeated 		= 1 				if number_repetitions >= 1 & !missing(number_repetitions)
+			replace 		ever_repeated 		= 0 				if number_repetitions == 0 
 			
-			label  define yesno 1 "Yes" 0 "No"
-			foreach var of varlist tv radio car bath room fridge dvd wash_mash freezer incentive* mother_literate mother_reads father_literate father_reads work live_mother live_father like_port like_math maid ever_dropped ever_repeated computer {
-				recode 		`var' (2 = 0) 
-				label val 	`var' yesno
+			**
+			label  		define yesno 1 "Yes" 0 "No"
+			foreach var of 		varlist tv radio car bath room fridge dvd wash_mash freezer incentive* mother_literate mother_reads father_literate father_reads work live_mother live_father like_port like_math maid ever_dropped ever_repeated computer {
+				recode 			`var' (2 = 0) 
+				label val 		`var' yesno
 			}
 			
-			label define ever 0 "Zero" 1 "Yes, once" 2 "Twice or more"
-			label val number_repetitions ever
-			label val number_dropouts  	 ever
+			**
+			label define 		ever 0 "Zero" 1 "Yes, once" 2 "Twice or more"
+			label val 			number_repetitions ever
+			label val 			number_dropouts  	 ever
 
 			
 			*Mother and Father education
 			*-----------------------------------------------------------------------------------------------------------------------*
-			label define 	parents_edu 1 "Never studied or did not finish primary education" 2 "Elementar Education" 3 "Incomplete High School"  4 "Complete High School" 5 "Higher Education" 6 "Don't know"
-			label val 		mother_edu parents_edu
-			label val 		father_edu parents_edu
+			label define 		parents_edu 1 "Never studied or did not finish primary education" 2 "Elementar Education" 3 "Incomplete High School"  4 "Complete High School" 5 "Higher Education" 6 "Don't know"
+			label val 			mother_edu parents_edu
+			label val 			father_edu parents_edu
 			
 			
 			*Time with tv or cleaning the house
 			*-----------------------------------------------------------------------------------------------------------------------*
-			recode 			time_tv_games    (1 5 = 1) (2 3 = 2) (4 = 3) 
-			recode 			time_clean_house (1 5 = 1) (2 3 = 2) (4 = 3) 
+			**
+			recode 				time_tv_games    (1 5 = 1) (2 3 = 2) (4 = 3) 
+			recode 				time_clean_house (1 5 = 1) (2 3 = 2) (4 = 3) 
 			
-			label  define 	time_tv_games			 1 "Don't watch or less than one hour"  2 "A couple hours" 3 "More than 3 hours" 
-			label  val 	  	time_tv_games 	time_tv_games
+			**
+			label  define 		time_tv_games			 1 "Don't watch or less than one hour"  2 "A couple hours" 3 "More than 3 hours" 
+			label  val 	  		time_tv_games 		 time_tv_games
 
-			label  define 	time_clean_house	 	 1 "Don't clean house or less than one" 2 "A couple hours" 3 "More than 3 hours" 
-			label  val    	time_clean_house 	time_clean_house
+			**
+			label  define 		time_clean_house	 	 1 "Don't clean house or less than one" 2 "A couple hours" 3 "More than 3 hours" 
+			label  val    		time_clean_house 	time_clean_house
 			
 			
 			*Number of household members
 			*-----------------------------------------------------------------------------------------------------------------------*
-			recode 					n_family_members (5 6 = 4)
-			label define  	n_family_members   1 "1 or 2" 2 "3" 3 "4" 4 "5 or more"
-			label val     	n_family_members n_family_members
+			recode 				n_family_members (5 6 = 4)
+			label 	define  	n_family_members   1 "1 or 2" 2 "3" 3 "4" 4 "5 or more"
+			label 	val     	n_family_members n_family_members
 
 			
 			*Other
 			*-----------------------------------------------------------------------------------------------------------------------*
-			label define homework 		        1 "Always/Often"  2 "Sometimes"  3  "Never/Almost never" 	  4 "Don't have homework"
-			
-			foreach var of varlist  do_homework* homework_corrected* {
-				label val `var' homework
+		
+			**
+			label 		define homework 		        1 "Always/Often"  2 "Sometimes"  3  "Never/Almost never" 	  4 "Don't have homework"
+		
+			foreach 	var of varlist  do_homework* hw_corrected* {
+				label 	val `var' 		   homework
 			}
 			 
-			label define enter_school 		    1 "Daycare" 	  2 "Pre-school" 3 "Grade 1" 			   	  4 "After grade 1"
-			label val 	 enter_school enter_school
+			 
+			**
+			label 		define enter_school 		    1 "Daycare" 	  2 "Pre-school" 3 "Grade 1" 			   	  4 "After grade 1"
+			label 		val 	 enter_school enter_school
 			
+			
+			**
 			clonevar 	A = type_school
 			replace 	type_school = .  if year < 2011 & grade == 5
 			replace 	type_school = 1  if year < 2011 & grade == 5 & A == 2 					//only public school
@@ -850,41 +886,43 @@
 			replace 	type_school = 3  if 			  grade == 9 & A == 2 & network <  4	//there are 9th grade students that answered that only studied in private schools but the current school they are enrolled in is public....
 			drop 		A
 			
-			label define type_school		    1 "Only public school" 		     2 "Only in private school"   3 "Public and private schools" 		
-			label val 	 type_school type_school
+			label 		define type_school		    1 "Only public school" 		     2 "Only in private school"   3 "Public and private schools" 		
+			label 		val 	 type_school type_school
 			
-			label define aspiration 		    1 "Only study" 				     2 "Only work"  			  3 "Study and work" 			4 "Don't know" 
-			label val 	 aspiration aspiration
+			**
+			label 		define aspiration 		    1 "Only study" 				     2 "Only work"  			  3 "Study and work" 			4 "Don't know" 
+			label 		val    aspiration aspiration
 			
-			gen 		 only_intend_work =		   aspiration == 2 & grade == 9
-			replace 	 only_intend_work = . if  (aspiration == 4 & grade == 9) | (grade == 5)
-					
+			**
+			gen 		only_intend_work =		   aspiration == 2 & grade == 9
+			replace     only_intend_work = . if  (aspiration == 4 & grade == 9) | (grade == 5)
+				
+			**	
 			foreach var of varlist gender-ever_repeated {
 				tab `var', mis
 			}
-		
 			
 			*Generate valid student dummy (score in both PT and MT)
 			*-----------------------------------------------------------------------------------------------------------------------*
-			gen 	byte valid_score = 1
-			replace 	 valid_score = 0 if (score_port == . | score_math == .) | (score_port  == 0 & score_math == 0) 
+			gen 		byte 	valid_score = 1
+			replace 	 		valid_score = 0 if (score_port == . | score_math == .) | (score_port  == 0 & score_math == 0) 
 			
 			
 			*Male, white, parent's education
 			*-----------------------------------------------------------------------------------------------------------------------*
-			recode gender     (1 = 1) (2 = 0)					, gen (male)
-			recode skincolor  (1 = 1) (2 3 4 5 = 0)				, gen (white)
-			recode mother_edu (4 5 = 1) (1 2 3 = 0) (6 = .)		, gen (mother_edu_highschool)	 //high school or more
-			recode father_edu (4 5 = 1) (1 2 3 = 0) (6 = .)		, gen (father_edu_highschool)	
+			recode 		gender     (1 = 1) (2 = 0)					, gen (male)
+			recode 		skincolor  (1 = 1) (2 3 4 5 = 0)				, gen (white)
+			recode 		mother_edu (4 5 = 1) (1 2 3 = 0) (6 = .)		, gen (mother_edu_highschool)	 //high school or more
+			recode 		father_edu (4 5 = 1) (1 2 3 = 0) (6 = .)		, gen (father_edu_highschool)	
 
 			
 			*Socioeconomic Index
 			*-----------------------------------------------------------------------------------------------------------------------*
-			egen 	temp1 			    = rowmiss(number_fridge number_tv  number_car  number_bath number_room)
-			egen 	socio_eco 	 		= rowmean(number_fridge number_tv  number_car  number_bath number_room)
-			replace socio_eco 	 		= . if temp1 > 2
-			drop 	temp1
-			format 	socio_eco %4.2fc	
+			egen 		temp1 			    = rowmiss(number_fridge number_tv  number_car  number_bath number_room)
+			egen 		socio_eco 	 		= rowmean(number_fridge number_tv  number_car  number_bath number_room)
+			replace 	socio_eco 	 		= . if temp1 > 2
+			drop 		temp1
+			format 		socio_eco %4.2fc	
 							
 							
 			*Students effort
@@ -920,6 +958,8 @@
 			
 			*-----------------------------------------------------------------------------------------------------------------------*
 			order 		year-sd_saeb_math valid_score age gender skincolor n_family_members enter_school type_school ever_* work aspiration time* number* radio dvd tv car bath room wash_mash freezer fridge maid computer computer_internet socio_eco incentive* mother* father*
+		   
+			**
 		    compress
 			save  "$inter/Prova Brasil Questionnaire_`year'.dta", replace
 		}
@@ -1081,7 +1121,7 @@
 			label variable teacher_motivation_port			"Teacher motivation to correct the Portuguese homework"
 			compress
 			save "$inter/Students - Prova Brasil.dta", replace
-			
+
 		
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -1089,12 +1129,15 @@
 	**
 	*________________________________________________________________________________________________________________________________* 
 		
+		{
 		**
 		* -> Renaming variables
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
 		forvalues year = 2007(2)2009 {
+		
 			use "$inter/Teachers_`year'.dta", clear
+			
 				if `year' == 2007 {
 					gen 	 year = 2007
 					drop 	 NO_MUNICIPIO SIGLA_UF  DS_DISCIPLINA
@@ -1196,12 +1239,15 @@
 			
 			*Teacher Education
 			*------------------------------------------------------------------------------------------------------------------------*
+			**
 			label  	define teacher_edu  				1 "Less than high school"   2 "High school"  		3 "Undergraduate/Pedagogy"  4 "Undergraduate/Math"   5 "Undergraduate/Portuguese" 6 "Undergraude/others"
 			label  	define teacher_years_graduation  	1 "Less than 2 years" 		2 "Between 3-7 years" 	3 "Between 8-14 yars" 		4 "Betweeen 15-20 years" 5 "More than 20 years" 
 			label  	define postgrad   					1 "No grad. certificate"    2 "Short Course" 		3 "Specialization" 			4 "Masters" 			 5 "Phd"
 			label 	define type_university 				1 "Federal"				    2 "State" 				3 "Municipal" 				4 "Private" 
 			label 	define type_education 				1 "Face to Face"  		    2 "Face/Distance" 		3 "Distance Learning"  
 			label 	define area_postgrad 				1 "Education" 			    0 "Other field" 
+			
+			**
 			recode 	teacher_edu 						(1 = 1) (2 3 = 2) (4 = 3) (5 = 4) (6 = 5) (7 8 = 6)   	if year <  2013
 			recode 	teacher_edu 						(1 = 1) (2 3 = 2) (4 = 3) (6 = 4) (7 = 5) (5 8 9 = 6) 	if year >= 2013
 			recode 	postgrad 							(5 = 1) (1   = 2) (2 = 3) (3 = 4) (4 = 5)   		  	if year <  2013
@@ -1212,6 +1258,8 @@
 			recode 	area_postgrad 						(1 2 3   = 1) (4 = 0) (5 = .) 							if year <  2011
 			recode 	area_postgrad 						(1 2 3 4 = 1) (5 = 0) 		   							if year == 2011
 			recode 	area_postgrad 						(2 3 4 5 = 1) (6 = 0) (1 = .) 							if year >  2011
+			
+			**
 			label  	val teacher_years_graduation teacher_years_graduation
 			label  	val teacher_edu 			 teacher_edu
 			label  	val postgrad 				 postgrad
@@ -1222,12 +1270,18 @@
 					
 			*Teacher Experience
 			*------------------------------------------------------------------------------------------------------------------------*
+			
+			**
 			label  	define experience 		  			1 "First year"    2 "1-2 years"     3 "3-5 years"         4 "6-10 years" 5 "11-15 years" 6 "16-20 years" 7 "More than 20 years"
 			label  	define teacher_exp_grade   			1 "Up to 2 years" 2 "Between 3-6 years" 3 "More than 6 years" 
+			
+			**
 			recode 	experience_asteacher 				(4 5 = 4) (6   = 5) (7 = 6) (8 = 7) if year == 2011
 			recode 	teacher_exp_school    				(4 5 = 4) (6   = 5) (7 = 6) (8 = 7) if year == 2011
 			recode 	teacher_exp_grade 					(1   = 1) (2 3 = 2) (4 5     = 3) 	if year <  2013
 			recode 	teacher_exp_grade 					(1 2 = 1) (3   = 2) (4 5 6 7 = 3)   if year >= 2013
+			
+			**
 			label   val teacher_exp_grade 		teacher_exp_grade
 			label   val experience_asteacher  	experience  
 			label   val teacher_exp_school    	experience 
@@ -1235,6 +1289,7 @@
 			
 			*Type of contract/teacher_wage
 			*------------------------------------------------------------------------------------------------------------------------*
+			**
 			label   define nu_schools_work  			1 "One school" 							2 "Two schools" 						3  "Three schools"				 		 4 "Four schools or more" 
 			label   define teacher_other_job			1 "Yes, in education area"				2 "Yes, in other field"					3  "Don't have another job"			
 			label 	define teacher_work_contract 		4 "No contract"				 			5 "Other" 								3  "Temporary contract" 				 2 "CLT" 							1 "Tenure (estatutário)" 
@@ -1242,11 +1297,14 @@
 			label 	define teacher_wage 				1 "Up to one minimum teacher_wage" 	  	2 "Between 1-1.5 minimum teacher_wage"  3  "Between 1.5-2 minimum teacher_wages" 4 "Between 2-2.5 minimum teacher_wages" ///
 														5 "Between 2.5-3 minimum teacher_wages" 6 "Between 3-3.5 minimum teacher_wages" 7  "Between 3.5-4 minimum teacher_wages" 8 "Between 4-5 minimum teacher_wages"   ///
 														9 "Between 5-7 minimum teacher_wages"   10 "Between 7-10 minimum teacher_wages" 11 "More than 10 minimum ages"			
+			**
 			replace teacher_wage = . 																		if year == 2007
 			recode  teacher_workhours_school 			(1 2 = 4) (3 4 5 6 7 8 9 = 3) (10 = 2) (11    = 1)  if year == 2007  
 			recode  teacher_workhours_school 			(1   = 4) (2 3 4 5 6 7   = 3) (8  = 2) (9     = 1)  if year == 2009 | year == 2011  
 			recode  teacher_workhours_total  			(1 2 = 4) (3 4 5 6 7 8 9 = 3) (10 = 2) (11 12 = 1)  if year == 2007  
 			recode  teacher_workhours_total  			(1   = 4) (2 3 4 5 6 7   = 3) (8  = 2) (9  	  = 1)  if year == 2009 | year == 2011  
+			
+			**
 			label   val teacher_workhours_school hours_worked
 			label   val teacher_workhours_total  hours_worked
 			label   val teacher_work_contract 	 teacher_work_contract
@@ -1257,15 +1315,20 @@
 			
 			*Teacher uses in the class
 			*------------------------------------------------------------------------------------------------------------------------*
+			**
 			label   define 	use 						0 "No/Never" 		1 "Yes"				2 "School does not have"
 			label 	define  share_curricula 			1 "Less than 40%" 	2 "Between 40-60%" 	3 "Between 60-80%" 4 "More than 80%"
-			recode  use_news 			 				(2 = 0) (3 = 2) 			 if year <   2013
-			recode  use_literature_books 				(2 = 0) (3 = 2) 			 if year <   2013
-			recode  use_copy_machine	 				(2 = 0) (3 = 2) 			 if year <   2013
-			recode  use_news 			 				(1 = 2) (2 = 0) (3 4 = 1)   if year >=  2013
-			recode  use_literature_books 				(1 = 2) (2 = 0) (3 4 = 1)   if year >=  2013
-			recode  use_copy_machine	 				(1 = 2) (2 = 0) (3 4 = 1)   if year >=  2013
-			recode  share_curricula 					(1 2 = 1) (3 = 2) (4 = 3) (5 = 4) if year >= 2013
+			
+			**
+			recode  use_news 			 				(2 = 0) (3 = 2) 			 		if year <   2013
+			recode  use_literature_books 				(2 = 0) (3 = 2) 			 		if year <   2013
+			recode  use_copy_machine	 				(2 = 0) (3 = 2) 			 		if year <   2013
+			recode  use_news 			 				(1 = 2) (2 = 0) (3 4 = 1)     		if year >=  2013
+			recode  use_literature_books 				(1 = 2) (2 = 0) (3 4 = 1)    		if year >=  2013
+			recode  use_copy_machine	 				(1 = 2) (2 = 0) (3 4 = 1)   	 	if year >=  2013
+			recode  share_curricula 					(1 2 = 1) (3 = 2) (4 = 3) (5 = 4) 	if year >= 2013
+			
+			**
 			label   val use_news 			 use
 			label   val use_literature_books use
 			label   val use_copy_machine 	 use		
@@ -1274,6 +1337,8 @@
 
 			*Other
 			*------------------------------------------------------------------------------------------------------------------------*
+			
+			**
 			label  define  yesno 							1 "Yes" 						0 "No"
 			label  define  meetings_class_council  			1 "Once" 						2 "Twice"   								3 "Three times or more"  				  4 "None"  				5 "No school council"
 			label  define  frequency				 		1 "Never" 						2 "Sometimes" 								3 "Often" 								  4 "Always"
@@ -1284,6 +1349,7 @@
 			label  define  pedagogic_plan  					1 "No pedag. project" 			2 "Modelo pronto, sem discussão da equipe"			///
 			3  "Modelo pronto com algumas modificações/modelo próprio mas sem Teachers' active involvement" 4 "With active Teachers' involvement"
 
+			**
 			recode meetings_class_council 		(3 = 1) (4 = 2) (5   = 3) (2 = 4) 	  (1 = 5)  		if year >= 2013
 			recode pedagogic_plan 				(8 = 1) (1 = 2 )(2   = 3) (3 4 5 = 4) (6 7 = .)		if year <  2013
 			recode pedagogic_plan 				(2 = 1) (3 = 2 )(5 7 = 3) (4 6 8 = 4) (1   = .) 	if year >= 2013
@@ -1293,6 +1359,7 @@
 			recode def_absenteeism				(1 = 0) (2   = 1) (3 4 = 2) 						if year >= 2013
 			recode def_absenteeism 				(1 = 0) (2   = 1) (3   = 2) 						if year <  2013
 
+			**
 			foreach var of varlist principal_* work_decisions my_ideas* {
 				recode 		`var' (4 5 = 1) (3 = 2) (2 = 3) (1 = 4) 								if year < 2013
 				label val 	`var' frequency
@@ -1308,16 +1375,17 @@
 				label val `var' yesno 
 			}
 			
-			label 	val def_absenteeism  problem
-			label   val students_books students_books
-			label   val pedagogic_plan pedagogic_plan
-			label   val meetings_class_council meetings_class_council
-			label   val quality_books quality_books
+			**
+			label 	val def_absenteeism  		problem
+			label   val students_books 			students_books
+			label   val pedagogic_plan 			pedagogic_plan
+			label   val meetings_class_council 	meetings_class_council
+			label   val quality_books 			quality_books
+			
 			
 			*Defining new variables
 			*------------------------------------------------------------------------------------------------------------------------*
-			**
-			*teacher_males, teacher_whites and college degree
+
 			**
 			recode teacher_gender     	  (1 = 1) (2 = 0)					, gen (teacher_male)
 			recode teacher_skincolor  	  (1 = 1) (2 3 4 5 = 0)				, gen (teacher_white)
@@ -1326,10 +1394,13 @@
 			recode teacher_age_range	  (1 2 3 = 1) (4 5 6 = 0)			, gen (teacher_less_40years)
 			recode teacher_wage			  (1/5 = 1) (6/11 = 0)				, gen (teacher_less3min_wages)
 			recode experience_asteacher   (1/4 = 0) (5/7  = 1)				, gen (teacher_more10yearsexp)
+			
+			**
 			gen    teacher_wage1 = inlist(teacher_wage, 1,2,3,4,5	)
 			gen    teacher_wage2 = inlist(teacher_wage, 6,7,8	)
 			gen    teacher_wage3 = inlist(teacher_wage, 9,10,11)
 
+			**
 			label  val teacher_male   				  yesno
 			label  val teacher_white  				  yesno
 			label  val teacher_tenure 				  yesno
@@ -1339,28 +1410,23 @@
 			**
 			*Principal effort according to Teachers' perspective
 			**
-			egen temp1 = rowmiss(principal_motivation-my_ideas)
-			foreach var of varlist principal_motivation-my_ideas{
-				recode `var' (1=0) (2=0.33) (3=0.66) (4=1), gen(II_`var')
+			egen 	temp1 = rowmiss(principal_motivation-my_ideas)
+			foreach var of varlist  principal_motivation-my_ideas{
+					recode `var' (1=0) (2=0.33) (3=0.66) (4=1), gen(II_`var')
 			}
-			egen principal_effort = rowmean(II_*) if temp1 < 4
-			drop II_* temp1
-			
-			**
-			*Teachers' effort ???????????????????????????? -> Segui o Do file do Thomaz
-			**
-			gen teacher_effort_index      = use_literature_books + use_news/2  if !missing(use_literature_books) & !missing(use_literature_books)
-			
+			egen 	principal_effort = rowmean(II_*) if temp1 < 4
+			drop 	II_* temp1
+						
 			**
 			*Parent's effort
 			**
-			gen parents_effort_index      = def_noparents_support
-			
+			recode def_noparents_support (1 = 0) (0 = 1), gen(parents_effort_index)  
+
 			**
 			*Students' effort
 			**
 			egen 	temp1 = 			    rowmiss(def_student_loweffort def_absenteeism def_bad_behavior)
-			foreach var of varlist def_student_loweffort def_absenteeism def_bad_behavior {
+			foreach var of varlist 					def_student_loweffort def_absenteeism def_bad_behavior {
 				recode `var' (0 = 1) (1 = 0), gen (I_`var')
 			}
 			egen 	student_effort_index  = rowmean(I_def_student_loweffort I_def_absenteeism I_def_bad_behavior)
@@ -1379,24 +1445,29 @@
 			**
 			*Teachers' expectations with their students
 			**
+			
+			**
 			recode expec_finish_grade9  (1 2 3 = 0) (4 = 1), gen (almost_all_finish_grade9)
 			recode expec_finish_grade12 (1 2 3 = 0) (4 = 1), gen (almost_all_finish_highschool)
 			recode expec_get_college    (1 2 3 = 0) (4 = 1), gen (almost_all_get_college)
+			
+			**
 			label  val almost_all_finish_grade9 	    yesno
 			label  val almost_all_finish_highschool 	yesno
 			label  val almost_all_get_college	   		yesno
 			label  val teacher_less3min_wages	   		yesno
 			label  val teacher_more10yearsexp	   		yesno
 			
+			**
 			format *index* %4.2fc
 			
 			**
 			*Other variables
 			**
-			tab share_curricula, gen(covered_curricula) 
-			tab	work_decisions , gen(participation_decisions)
-			tab students_books , gen(share_students_books)
-			tab quality_books  , gen(quality_books)
+			tab 	share_curricula, gen(covered_curricula) 
+			tab		work_decisions , gen(participation_decisions)
+			tab 	students_books , gen(share_students_books)
+			tab 	quality_books  , gen(quality_books)
 
 			*-----------------------------------------------------------------------------------------------------------------------*
 			gen treated   		= .				//1 for closed schools, 0 otherwise
@@ -1417,7 +1488,6 @@
 			*Labels
 			*------------------------------------------------------------------------------------------------------------------------*
 			label variable principal_effort					"Principal managerial skills from teacher perspective"
-			label variable teacher_effort_index 			"Teachers' effort based on the use of news and literature books" 	
 			label variable parents_effort_index 			"1 if parents support children (from Teachers' perspective) and 0, otherwise"
 			label variable student_effort_index				"Student motivation from teacher perspective"
 			label variable violence_index					"Index for the violence the teacher faces in the school"
@@ -1508,7 +1578,7 @@
 			label var teacher_wage3
 			compress
 			save "$inter/Teachers - Prova Brasil.dta", replace
-					
+		}			
 		
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -1516,11 +1586,13 @@
 	**
 	*________________________________________________________________________________________________________________________________* 
 		
+		{
 		**
 		* -> Renaming variables
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
 			forvalues year = 2007(2)2009 {
+			
 				use "$inter/Principals_`year'.dta", clear
 				
 					if `year' == 2007 {
@@ -1537,7 +1609,7 @@
 						rename  (pk_cod_entidade-cod_municipio)(codschool network location coduf codmunic)
 						rename  (Q1 Q2 Q3 Q4 Q5 Q6 Q8 Q9 Q10 Q14 Q16 Q15 Q20 Q21 Q18 Q19 Q17 Q11 Q22 Q23 Q35 Q24 Q25 Q26 Q27 Q28 Q29 Q30 Q31 Q32 Q33 Q34 Q36 Q37 Q43 Q38 Q39 Q40 Q41 Q42 Q46 Q47 Q48 Q49 Q50 Q51 Q52 Q53 Q54 Q55 Q56 Q57 Q58 Q59 Q94 Q95 Q96 Q97 Q98 Q99 Q101 Q127 Q130 Q139 Q142 ) ///					
 								(principal_gender principal_age_range principal_skincolor principal_edu_level principal_years_graduation type_university type_education postgrad area_postgrad principal_wage principal_other_job total_principal_wage principal_workhours_school principal_selection_work experience_asprincipal_total experience_asprincipal_school principal_exp_educ training_last2years org_training teachers_training teachers_tenure meetings_school_council school_council_teachers school_council_students school_council_staff school_council_parents meetings_class_council pedagogic_plan students_admission school_offering criteria_classrooms criteria_teacher_classrooms prog_reduce_dropout prog_reduce_repetition prog_increase_learning absenteeism_talk_students absenteeism_talk_parents absenteeism_parents_meeting absenteeism_parents_inperson absenteeism_send_someone lack_finantial_resources lack_teachers lack_adm_staff lack_pedago_staff lack_pedago_resources interruption_school absenteeism_teachers absenteeism_students teachers_turnover student_bad_behavior interference_external_agents support_secretary_edu exchange_information support_community finantial_resourses_federal finantial_resourses_state finantial_resources_municipal book_choice books_since_beg_year lack_books books_received agressao_prof1 agressao_prof2 agressao_func1 agressao_func2 )					
-						}
+					}
 					
 					drop Q*
 					destring codschool network location coduf codmunic, replace
@@ -1615,17 +1687,22 @@
 			
 			*Principal ducation
 			*------------------------------------------------------------------------------------------------------------------------*
+			**
 			label  	define principal_edu_level  		1 "Less than high school"   2 "High school"  		3 "Undergraduate/Pedagogy"  4 "Undergraduate/Math"   5 "Undergraduate/Portuguese" 6 "Undergraude/others"
 			label  	define principal_years_graduation  	1 "Less than 2 years" 		2 "Between 3-7 years" 	3 "Between 8-14 yars" 		4 "Betweeen 15-20 years" 5 "More than 20 years" 
 			label  	define postgrad   					1 "No grad. certificate"    2 "Short Course" 		3 "Specialization" 			4 "Masters" 			 5 "Phd"
 			label 	define type_university 				1 "Federal"				    2 "State" 				3 "Municipal" 				4 "Private" 
 			label 	define type_education 				1 "Face to Face"  		    2 "Face/Distance" 		3 "Distance Learning"  
 			label 	define area_postgrad 				1 "Education" 			    0 "Other field" 
-			recode 	principal_edu_level 			(1 = 1) (2 3 = 2) (4 = 3) (5 = 4) (6 = 5) (7 8 = 6)   	if year <  2013
-			recode 	postgrad 						(5 = 1) (1   = 2) (2 = 3) (3 = 4) (4 = 5)   		  	if year <  2013
-			recode  type_university 				(5 = .) 								  		 		if year <  2013
-			recode 	type_education	 				(4 = .) 												if year <  2013
-			recode 	area_postgrad 					(1 2 3   = 1) (4 = 0) (5 = .) 							if year <  2011
+			
+			**
+			recode 	principal_edu_level 				(1 = 1) (2 3 = 2) (4 = 3) (5 = 4) (6 = 5) (7 8 = 6)   	if year <  2013
+			recode 	postgrad 							(5 = 1) (1   = 2) (2 = 3) (3 = 4) (4 = 5)   		  	if year <  2013
+			recode  type_university 					(5 = .) 								  		 		if year <  2013
+			recode 	type_education	 					(4 = .) 												if year <  2013
+			recode 	area_postgrad 						(1 2 3   = 1) (4 = 0) (5 = .) 							if year <  2011
+			
+			**
 			label  	val principal_years_graduation principal_years_graduation
 			label  	val principal_edu_level principal_edu_level
 			label  	val postgrad postgrad
@@ -1644,16 +1721,20 @@
 
 			*principal_wage, hours worked
 			*------------------------------------------------------------------------------------------------------------------------*
+			
+			**
 			label 	define hours_worked 			1 "More than 40 hours" 						2 "40 hours" 								3  "Between 20-39 hours" 		 			4 "Less than 20 hours" 
 			label 	define principal_wage 			1 "Up to one minimum principal_wage" 	  	2 "Between 1-1.5 minimum principal_wage"  	3  "Between 1.5-2 minimum principal_wages" 	4 "Between 2-2.5 minimum principal_wages" ///
 													5 "Between 2.5-3 minimum principal_wages"   6 "Between 3-3.5 minimum principal_wages" 	7  "Between 3.5-4 minimum principal_wages" 	8 "Between 4-5 minimum principal_wages"   ///
 													9 "Between 5-7 minimum principal_wages"     10 "Between 7-10 minimum principal_wages" 	11 "More than 10 minimum ages"
 			label   define principal_other_job		1 "Yes, in education area"					2 "Yes, in other field"			3  "Don't have another job"
 			
-			
+			**
 			replace principal_wage 			= . if year == 2007
 			replace total_principal_wage	= . if year == 2007
 			recode  principal_workhours_school (4 = 1) (3 = 2) (2 = 3) (1 = 4) if year < 2013
+			
+			**
 			label   val principal_workhours_school hours_worked
 			label   val principal_wage 	   principal_wage
 			label   val total_principal_wage principal_wage
@@ -1662,6 +1743,7 @@
 			
 			*Other
 			*------------------------------------------------------------------------------------------------------------------------*
+			**
 			label  define  yesno 							1 "Yes" 							0 "No"
 			label  define  meetings  						1 "Once" 							2 "Twice"   										3 "Three times or more"  				  			4 "None"  		   										5 "No school council"
 			label  define  principal_selection_work 		1 "Election" 						2 "Election involving additional process"   		3 "Selection/civil servant" 						4 "Appointments"     									5 "Other process"
@@ -1677,6 +1759,7 @@
 			label  define  pedagogic_plan  					1 "No pedag. project" 				2 "Modelo pronto, sem discussão da equipe"			///
 			3  "Modelo pronto com algumas modificações/modelo próprio mas sem Teachers' active involvement" 4 "With active Teachers' involvement"
 			
+			**
 			recode criteria_classrooms						(5 = .) (6 = 5) if year > 2011
 			recode principal_selection_work  							(2 = 1) 	(3 = 2) 		(1     = 3) 	(4 5 6 = 4) (7 = 5)	 								if year <  2013
 			recode principal_selection_work  							(2 = 1) 	(5 = 2) 		(1 4 6 = 3) 	(3     = 4) (7 = 5) 								if year >= 2013
@@ -1690,6 +1773,7 @@
 			recode book_choice								(5 = 1) (3 4 = 2) (1 2 = 3) (6   = .)																		if year <  2013
 			recode book_choice								(4 = 1) (3   = 2) (2   = 3) (1 5 = .)																		if year >= 2013
 			
+			**
 			label  val meetings_school_council 				meetings
 			label  val meetings_class_council  				meetings
 			label  val principal_selection_work 		   				principal_selection_work
@@ -1701,6 +1785,7 @@
 			label  val pedagogic_plan						pedagogic_plan
 			label  val book_choice							book_choice
 			
+			**
 			foreach var of varlist prog_reduce_dropout prog_reduce_repetition {
 				recode 		`var' (3 = 0) (1 2   = 1) (4 = 2) if year <  2013
 				recode 		`var' (1 = 0) (3 4 5 = 1) (2 = 2) if year >= 2013
@@ -1724,99 +1809,115 @@
 				label val 	`var' yesno
 			}
 			
+			**
 			gen 		 violence_students_teachers = .
 			replace 	 violence_students_teachers = 0 if 				year < 2013
 			foreach var of varlist agressao_prof1 agressao_prof2 agressao_func1 agressao_func2 {
 				replace  violence_students_teachers = 1 if `var' == 1 & year < 2013
 				drop 	`var'
 			}
-
+			label 	 val violence_students_teachers yesno
+			
+			**
 			foreach var of varlist org_training training_last2years prog_increase_learning {
 				recode 		`var' (2 = 0) 		 	if year <  2013
 				recode 		`var' (1 = 0) (2 = 1) 	if year >= 2013
 				label val   `var' yesno
 			}
-
+	
+			**
 			foreach var of varlist interference_external_agents support_secretary_edu exchange_information support_community {
 				recode 		`var' (1 = 1) (2 = 0)
 				label val 	`var' yesno
 			}
-		
+			
+			**
 			foreach var of varlist school_council_teachers school_council_students school_council_staff school_council_parents {
 				recode 	    `var' (2 = 0) if year < 2013
 				label val   `var' yesno
 			}
 			
-			recode   teachers_training 		  		  (1  2 = 1) (3 = 2) (4   = 3) (5 = .) 	if  year <  2013
-			replace  teachers_training 		  = 0  							    			if  year <  2013 & org_training == 0
-			label    val teachers_training teachers_training
-			 
-			label val violence_students_teachers yesno
-			 
+			**
+			recode   		teachers_training 		  		  (1  2 = 1) (3 = 2) (4   = 3) (5 = .) 	if  year <  2013
+			replace  		teachers_training 		  = 0  							    			if  year <  2013 & org_training == 0
+			label    val 	teachers_training teachers_training
+						 
 			*Defining new variables
 			*------------------------------------------------------------------------------------------------------------------------*
 			**
 			*Males, whites and college degree
 			**
-			recode principal_gender     (1 = 1) (2 = 0)					, gen (principal_male)
-			recode principal_skincolor  (1 = 1) (2 3 4 5 = 0)			, gen (principal_white)
-			recode principal_edu_level  (3 4 5 6 = 1) (2 1 = 0)			, gen (principal_college_degree)
-			label  val male   yesno
-			label  val white  yesno
-			label  val principal_college_degree yesno
+			recode 		principal_gender     (1 = 1) (2 = 0)					, gen (principal_male)
+			recode 		principal_skincolor  (1 = 1) (2 3 4 5 = 0)				, gen (principal_white)
+			recode 		principal_edu_level  (3 4 5 6 = 1) (2 1 = 0)			, gen (principal_college_degree)
+			
+			**
+			label  		val principal_male   yesno
+			label  		val principal_white  yesno
+			label 		val principal_college_degree yesno
 			
 			**
 			*External support
 			**
-			egen temp1 						 = rowmiss(interference_external_agents support_secretary_edu exchange_information support_community)
-			egen external_support_mean 		 = rowmean(interference_external_agents support_secretary_edu exchange_information support_community)
+			egen 			temp1 						 = rowmiss(interference_external_agents support_secretary_edu exchange_information support_community)
+			egen 			external_support_mean 		 = rowmean(interference_external_agents support_secretary_edu exchange_information support_community)
 
-			gen external_support_all 		 = 1
-			foreach var of varlist 					  interference_external_agents support_secretary_edu exchange_information support_community {
-				replace external_support_all = 0 if `var' == 0
+			gen 			external_support_all 		 = 1
+			foreach var 	of varlist 					  interference_external_agents support_secretary_edu exchange_information support_community {
+				replace 	external_support_all = 0 if `var' == 0
 			}
-			replace external_support_mean    =.  if temp1 > 1
-			replace external_support_all     =.  if temp1 > 1
-			drop 	temp1
+			replace 		external_support_mean    =.  if temp1 > 1
+			replace 		external_support_all     =.  if temp1 > 1
+			drop 			temp1
 			
 			**
 			*Principal effort - implementation of projects to increase learning and reduce dropout/repetition
 			**
-			egen temp1 					 	 	    = rowmiss(prog_reduce_dropout prog_reduce_repetition prog_increase_learning)
-			egen implementation_projects_mean	    = rowmean(prog_reduce_dropout prog_reduce_repetition prog_increase_learning)
+			egen 			temp1 					 	 	    = rowmiss(prog_reduce_dropout prog_reduce_repetition prog_increase_learning)
+			egen 			implementation_projects_mean	    = rowmean(prog_reduce_dropout prog_reduce_repetition prog_increase_learning)
 
-			gen  implementation_projects_all        = 1
-			foreach var of varlist 						   prog_reduce_dropout prog_reduce_repetition prog_increase_learning {
-				replace implementation_projects_all = 0 if `var' == 0
+			gen  			implementation_projects_all        = 1
+			foreach var 	of varlist 						   prog_reduce_dropout prog_reduce_repetition prog_increase_learning {
+				replace 	implementation_projects_all = 0 if `var' == 0
 			}
-			replace implementation_projects_all  =. if temp1 > 1
-			replace implementation_projects_mean =. if temp1 > 1
-			drop 	temp1
-			
-			label val implementation_projects_all yesno
-			label val external_support_all 		  yesno
+			replace 		implementation_projects_all  =. if temp1 > 1
+			replace 		implementation_projects_mean =. if temp1 > 1
+			drop 			temp1
 			
 			**
-			*Student and teacher effort (Principals' perspective)
+			label 			val implementation_projects_all   yesno
+			label 			val external_support_all 		  yesno
+			
 			**
-			egen temp1 =  rowmiss(absenteeism_students student_bad_behavior)
-			egen temp2 =  rowmiss(absenteeism_teachers teachers_turnover)
-			foreach var of varlist absenteeism_students student_bad_behavior absenteeism_teachers teachers_turnover {
-				recode `var' (2 = 0) (1 = 0.5) (0 = 1), gen(`var't)
+			*Student effort from principal's perspective
+			foreach 		var of varlist  absenteeism_students student_bad_behavior {
+							recode `var' (1=1) (1=0.5) (2=0), gen(II_`var')
 			}
-			egen 	student_effort = rowmean(absenteeism_studentst student_bad_behaviort) if temp1 != .
-			egen 	teacher_effort = rowmean(absenteeism_teachers teachers_turnover)      if temp2 != .
-			drop 	absenteeism_studentst student_bad_behaviort absenteeism_teacherst teachers_turnovert temp1 temp2
-			format  implementation* external* student_effort* teacher_effort* %4.2fc
+			
+			egen 			student_effort = rowmean(II_*) if  !missing(absenteeism_students) &!missing(student_bad_behavior)
+			drop 			II_* 
+			
+			
+			**
+			*Teachers effort from principal's perspectiva
+			foreach 		var of varlist  absenteeism_teachers teachers_turnover {
+							recode `var' (1=1) (1=0.5) (2=0), gen(II_`var')
+			}
+			
+			egen 			teacher_effort = rowmean(II_*) if  !missing(absenteeism_teachers) &!missing(teachers_turnover)
+			drop 			II_* 
+						
+			**
+			format  		implementation* external* student_effort* teacher_effort* %4.2fc
 
 			**
 			*
 			**
-			tab teachers_training, 			gen(teachers_training)
-			tab principal_selection_work, 	gen(principal_selection_work)
-			tab absenteeism_teachers, 		gen(absenteeism_teachers)
-			tab absenteeism_students, 		gen(absenteeism_students)
-			tab teachers_turnover, 			gen(teachers_turnover)
+			tab 			teachers_training, 			gen(teachers_training)
+			tab 			principal_selection_work, 	gen(principal_selection_work)
+			tab 			absenteeism_teachers, 		gen(absenteeism_teachers)
+			tab 			absenteeism_students, 		gen(absenteeism_students)
+			tab 			teachers_turnover, 			gen(teachers_turnover)
 			
 			foreach var of varlist teachers_training1-teachers_turnover3 {
 				label val `var' yesno
@@ -1920,5 +2021,4 @@
 			label variable absenteeism_students3			"Student absenteeism as a big issue"	
 			compress
 			save "$inter/Principals - Prova Brasil.dta", replace
-
-		
+		}

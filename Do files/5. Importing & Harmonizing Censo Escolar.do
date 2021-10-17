@@ -55,7 +55,9 @@
 		forvalues year = 2008/2009 {
 			do "$dofiles/Dictionaries/0. CensoEscolar_`year'Matrículas.do"
 		}
-			
+		
+		
+	/*	
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**
@@ -618,11 +620,42 @@
 			**
 			*------------------------------------------------------------------------------------------------------------------------*
 			keep 	if enrollment5grade == 1
-			
+				
 			**
 			**
 			replace 	age = . if age <  8		//outliers
 			replace 	age = . if age > 18
+			
+			foreach var of varlist BirthDay	BirthMonth	Birthyear {
+				replace `var' = . if age == .
+			
+			}
+			
+			tostring BirthDay	BirthMonth	Birthyear, force replace 
+			
+			replace BirthDay = "0" + BirthDay 					if length(BirthDay ) == 1
+						
+			replace BirthMonth= "0" + BirthMonth					if length(BirthMonth) == 1
+
+
+								
+				egen 	bd=concat(BirthDay	BirthMonth	Birthyear)
+
+				*br 		year v3031 v3031b v3032 v3032b v3033 v3033b age bd
+
+				gen 	birth_date = date(bd,"DMY") 																																		//note that month is unknow, the Value is 20 and if the year is unknow the Value is the presumed age
+					
+				format 	birth_date %td
+				
+				drop age
+				
+				replace base_date = mdy(31,3,`year') 		
+				
+				gen age = (base_date - birth_date)/365.25
+				
+				gen atraso5 = 1 if age > 11  & !missing(age)
+				replace atraso = 0 if age <= 11
+				
 			
 			**
 			**
@@ -632,16 +665,17 @@
 			**
 			**
 			gen 		  		enrollment = 1
-			collapse 	(sum)	enrollment  (max)max_age (min) min_age , by (codclass codschool year network) 
+			collapse 	(sum)	enrollment  (max)max_age (min) min_age (mean)atraso5 , by (codclass codschool year network) 
 				
 			
 			**
 			**
 			gen 				dif_age_5grade = max_age - 	   min_age
+			gen 				atraso5 	   = dis
 			
 			**
 			**
-			collapse 	(mean)	dif_age_5grade [w = enrollment], by(codschool year)		
+			collapse 	(mean)	dif_age_5grade atraso5 [w = enrollment], by(codschool year)		
 			
 			**
 			**
