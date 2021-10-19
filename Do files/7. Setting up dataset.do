@@ -18,6 +18,8 @@
 				Nunca				(3 = 0) 
 				
 				The dataset is organized at student level. The teacher motivation at school level would be an average of student's answers. 
+				recode 		hw_corrected_port  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 				gen (teacher_motivation_port) 
+				recode 		hw_corrected_math  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 				gen (teacher_motivation_math) 
 
 				
 	**
@@ -35,23 +37,51 @@
 			If the principals let them participate of work decisions
 			If the principal support their ideas. 
 			
-				Sempre 				(1 = 1) 
-				Frequentemente		(2 = 0.66)
-				De vez em quando 	(3 = 0.33)
-				Nunca				(4 = 0) 
+			Sempre 				(1 = 1) 
+			Frequentemente		(2 = 0.66)
+			De vez em quando 	(3 = 0.33)
+			Nunca				(4 = 0)
 				
+			The average of these anwers at teacher level gives the principal effort according to teacher's perspective.
+			The principal effort at school level is an average of these perspective. 
+
+			egen 	temp1 = rowmiss(principal_motivation-my_ideas)
+			foreach var of varlist  principal_motivation-my_ideas{
+					recode `var' (1=0) (2=0.33) (3=0.66) (4=1), gen(II_`var')
+			}
+			egen 	principal_effort = rowmean(II_*) if temp1 < 4
+			drop 	II_* temp1
+
+			
+		-> Students' effort. Variable defined based on teacher's anwers of what is associated with student's low performance. 
+			**
+			egen 	temp1 = 			    rowmiss(def_student_loweffort def_absenteeism def_bad_behavior)
+			
+			foreach var of varlist 					def_student_loweffort 				  def_bad_behavior {
+				recode `var'				 (0 = 1) (1 = 0), gen (I_`var')
+			}
+				recode def_absenteeism		 (0 = 1) (1 = 0.5) (2 = 0)
+			
+			
+			egen 	student_effort_teacherpers   = rowmean(I_def_student_loweffort I_def_absenteeism I_def_bad_behavior)
+			replace student_effort_teacherpers  = . if temp1 > 1
+
+			
 		-> Parent's effort
 		
-				1 if the parents support children and 0 otherwise. 
+			1 if the parents support children and 0 otherwise. 
 			
 			Since the dataset is at teacher level, the variable principal effort and teacher effort at school level is an average of teacher's answers. 
-				
+
+			recode def_noparents_support (1 = 0) (0 = 1), gen(parents_effort_teacherpers)  
+
+		
 	**
 	*Principal's dataset
 	
-		-> Teacher Effort. Based on teacher absenteeism and turnover
+		-> Teacher Effort. Based on teacher absenteeism and turnover. teacher_effort_principalpers
 		
-		-> Student Effort. Based on students absenteeism and bad behavior in class. 
+		-> Student Effort. Based on students absenteeism and bad behavior in class. student_effort_principalpers
 
 			Not an issue 			(0 = 1)
 			Small issue  			(2 = 0.5)
@@ -76,6 +106,7 @@
 	
 	*/
 	
+
 		*............................................................................................................................*
 		
 		foreach etapa in AI AF EM { //AI -> 5grade, AF -> 9 grade, EM - > High School
@@ -126,7 +157,6 @@
 		**
 		compress
 		save 			"$inter/IDESP.dta", replace
-	
 	
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -187,7 +217,6 @@
 			**
 			keep 	 if school_management_program == 1
 			keep 		school_management_program codschool
-			
 			
 			**
 			**
@@ -360,7 +389,7 @@
 		**
 		**The majority of teachers of 5th grade students work in both state and municipal networks
 		**
-		gen 		G			= 1															//0 for the 13 municipalities that extended the winter break, 1 otherwise
+		gen 		G			= 1																//0 for the 13 municipalities that extended the winter break, 1 otherwise
 		foreach munic in $treated_municipalities {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 			replace G	  	  	= 0 		if codmunic == `munic'
 		}	
@@ -402,7 +431,6 @@
 		**
 		**
 		collapse   (mean) $socioeco_variables teacher_motivation* number_dropouts number_repetitions, by(grade year codschool)
-		
 		
 		**
 		**
@@ -477,7 +505,7 @@
 	*________________________________________________________________________________________________________________________________* 
 	**	
 		use 	   "$inter/Flow Indicators.dta", clear
-		keep 		*5grade* approval9grade codschool year
+		keep 		*5grade* approval9* codschool year			//nao tirar o approval9
 		
 		**
 		tempfile    	flow_index
@@ -505,7 +533,7 @@
 	*________________________________________________________________________________________________________________________________* 
 	**	
 
-		use 		year codschool dif_age_5grade enrollmentEMtotal enrollmentEF enrollment5grade network enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentEI coduf  ///
+		use 		year codschool dif_age_5grade atraso5 enrollmentEMtotal enrollmentEF enrollment5grade network enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentEI coduf  ///
 		using "$inter/Enrollments"  if (network == 3 | network == 2)  & !missing(codschool) & coduf == 35, clear
 		
 		**
@@ -709,7 +737,7 @@
 	**
 		use 		`school_infra'	, clear
 		merge   	1:1 codschool year using `flow_index'											, nogen
-		merge   	1:1 codschool year using `enrollments'	 										, nogen keepusing(dif_age_5grade enrollment5grade enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentTotal)
+		merge   	1:1 codschool year using `enrollments'	 										, nogen keepusing(dif_age_5grade atraso5 enrollment5grade enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentTotal)
 		merge   	1:1 codschool year using `class_hours'	 										, nogen keepusing(classhour5grade)
 		merge   	1:1 codschool year using `class_size'	 										, nogen keepusing(tclass5grade   )
 		merge   	1:1 codschool year using `students_teacher'	 									, nogen keepusing(spt5grade      )
@@ -723,6 +751,8 @@
 		merge 		m:1 codschool 	   using "$inter/Teachers Managerial Practices Program.dta"		, nogen keepusing(teacher_management_program share*)
 		merge 		m:1 codschool 	   using "$inter/Teachers in state and municipal networks.dta"	, nogen 
 		merge 		m:1 codschool 	   using `data'													, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
+		
+		**
 		sort 			codschool year 
 		xtset   		codschool year  
 
@@ -1032,28 +1062,30 @@
 		
 		*/
 		
-		rename (principal_effort5 formacao_adequada_port5 formacao_adequada_math5 dif_age_5) ///
-			   (prin5			  )
+		clonevar  	absenteeism_issue5 = absenteeism_teachers3  	
 		
-		foreach variable in spt5 principal_effort5 teacher_tenure5 formacao_adequada_port5 formacao_adequada_math5 dif_age_5 { 		//students per teacher, principal_effort_index teacher_tenure 
+		rename 		(principal_effort_teacherpers5 formacao_adequada_port5 formacao_adequada_math5 dif_age_5	 absenteeism_issue5 teacher_motivation5 mother_edu_highschool5  teacher_tenure5 ) ///
+					(prin5			  			   adeqport5			   adeqmath5			   dif5		 	 absen5				mot5				medu5					tenure5)
+		
+		rename      (clashour5) (hour5)
+		
+		
+		foreach variable in prin5 adeqport5 adeqmath5 dif5 absen5 mot5 medu5 spt5  tenure5 atraso5 { 		//students per teacher, principal_effort_index teacher_tenure 
 				gen   T2009_`variable'  		= T2009*`variable'
 		}
 		
-		clonevar  			absenteeism_issue5 	= absenteeism_teachers3  															//*Treatment status versus teacher absenteeism
-		gen 		  T2009_absenteeism_issue5 	= T2009*absenteeism_issue5
-		
-		
 		**
 		**
-		label 		var T2009_spt5  			 		"ATT versus students per teacher" 
-		label 		var T2009_principal_effort5   		"ATT versus principal effort" 
-		label 		var T2009_teacher_tenure5  			"ATT versus % teachers with tenure" 
-		label 		var T2009_absenteeism_issue5 		"ATT versus teacher absenteeism" 		
-		label 		var T2009_formacao_adequada_port5	"ATT versus teacher with the correct degree to teach Portuguese"
-		label 		var T2009_formacao_adequada_math5	"ATT versus teacher with the correct degree to teach math"
-		label 		var T2009_dif_age_5					"ATT versus age difference between youngest and oldest of the class" 
-		
-		
+		label 		var T2009_atraso5				"ATT verus age-grade distortion" 
+		label 		var T2009_prin5   				"ATT versus principal effort" 
+		label 		var T2009_adeqport5				"ATT versus teacher with the correct degree to teach Portuguese"
+		label 		var T2009_adeqmath5 			"ATT versus teacher with the correct degree to teach math"
+		label 		var T2009_dif5					"ATT versus age difference between youngest and oldest of the class" 
+		label 		var T2009_absen5 				"ATT versus teacher absenteeism" 		
+		label 		var T2009_mot5 					"ATT versus teacher motivation" 		
+		label 		var T2009_medu5 				"ATT versus mother's education" 		
+		label 		var T2009_spt5  			 	"ATT versus students per teacher" 
+		label 		var T2009_tenure5  				"ATT versus % teachers with tenure" 
 		**
 		**
 		format 		T2009_* %4.2fc
@@ -1103,12 +1135,20 @@
 
 			**
 			keep if ((G == 1 & share_teacher_both_networks < 25) 	 | (G == 0)) 
-					
-			**
+			
+			/*
+			
+			Triple dif sample does not include:
+			
+				-> schools in the managment interveantion.
+				-> schools in which there are teachers participating in the management intervention.
+				-> schools in G = 1 where the percentage of teachers working in both state and locally-managed schools is higher than 25%. 
+			
+			*/
 			egen 	tag_codmunic = tag(codmunic network)
 
 			**
-			gen 	sample = "Baseline"
+			gen 	sample = "Baseline"			//municipalities included in the baseline of the Triple-Dif
 					
 			**
 			gen 		ind = 1
@@ -1142,7 +1182,8 @@
 				**
 				keep 			if G == `G' & network == 3
 				duplicates 		drop codmunic, force
-				merge 			1:1 codmunic using `A`G'', keep(3) nogen
+				merge 			1:1 codmunic using `A`G'', keep(3) nogen		//keeping only the municipalities in G = 0 and G = 1 where 
+																				//we have state and locally-managed schools
 						
 				**
 				di 				as red "Numero de municipios" 
@@ -1176,18 +1217,18 @@
 			**
 			*Identifying schools and municipalities in the triple dif sample 
 			**
-			use	`data_h1n1',  clear
+			use					`data_h1n1',  clear
 		
 			**
-			merge 	m:1 codmunic using  `amostra_triple'
+			merge 				m:1 codmunic using  `amostra_triple'
 				
 			**
-			gen 	sample_triple_dif = 1 if _merge == 3		//only excluding schools in the management program and schools in which there is any teacher working in a scholl that implemented the intervention
-			drop 	_merge
+			gen 				sample_triple_dif = 1 if _merge == 3		//only excluding schools in the management program and schools in which there is any teacher working in a scholl that implemented the intervention
+			drop 				_merge
 			
 			**
-			tempfile 	 data_h1n1
-			save  		`data_h1n1'
+			tempfile 		 	data_h1n1
+			save  			   `data_h1n1'
 
 			
 		*............................................................................................................................*
@@ -1195,7 +1236,9 @@
 		*Dif-in-dif sample
 		**
 			use 		"$inter/IDEB by school.dta" if year == 2005 & network == 3 & codschool !=. & coduf == 35 & math5 != ., clear
-			gen T = .
+			
+			**
+			gen 		T = .
 			foreach 	munic in $treated_municipalities {
 				replace T   				= 1 		if codmunic == `munic' 
 			}	
@@ -1207,8 +1250,8 @@
 			keep 			codmunic
 			
 			**
-			tempfile 	 sample_dif
-			save  		`sample_dif'
+			tempfile 	 	sample_dif
+			save  		   `sample_dif'
 
 		*............................................................................................................................*
 		**
@@ -1220,6 +1263,7 @@
 			
 			**
 			gen 		sample_dif = 1 if _merge == 3 & network == 3
+			drop 		_merge
 			
 			**
 			save 		"$final/h1n1-school-closures-sp-2009.dta", replace

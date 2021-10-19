@@ -3,6 +3,15 @@
 	**
 	*________________________________________________________________________________________________________________________________* 
 
+	*________________________________________________________________________________________________________________________________* 
+	**
+	**
+	**Importing Census Data
+	**
+	*________________________________________________________________________________________________________________________________* 
+
+	..
+	{
 	
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -41,7 +50,7 @@
 	**Importing Teacher Data (2007, 2008 and 2009)
 	**
 	*________________________________________________________________________________________________________________________________* 
-		forvalues year = 2007/2009 {
+		forvalues year = 2007/2009  {
 			do "$dofiles/Dictionaries/0. CensoEscolar_`year'Professores.do"
 		}
 
@@ -52,18 +61,24 @@
 	**Importing Enrollment Data (2007, 2008 and 2009)
 	**
 	*________________________________________________________________________________________________________________________________* 
-		forvalues year = 2008/2009 {
+		forvalues year = 2007/2009 {
 			do "$dofiles/Dictionaries/0. CensoEscolar_`year'Matrículas.do"
 		}
 		
-		
-	/*	
+	..	
+	}	
+	..	
+	
+	
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**
 	**Program to format School Census Data
 	**
 	*________________________________________________________________________________________________________________________________* 
+	..
+	{
+	
 		**
 		**
 		**We use the program below across all harmonization of School Census Data
@@ -106,6 +121,9 @@
 			label 		val    network  network
 			
 		end	
+		
+	}	
+	
 	
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -121,6 +139,9 @@
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		
+		..
+		{
 		use 		"$inter/CensoEscolar2005", clear
 		
 			merge 		1:1 MASCARA using "$inter/Máscara2005.dta", nogen 			//code of the schools
@@ -169,13 +190,18 @@
 			**
 			compress
 			save		"$inter/Escolas2005.dta", replace
-		
+			
+		..	
+		}
 		
 		**
 		*----------------->>
 		*2007, 2008, 2009
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
+		..
+		{
+		
 		forvalues year = 2007/2009 {
 			
 			use "$inter/Escolas`year'.dta", clear
@@ -266,10 +292,17 @@
 				save "$inter/Escolas`year'.dta", replace
 		}
 		
+		..
+		}
+		
+		
 		**
 		**-> Appending 2005 to 2009
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
+		.. 
+		{
+			
 			clear
 			foreach year in 2005 2007 2008 2009 {
 				append using "$inter/Escolas`year'.dta"
@@ -319,6 +352,8 @@
 				sort  	codschool year
 				compress
 				save "$inter/School Infrastructure.dta", replace
+				
+		}
 
 
 	*________________________________________________________________________________________________________________________________* 
@@ -335,6 +370,9 @@
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		..
+		{
+		
 		use 		"$inter/CensoEscolar2005", clear
 			merge 		1:1 MASCARA using "$inter/Máscara2005.dta", nogen 
 			gen 		codmunic = substr(CODMUNIC,1,2) + substr(CODMUNIC, -5,.)
@@ -376,7 +414,8 @@
 			
 			**
 			save 	"$inter/Turmas2005.dta", replace
-
+		}
+		
 		
 		**
 		*----------------->>
@@ -384,6 +423,8 @@
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		..
+		{
 		forvalues year = 2007/2009 {
 
 			use "$inter/Turmas`year'.dta", clear
@@ -424,12 +465,17 @@
 			save 	 `Turmas`year''
 			erase  	"$inter/Turmas`year'.dta"
 		}
+		
+		..
+		}
 	
 
 		**
 		**Appending 2007 to 2009
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
+		..
+		{
 			clear
 			foreach 	year in 2007 2008 2009 {		
 						append using `Turmas`year''
@@ -442,6 +488,9 @@
 			**
 			**
 			formatting	
+			
+		..	
+		}
 		
 		
 		**
@@ -484,14 +533,14 @@
 			preserve
 				collapse 	(mean) tclass*	   					 , by (year network coduf uf codmunic codmunic2 codschool)			//tamanho médio das turmas
 				order 		year coduf uf codmunic codmunic2 codschool network
-				format 		tclass* %4.2fc
+				format 		tclass* %4.2fcwww
 				sort 		codschool year
 				append 		using 	"$inter/Turmas2005.dta"
 				save 		 		"$inter/Class-Size.dta", replace
 				erase 		 		"$inter/Turmas2005.dta"
 			restore
-			
-			
+
+		
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**
@@ -567,7 +616,7 @@
 			
 			**
 			**
-			rename 		(ANO_CENSO-ID_N_T_E_P)  (year		codenrollment		codstudent		BirthDay	BirthMonth	Birthyear	age			gender	color		FK_COD_MOD_ENSINO	FK_COD_ETAPA_ENSINO	codclass		codschool		coduf					codmunic				location			network 				transporte )
+			rename 		(ANO_CENSO-ID_N_T_E_P)  (year		codenrollment	codstudent			BirthDay	BirthMonth	Birthyear	age			gender	color		FK_COD_MOD_ENSINO	FK_COD_ETAPA_ENSINO	codclass		codschool		coduf					codmunic				location			network 				transporte )
 			
 			**
 			**
@@ -619,69 +668,59 @@
 			*Difefença de idade entre o mais novo e o mais velho da turma //a ideia é ver se turmas com distinção muito alta sofreram mais com o fechamento das escolas
 			**
 			*------------------------------------------------------------------------------------------------------------------------*
+			
+			**
 			keep 	if enrollment5grade == 1
-				
+			
 			**
-			**
-			replace 	age = . if age <  8		//outliers
-			replace 	age = . if age > 18
-			
-			foreach var of varlist BirthDay	BirthMonth	Birthyear {
-				replace `var' = . if age == .
-			
-			}
-			
 			tostring BirthDay	BirthMonth	Birthyear, force replace 
 			
-			replace BirthDay = "0" + BirthDay 					if length(BirthDay ) == 1
+			replace  BirthDay   = "0" + BirthDay 					if length(BirthDay ) == 1
 						
-			replace BirthMonth= "0" + BirthMonth					if length(BirthMonth) == 1
+			replace  BirthMonth = "0" + BirthMonth					if length(BirthMonth) == 1
 
+			egen 	 bd = concat(BirthDay BirthMonth Birthyear)
 
-								
-				egen 	bd=concat(BirthDay	BirthMonth	Birthyear)
-
-				*br 		year v3031 v3031b v3032 v3032b v3033 v3033b age bd
-
-				gen 	birth_date = date(bd,"DMY") 																																		//note that month is unknow, the Value is 20 and if the year is unknow the Value is the presumed age
+			gen 	 birth_date = date(bd,"DMY") 																																		//note that month is unknow, the Value is 20 and if the year is unknow the Value is the presumed age
 					
-				format 	birth_date %td
+			format 	 birth_date %td
 				
-				drop age
+			**
+			drop 	 age
 				
-				replace base_date = mdy(31,3,`year') 		
+			gen 	 base_date 	= mdy(3,31,`year') 		
 				
-				gen age = (base_date - birth_date)/365.25
-				
-				gen atraso5 = 1 if age > 11  & !missing(age)
-				replace atraso = 0 if age <= 11
-				
+			**	
+			gen 	 age 		= (base_date - birth_date)/365.25
+			
+			replace  age 		= . if age <   8		//outliers
+			
+			replace  age		= . if age >  18
+
+			**
+			gen 	 atraso5    = 1 if age >  11  & !missing(age)
+			
+			replace  atraso5 	= 0 if age <= 11		
 			
 			**
-			**
-			gen 		min_age = age
-			gen 		max_age = age
+			gen 	 min_age = age
+			gen 	 max_age = age
 			 
-			**
+			 
 			**
 			gen 		  		enrollment = 1
 			collapse 	(sum)	enrollment  (max)max_age (min) min_age (mean)atraso5 , by (codclass codschool year network) 
 				
 			
 			**
-			**
-			gen 				dif_age_5grade = max_age - 	   min_age
-			gen 				atraso5 	   = dis
+			gen 				dif_age_5grade = max_age -  min_age
 			
-			**
 			**
 			collapse 	(mean)	dif_age_5grade atraso5 [w = enrollment], by(codschool year)		
 			
 			**
-			**
 			merge 		1:1 	codschool year using "$inter/Matrículas`year'`region'.dta", nogen
 			
-			**
 			**
 			compress
 			save 						   			 "$inter/Matrículas`year'`region'.dta", replace
@@ -940,15 +979,19 @@
 			**
 			collapse 	(mean)formacao* [w = enrollments], by(codschool year network coduf codmunic)			//proporcao de turmas com docentes com formacao adequada, ponderado pelo numero de alunos da turma 
 			
+			**
+			**
 			replace 	formacao_adequada_math5 = formacao_adequada_math5*100
 			replace 	formacao_adequada_port5 = formacao_adequada_port5*100
-			
 			format 		formacao* %4.2fc
+			
 			
 			**
 			sort 		codschool year
+			
+			**
 			compress
-			save "$inter/Formação Adequada dos Docentes.dta", replace
+			save 		"$inter/Formação Adequada dos Docentes.dta", replace
 			
 		
 		
@@ -958,8 +1001,10 @@
 		*----------------------------------------------------------------------------------------------------------------------------*
 			use 	"$inter/Teachers.dta", clear
 			
+				**
 				merge 1:1 codschool year using "$inter/Enrollments.dta", keep (3) nogen
 				
+					**
 					foreach  grade in EF 5grade 9grade {
 						gen 	 spt`grade' = enrollment`grade'/Teacher`grade' 						//students per teacher
 						su 		 spt`grade', detail
@@ -974,6 +1019,8 @@
 					**
 					**
 					sort 		codschool year
+					
+					**
 					compress
 					save  		"$inter/Students per teacher.dta", replace
 					*erase 		"$inter/Teachers.dta"

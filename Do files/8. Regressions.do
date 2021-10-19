@@ -454,7 +454,7 @@
 					if `sub' == 6 | `sub' == 7 | `sub' == 8 { 								//for approval, repetition and dropout, our placebo compares 2007 with 2008, since these dep vars are available starting in 2007
 						**
 						reg  	`subject' T2008 		  										  i.T i.codmunic i.year $controls2008 						if year == 2007 | year == 2008 																											[aw = `weight'], cluster(codmunic)
-						eststo 		model`model'`sub'`grade', title("DiD-`mode'`sub'")
+						eststo 		model`model'`sub'`grade', title("DiD-`model'`sub'")
 						mat_res, 	model(`model') sub(`sub') var1(T2008) var2(novar) var3(novar)  dep_var(`subject') grade(`grade')
 					}
 					
@@ -471,7 +471,7 @@
 					*/	
 						**
 						reg 	`subject' 	    T2009	  								 		  i.T i.codmunic i.year $controls2007 						if year == 2007 | year == 2009  																										[aw = `weight'], cluster(codmunic)
-						eststo 	 	model`model'`sub'`grade', title("DiD-`mode'`sub'") 
+						eststo 	 	model`model'`sub'`grade', title("DiD-`model'`sub'") 
 						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar)  dep_var(`subject') grade(`grade')
 						local 		model = `model' + 1
 						
@@ -485,7 +485,7 @@
 					*/
 						**
 						reg 	`subject' 	    T2009	  								 		  i.T i.codmunic i.year $controls_add_2007					if year == 2007 | year == 2009  																										[aw = `weight'], cluster(codmunic)
-						eststo 	 	model`model'`sub'`grade', title("DiD-`mode'`sub'") 
+						eststo 	 	model`model'`sub'`grade', title("DiD-`model'`sub'") 
 						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar)  dep_var(`subject') grade(`grade')
 						local 		model = `model' + 1
 						
@@ -510,7 +510,7 @@
 						forvalues share = 5(5)25 {
 						**
 						reg 	`subject' 	    T2009	  										   i.T i.codmunic i.year $controls2007 						if (year == 2007 | year == 2009) & ((T == 1) | (T == 0 & share_teacher_both_networks < `share'))   								     	[aw = `weight'], cluster(codmunic)
-						eststo 		model`model'`sub'`grade', title("DiD-`mode'`sub'")  
+						eststo 		model`model'`sub'`grade', title("DiD-`model'`sub'")  
 						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar)  var3(novar)  dep_var(`subject') grade(`grade')
 						local 		model = `model' + 1
 						}
@@ -529,7 +529,7 @@
 					*/
 						**
 						reg 	`subject' 	    T2009	  										   i.T i.codmunic i.year $controls2007 						if (year == 2007 | year == 2009) & share_teacher_management_program == 0   																[aw = `weight'], cluster(codmunic)
-						eststo 		model`model'`sub'`grade', title("DiD-`mode'`sub'")  
+						eststo 		model`model'`sub'`grade', title("DiD-`model'`sub'")  
 						mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar)  var3(novar)  dep_var(`subject') grade(`grade')
 						local 		model = `model' + 1
 						
@@ -553,7 +553,7 @@
 						foreach variable in $interactions { //
 								**
 								reg 	`subject' T2009 T2009_`variable'`grade' `variable'`grade'   i.T i.codmunic i.year $controls2007 					if (year == 2007 | year == 2009) & ((T == 1) | (T == 0 & share_teacher_both_networks < 25)) &  share_teacher_management_program == 0 	[aw = `weight'], cluster(codmunic)
-								eststo 		model`model'`sub'`grade', title("DiD-`mode'`sub'")   
+								eststo 		model`model'`sub'`grade', title("DiD-`model'`sub'")   
 								mat_res, 	model(`model') sub(`sub') var1(T2009) var2(T2009_`variable'`grade') var3(`variable'`grade')  dep_var(`subject') grade(`grade')
 								local 		model = `model' + 1							
 						}
@@ -562,7 +562,7 @@
 						if `grade' == 5 & (`sub' == 2 | `sub' == 3) {
 								**
 								reg 	`subject' T2009 T2009_adeq`subject' adeq`subject' 	 	   i.T i.codmunic i.year $controls2007  					if (year == 2007 | year == 2009) & ((T == 1) | (T == 0 & share_teacher_both_networks < 25)) &  share_teacher_management_program == 0   	[aw = `weight'], cluster(codmunic)
-								eststo 		model`model'`sub'`grade', title("DiD-`mode'`sub'")   
+								eststo 		model`model'`sub'`grade', title("DiD-`model'`sub'")   
 								mat_res, 	model(`model') sub(`sub') var1(T2009) var2(T2009_adeq`subject') var3(adeq`subject')  dep_var(`subject') grade(`grade')
 								local 		model = `model' + 1
 						}
@@ -578,6 +578,7 @@
 					Model 17: DiD, impact by deciles
 					
 					*/
+					/*
 						if `grade' == 5 & (`sub' == 2 | `sub' == 3) {
 							foreach quantile in 10 20 30 40 50 60 70 80 90 { 
 								**
@@ -586,7 +587,7 @@
 								matrix 	results = results \ (`model', `sub', reg_results[1, colsof(reg_results)-2], reg_results[5,colsof(reg_results)-2], reg_results[6,colsof(reg_results)-2], `quantile', `grade')	 	
 							}
 						}
-						
+					*/	
 							
 					*........................................>>> 
 					**
@@ -619,16 +620,15 @@
 					
 					**
 					replace 	   share_teacher_management_program =  0 if year == 2007						   //In 2007, the Management Program of the state-managed network had not yet been implemented.
-					
-					
+										
+					**
+					keep 		if share_teacher_management_program == 0
+																													//this variable sample_triple_dif only keeps municipalities in which we have both schools even after the exclusion
 					**
 					keep 		if sample_triple_dif == 1														   //sample of triple dif includes municipalities that have state and locally-managed schools considering the exclusions we did 
 																												   //excluding state schools included in the program to increase managerial practices
 																												   //we do this because sometimes the municipality has state and locally-managed schools offering 1st to 5th grade 
 																												   //but once we perform the exclusions above, we only keep the state-managed or the locally-managed. 
-					**
-					keep 		if share_teacher_management_program == 0
-																												//this variable sample_triple_dif only keeps municipalities in which we have both schools even after the exclusion
 					
 					**
 					local model = 20
@@ -654,13 +654,13 @@
 					clonevar T2009 = beta7
 						
 							reg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls_add_2007  [aw = `weight'] if (year == 2007 | year == 2009) & 																  , 	cluster(codmunic)
-							eststo 		model`model'`sub'`grade', title("Triple-DiD-`mode'`sub'")   
+							eststo 		model`model'`sub'`grade', title("Triple-DiD-`model'`sub'")   
 							mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
 							local 		model = `model' + 1					
 
 						forvalues share = 5(5)25 {
 							reg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls_add_2007  [aw = `weight'] if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < `share') | (G == 0)) , 		cluster(codmunic)
-							eststo 		model`model'`sub'`grade', title("Triple-DiD-`mode'`sub'")  
+							eststo 		model`model'`sub'`grade', title("Triple-DiD-`model'`sub'")  
 							mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
 							local 		model = `model' + 1					
 						}
@@ -676,7 +676,7 @@
 					*/
 					
 							xtreg 	`subject' T2009 										 beta1-beta6 i.codmunic $controls_add_2007  				if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < 25) 	 | (G == 0)) ,  fe 	cluster(codmunic)
-							eststo 		model`model'`sub'`grade', title("Triple-DiD-`mode'`sub'")  
+							eststo 		model`model'`sub'`grade', title("Triple-DiD-`model'`sub'")  
 							mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
 							local 		model = `model' + 1	
 													
@@ -701,7 +701,7 @@
 					foreach variable in $interactions { //
 							**
 							reg 	`subject' T2009 T2009_`variable'`grade' `variable'`grade'  beta1-beta6 i.codmunic $controls_add_2007 [aw = `weight'] if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < 25)		| (G == 0)), 	cluster(codmunic)
-							eststo 		model`model'`sub'`grade', title("Triple-DiD-`mode'`sub'") 
+							eststo 		model`model'`sub'`grade', title("Triple-DiD-`model'`sub'") 
 							mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar)  var3(novar) dep_var(`subject') grade(`grade')
 							local 		model = `model' + 1
 					}
@@ -710,7 +710,7 @@
 					if `grade' == 5 & (`sub' == 2 | `sub' == 3) {
 							**
 							reg 	`subject' T2009 T2009_adeq`subject' adeq`subject' 	 	   beta1-beta6 i.codmunic $controls_add_2007 [aw = `weight'] if (year == 2007 | year == 2009) & ((G == 1 & share_teacher_both_networks < 25)		| (G == 0)), 	cluster(codmunic)
-							eststo 		model`model'`sub'`grade', title("Triple-DiD-`mode'`sub'")  
+							eststo 		model`model'`sub'`grade', title("Triple-DiD-`model'`sub'")  
 							mat_res, 	model(`model') sub(`sub') var1(T2009) var2(novar)  var3(novar) dep_var(`subject') grade(`grade')
 					}
 							**
@@ -726,7 +726,7 @@
 					Model 34
 					
 					*/
-				
+						/*
 						preserve
 						
 						keep if ((G == 1 & share_teacher_both_networks < 25) | (G == 0))
@@ -740,7 +740,7 @@
 						}
 						
 						restore
-						
+						*/
 						**
 						local model = `model' + 1
 				
@@ -762,32 +762,17 @@
 					**
 					if `sub' == 6 | `sub' == 7 | `sub' == 8 {
 						drop 	  T2008
-						clonevar  T2008 = beta7P2
-<<<<<<< Updated upstream
-						
+						clonevar  T2008 = beta7P2						
 							**
 							reg 	`subject' T2008											 beta1P2-beta6P2 i.codmunic $controls2008  	  [aw = `weight']  if (year == 2007 | year == 2008) & ((G == 1 & share_teacher_both_networks < 25) 		| (G == 0)), cluster(codmunic)
 							eststo 		model`model'`sub'`grade', title("Triple-DiD-`mode'`sub'") 
-=======
-						label var T2008 "ATT, 2008 versus 2007"
-							reg 	`subject' T2008											 beta1P2-beta6P2 i.codmunic $controls2008  	  [aw = `weight']  if (year == 2007 | year == 2008) & ((G == 1 & share_teacher_both_networks < 25) 		| (G == 0)) & share_teacher_management_program == 0, cluster(codmunic)
-							eststo 		model`model'`sub'`grade', title("Triple-dif")   
->>>>>>> Stashed changes
 							mat_res, 	model(`model') sub(`sub') var1(T2008) var2(novar) var3(novar) dep_var(`subject') grade(`grade')	
 							local		model = `model' + 1
 					}
 					
 		}
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+	
 		/*
 		**
 		**

@@ -873,7 +873,7 @@
 			 
 			**
 			label 		define enter_school 		    1 "Daycare" 	  2 "Pre-school" 3 "Grade 1" 			   	  4 "After grade 1"
-			label 		val 	 enter_school enter_school
+			label 		val    enter_school enter_school
 			
 			
 			**
@@ -925,7 +925,7 @@
 			format 		socio_eco %4.2fc	
 							
 							
-			*Students effort
+			*Whether the student always does the homework
 			*-----------------------------------------------------------------------------------------------------------------------*
 			recode 		do_homework_port (1 = 1) (2 3 = 0) (4 = .)  		if valid_score!= 0, gen (do_homework_port_always)
 			recode 		do_homework_math (1 = 1) (2 3 = 0) (4 = .)  		if valid_score!= 0, gen (do_homework_math_always)
@@ -934,7 +934,7 @@
 			replace 	do_homework_both_always = 0 			    		if valid_score!= 0 & 	(do_homework_port_always 		== 0 | do_homework_math_always 		 == 0) & !missing(do_homework_port_always) & !missing(do_homework_math_always)
 
 			
-			*Teachers' effort
+			*Teachers' motivation to correct the homework
 			*-----------------------------------------------------------------------------------------------------------------------*
 			recode 		hw_corrected_port  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (hw_corrected_port_always)
 			recode 		hw_corrected_math  (1 = 1) (2 3 = 0) (4 = .) 	if valid_score!= 0, gen (hw_corrected_math_always)
@@ -1414,23 +1414,25 @@
 			foreach var of varlist  principal_motivation-my_ideas{
 					recode `var' (1=0) (2=0.33) (3=0.66) (4=1), gen(II_`var')
 			}
-			egen 	principal_effort = rowmean(II_*) if temp1 < 4
+			egen 	principal_effort_teacherpers = rowmean(II_*) if temp1 < 4				
 			drop 	II_* temp1
 						
 			**
 			*Parent's effort
 			**
-			recode def_noparents_support (1 = 0) (0 = 1), gen(parents_effort_index)  
+			recode def_noparents_support (1 = 0) (0 = 1), gen(parents_effort_teacherpers)  
 
 			**
 			*Students' effort
 			**
 			egen 	temp1 = 			    rowmiss(def_student_loweffort def_absenteeism def_bad_behavior)
-			foreach var of varlist 					def_student_loweffort def_absenteeism def_bad_behavior {
-				recode `var' (0 = 1) (1 = 0), gen (I_`var')
+			foreach var of varlist 					def_student_loweffort 				  def_bad_behavior {
+				recode `var'				 (0 = 1) (1 = 0), gen (I_`var')
 			}
-			egen 	student_effort_index  = rowmean(I_def_student_loweffort I_def_absenteeism I_def_bad_behavior)
-			replace student_effort_index  = . if temp1 > 1
+				recode def_absenteeism		 (0 = 1) (1 = 0.5) (2 = 0), gen (I_def_absenteeism)
+			
+			egen 	student_effort_teacherpers  = rowmean(I_def_student_loweffort I_def_absenteeism I_def_bad_behavior)
+			replace student_effort_teacherpers  = . if temp1 > 1
 			drop I_* temp1
 
 			**
@@ -1487,9 +1489,9 @@
 			
 			*Labels
 			*------------------------------------------------------------------------------------------------------------------------*
-			label variable principal_effort					"Principal managerial skills from teacher perspective"
-			label variable parents_effort_index 			"1 if parents support children (from Teachers' perspective) and 0, otherwise"
-			label variable student_effort_index				"Student motivation from teacher perspective"
+			label variable principal_effort_teacherpers		"Principal managerial skills from teacher perspective"
+			label variable parents_effort_teacherpers		"1 if parents support children (from Teachers' perspective) and 0, otherwise"
+			label variable student_effort_teacherpers		"Student motivation from teacher perspective"
 			label variable violence_index					"Index for the violence the teacher faces in the school"
 			label variable almost_all_finish_grade9			"Teacher expects that almost all students will finish 9th grade"
 			label variable almost_all_finish_highschool		"Teacher expects that almost all students will finish high school "
@@ -1891,24 +1893,24 @@
 			**
 			*Student effort from principal's perspective
 			foreach 		var of varlist  absenteeism_students student_bad_behavior {
-							recode `var' (1=1) (1=0.5) (2=0), gen(II_`var')
+							recode `var' (0=1) (1=0.5) (2=0), gen(II_`var')
 			}
 			
-			egen 			student_effort = rowmean(II_*) if  !missing(absenteeism_students) &!missing(student_bad_behavior)
+			egen 			student_effort_principalpers = rowmean(II_*) if  !missing(absenteeism_students) &!missing(student_bad_behavior)
 			drop 			II_* 
 			
 			
 			**
 			*Teachers effort from principal's perspectiva
 			foreach 		var of varlist  absenteeism_teachers teachers_turnover {
-							recode `var' (1=1) (1=0.5) (2=0), gen(II_`var')
+							recode `var' (0=1) (1=0.5) (2=0), gen(II_`var')
 			}
 			
-			egen 			teacher_effort = rowmean(II_*) if  !missing(absenteeism_teachers) &!missing(teachers_turnover)
+			egen 			teacher_effort_principalpers = rowmean(II_*) if  !missing(absenteeism_teachers) &!missing(teachers_turnover)
 			drop 			II_* 
 						
 			**
-			format  		implementation* external* student_effort* teacher_effort* %4.2fc
+			format  		implementation* external* student_effort_principalpers* teacher_effort_principalpers* %4.2fc
 
 			**
 			*
@@ -1940,8 +1942,8 @@
 			replace treated    = 0 if treated == .
 			
 			
-			label variable student_effort 				  	"Student motivation from principal perspective"
-			label variable teacher_effort 				  	"Teacher effort - Principals' view"
+			label variable student_effort_principalpers 	"Student motivation from principal perspective"
+			label variable teacher_effort_principalpers 	"Teacher effort - Principals' view"
 			label variable implementation_projects_mean  	"Mean principal effort - projects to reduce dropout/repetition and increase learning"
 			label variable implementation_projects_all   	"Full principal effort - projects to reduce dropout/repetition and increase learning"
 			label variable external_support_mean 		 	"Mean external stakeholder's suppport - Principals' view"

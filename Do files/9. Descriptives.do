@@ -84,14 +84,15 @@
 	*Table A1 and A2: number of municipalities and schools in our sample, disaggregated by network and G = 1/G = 0
 	**
 	*--------------------------------------------------------------------------------------------------------------------------------*
-		
+		/*
 		**
 		**
 		use	 "$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
 			codebook codmunic  if id_13_mun == 0 & network == 2 & !missing(math5) 										//number of municipalities (among the ones that did not extend the winter break) with at lest one state school
 			codebook codschool if id_13_mun == 0 & network == 2 & !missing(math5) 										//number of state schools in the municipalities that opted to not extend the winter break
 			codebook codschool if id_13_mun == 0 & network == 3 & !missing(math5) & mun_escolas_estaduais_ef1 == 1  	//number of municipal schools in the municipalities that opted to not extend the winter break
-
+		*/
+			
 		**
 		**
 		use	"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
@@ -201,9 +202,9 @@
 				keep if sample_dif == 1	//municipalities with 5th grade scores in 2005, so we can check parallel trends 
 	
 				**
-				gen 	id_escola	 = 1 	
-				egen 	id_mun = tag(codmunic)
-				rename 	enrollment5 id_mat
+				gen 	id_escola	 	= 1 	
+				egen 	id_mun 			= tag(codmunic)
+				rename 	enrollment5 	id_mat
 				
 				**
 				*Baseline
@@ -228,7 +229,7 @@
 					preserve
 					
 					**
-					drop 		if school_management_program == 1 | share_teacher_management_program == 0 
+					drop 		if share_teacher_management_program == 0 
 					
 					**
 					collapse 	(sum) id_mun id_escola id_mat, by (T)									 			//number of schools offering 1st to 5th grade 
@@ -286,89 +287,83 @@
 				use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & math5 != . & tipo_municipio_ef1 == 1,  clear
 				
 					**
-					keep 	if sample_triple_dif == 1		
-			
-					**
-					drop 	if school_management_program 		 == 1	
+					drop 		if school_management_program 		 == 1	
 					
 					**
-					keep 	if share_teacher_management_program == 0
+					keep 		if share_teacher_management_program == 0
 
 					**
-					keep 	if ((G == 1 & share_teacher_both_networks < 25) 	 | (G == 0)) 
+					keep 		if ((G == 1 & share_teacher_both_networks < 25) 	 | (G == 0)) 
 					
 					**
-					egen 	id_mun = tag(codmunic network)
+					keep 		if sample_triple_dif == 1		
+					
+					**
+					egen 		id_mun = tag(codmunic network)
 					
 					**
 					gen 				id_escola = 1
 					
 					**
-					rename 	enrollment5 id_mat
+					rename 		enrollment5 id_mat
 
 					**
-					collapse (sum)id_mun id_escola id_mat, by(G network)
+					collapse 	(sum)id_mun id_escola id_mat, by(G network)
 
 					**
-					reshape long id_ , i(network G) j(desc) string
+					reshape 	long id_ , i(network G) j(desc) string
 					
-					reshape wide id_ , i(network desc) j(G)
+					reshape 	wide id_ , i(network desc) j(G)
 					
-					reshape wide id_*, i(		 desc) j(network)
+					reshape 	wide id_*, i(		 desc) j(network)
 
-					rename (id_02 id_12 id_03 id_13) (G0_est G1_est G0_mun G1_mun)
+					rename 		(id_02 id_12 id_03 id_13) (G0_est G1_est G0_mun G1_mun)
 					
-					gen sample 	= "Baseline"
+					gen 		sample 	= "Baseline"
 					
-					gen met		= "Triple DiD"
+					gen			met		= "Triple DiD"
+						
+					order 		met sample desc G0_est G0_mun G1_est G1_mun
 					
-					order met sample desc G0_est G0_mun G1_est G1_mun
+					append 		using `dif'
 					
-					append using `dif'
+					keep 		if sample == "Baseline"
 					
-					keep if sample == "Baseline"
-					
-					set 	obs 9
+					set 		obs 9
 					tostring *, replace force
 					
-					replace G0_est = "13 municipalities in which the local" 				in 7
-					replace G0_mun = "governments extended the winter break"  				in 7
-					replace G1_est = "Other municipalities of the state in which"  			in 7
-					replace G1_mun = "local authorities did notchange the school calendar"	in 7 				
-
-					replace G0_est = "State schools" in 8 
-					replace G1_est = "State schools" in 8 
-					
-					replace G0_mun = "Local schools" in 8 
-					replace G1_mun = "Local schools" in 8 
+					*
+					replace 	G0_est = "13 municipalities in which the local" 				in 7
+					replace 	G0_mun = "governments extended the winter break"  				in 7
+					replace 	G1_est = "Other municipalities of the state in which"  			in 7
+					replace 	G1_mun = "local authorities did notchange the school calendar"	in 7 				
+					replace	 	G0_est = "State schools" in 8 
+					replace 	G1_est = "State schools" in 8 
+					replace 	G0_mun = "Local schools" in 8 
+					replace 	G1_mun = "Local schools" in 8 
 										
 					
+					**
+					gen 		ordem = 1 in 7
+					replace 	ordem = 2 in 8
+					replace 	ordem = 3 in 1
+					replace 	ordem = 4 in 2
+					replace 	ordem = 5 in 3
+					replace 	ordem = 6 in 9
+					replace 	ordem = 7 in 4
+					replace 	ordem = 8 in 5
+					replace 	ordem = 8 in 6
 					
-					gen 	ordem = 1 in 7
-					replace ordem = 2 in 8
+					**
+					sort 		ordem
+					drop 		ordem sample 
 					
-					
-					
-					replace ordem = 3 in 1
-					replace ordem = 4 in 2
-					
-					replace ordem = 5 in 3
-					
-					
-					replace ordem = 6 in 9
-					replace ordem = 7 in 4
-					replace ordem = 8 in 5
-					replace ordem = 8 in 6
-					
-					
-					sort ordem
-					
-					drop ordem sample 
-					
-					replace desc = "Enrollments, fifth-grade" if desc == "mat"
-					replace desc = "Number of municipalities" if desc == "mun"
+					**
+					replace 	desc = "Enrollments, fifth-grade" if desc == "mat"
+					replace 	desc = "Number of municipalities" if desc == "mun"
 					replace desc = "Number of schools" 		  if desc == "escola"
 					
+					**
 					export excel "$tables/TableA2.xlsx", replace
 		
 		
@@ -431,17 +426,17 @@
 			*
 			*-------------------> Locally-managed schools in treated versus non-treated municipalities 
 			*
-				iebaltab  $balance_students5  $matching_schools school_year enrollmentTotal pib_pcap if network == 3					, format(%12.2fc) grpvar(T) savetex("$tables/TableA3") 	rowvarlabels replace 
+				iebaltab  $balance_students5  $matching_schools school_year enrollmentTotal pib_pcap if network == 3					 & sample_dif == 1			, format(%12.2fc) grpvar(T) savetex("$tables/TableA3") 	rowvarlabels replace 
 
 			*
 			*-------------------> Locally-managed schools versus state managed schools across all municipalities that did not extend the winter break of their local schools (G = 1)
 			*	
-				iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 1 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(E) savetex("$tables/TableA4") 	rowvarlabels replace 
+				iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 1 & tipo_municipio_ef1 == 1 & sample_triple_dif == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA4") 	rowvarlabels replace 
 
 			*
 			*-------------------> Locally-managed schools versus state managed schools across all municipalities that did extend the winter break of their local schools     (G = 0) 
 			*	
-				iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 0 & tipo_municipio_ef1 == 1, format(%12.2fc) grpvar(E) savetex("$tables/TableA5") 	rowvarlabels replace 
+				iebaltab  $balance_students5 $matching_schools  school_year enrollmentTotal pib_pcap if G == 0 & tipo_municipio_ef1 == 1 & sample_triple_dif == 1   , format(%12.2fc) grpvar(E) savetex("$tables/TableA5") 	rowvarlabels replace 
 
 			
 			*
@@ -451,7 +446,7 @@
 				label define 	G 0 "State-managed in G = 0" 1 "State-managed in G = 1"
 				label val    	G G
 				
-				iebaltab  $balance_students5 $matching_schools school_year enrollmentTotal pib_pcap if network == 2						, format(%12.2fc) grpvar(G)	savetex("$tables/TableA6") 	rowvarlabels replace 
+				iebaltab  $balance_students5 $matching_schools school_year enrollmentTotal pib_pcap if network == 2						& sample_triple_dif == 1   , format(%12.2fc) grpvar(G)	savetex("$tables/TableA6") 	rowvarlabels replace 
 
 			
 	**
@@ -480,20 +475,20 @@
 			*-------------------> Locally-managed schools in treated versus non-treated municipalities 
 			*
 
-				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3				    	, format(%12.2fc) grpvar(T) savetex("$tables/TableA7")   rowvarlabels replace 
+				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 3				     & sample_dif == 1			, format(%12.2fc) grpvar(T) savetex("$tables/TableA7")   rowvarlabels replace 
 			
 			*
 			*-------------------> Locally-managed schools versus state managed schools across all municipalities that did not extend the winter break of their local schools
 			*
 			
-				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 1 & tipo_municipio_ef1 == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA8")   rowvarlabels replace 
+				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 1 & tipo_municipio_ef1 == 1 & sample_triple_dif == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA8")   rowvarlabels replace 
 
 			
 			*
 			*-------------------> Locally-managed schools versus state managed schools across all municipalities that did extend the winter break of their local schools
 			*
 			
-				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 0 & tipo_municipio_ef1 == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA9")   rowvarlabels replace 
+				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & G == 0 & tipo_municipio_ef1 == 1 & sample_triple_dif == 1	, format(%12.2fc) grpvar(E) savetex("$tables/TableA9")   rowvarlabels replace 
 
 			
 			*
@@ -505,7 +500,7 @@
 				label define 	G 0 "State-managed, G=0" 1 "State-managed, G=1"
 				label val    	G G
 				
-				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 2						, format(%12.2fc) grpvar(G) savetex("$tables/TableA10")  rowvarlabels replace 
+				iebaltab  $balance_teachers $balance_principals if year == 2009 & !missing(math5) & network == 2						& sample_triple_dif == 1 , format(%12.2fc) grpvar(G) savetex("$tables/TableA10")  rowvarlabels replace 
 
 
 	
