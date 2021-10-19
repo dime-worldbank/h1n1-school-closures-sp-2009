@@ -277,13 +277,19 @@
 		
 		**
 		**
-		tab 		year teacher_management_program if network == 3 & Teacher5grade == 1 & T == 1 //teachers included in the management program intervention that are also working in locally-managed schools in T == 1
-		tab 		year teacher_management_program if network == 3 & Teacher5grade == 1 & T == 0 //teachers included in the management program intervention that are also working in locally-managed schools in T == 0
+		tab 		year teacher_management_program if network == 3 & Teacher5grade == 1 & T == 1 &  year == 2009   //teachers included in the management program intervention that are also working in locally-managed schools in T == 1
+		tab 		year teacher_management_program if network == 3 & Teacher5grade == 1 & T == 0 &  year == 2009   //teachers included in the management program intervention that are also working in locally-managed schools in T == 0
+		//in T = 1. 4%   of 5th grade teachers of municipal schools also worked on a state managed school that had the managerial practices intervention implemented
+		//in T = 0. 1.5%
 		
+		tab 		year teacher_management_program if network == 2 & Teacher5grade == 1 & G == 0 &  year == 2009   //teachers included in the management program intervention that are also working in locally-managed schools in T == 0
+		tab 		year teacher_management_program if network == 2 & Teacher5grade == 1 & G == 1 &  year == 2009   //teachers included in the management program intervention that are also working in locally-managed schools in T == 1
+		//in G = 0. 18.5% of teachers work in a state managed school that implemented the program
+		//in G = 1. 13.4% of teachers work in a state managed school that implemented the program.
 		
 		**
 		**
-		collapse 	(max) teacher_management_program   (max)school_management_program  (mean)share_teacher_management_program , by(codschool network year) 				
+		collapse 	(max) teacher_management_program   (max)school_management_program  (mean)share_teacher_management_program , by(codschool network year T G) 				
 	
 		**
 		**
@@ -309,6 +315,17 @@
 		
 		save 		"$inter/Teachers Managerial Practices Program.dta", replace			//share of teachers per school participating in the Management Program
 		
+		**
+		use			"$inter/Teachers Managerial Practices Program.dta", clear
+		drop 		if school_management_program == 1
+		
+		su 			share_teacher_management_program  if T == 1 & network == 3
+		su 			share_teacher_management_program  if T == 0 & network == 3
+		
+		su 			share_teacher_management_program  if G == 1 & network == 2
+		su 			share_teacher_management_program  if G == 0 & network == 2
+		
+
 		
 	*________________________________________________________________________________________________________________________________* 
 	**
