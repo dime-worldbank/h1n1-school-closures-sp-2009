@@ -1,3 +1,4 @@
+	
 	**
 	*This do file imports and harmonizes Censo Escolar Data
 	**
@@ -492,7 +493,11 @@
 		..	
 		}
 		
-		
+		**
+		**Class hour and class-size
+		**
+		*----------------------------------------------------------------------------------------------------------------------------*
+		{
 		**
 		*Turmas e suas respectivas matrículas para fazer o merge com as turmas que têm docentes com formação adequada e calcular a proporção de turmas que têm aulas com docentes com formação adequada. 
 		**
@@ -539,7 +544,8 @@
 				save 		 		"$inter/Class-Size.dta", replace
 				erase 		 		"$inter/Turmas2005.dta"
 			restore
-
+		}
+		
 		
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -553,6 +559,7 @@
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		{
 		use 		"$inter/CensoEscolar2005", clear
 			merge 		1:1 MASCARA using "$inter/Máscara2005.dta", nogen 
 			gen 		codmunic = substr(CODMUNIC,1,2) + substr(CODMUNIC, -5,.)
@@ -595,13 +602,14 @@
 			
 			**
 			save 		"$inter/Matrículas2005.dta", replace
-		
+		}
 		
 		**
 		*2007, 2008, 2009
 		**
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		{
 		forvalues 	year = 2007/2009 {
 		
 			foreach 	region in SP { // RO AC AM RR PA AP TO MA PI CE RN PB PE AL SE BA MG ES RJ SP PR SC RS MS MT GO DF
@@ -727,11 +735,13 @@
 			
 			}
 		}
+		}
 		
 		**
 		**Appending enrollment 2005 to 2009
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
+		{
 			clear 
 			foreach 	year in 2007 2008 2009 {		
 				foreach 	region in SP {
@@ -785,7 +795,7 @@
 			save 		"$inter/Enrollments", replace
 			erase 		"$inter/CensoEscolar2005.dta"
 			erase		"$inter/Máscara2005.dta"
-
+		}
 		
 		
 	*________________________________________________________________________________________________________________________________* 
@@ -794,6 +804,7 @@
 	**Harmonizing Teacher Data
 	**
 	*________________________________________________________________________________________________________________________________* 
+	{
 		foreach year in 2009 	{
 			
 			foreach region in SP  		{
@@ -1024,6 +1035,6 @@
 					compress
 					save  		"$inter/Students per teacher.dta", replace
 					*erase 		"$inter/Teachers.dta"
-
+		}
 					
 		

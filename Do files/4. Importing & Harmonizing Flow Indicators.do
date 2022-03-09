@@ -47,6 +47,7 @@
 			rename 		(A-BK) ///
 						(year	region	uf	codmunic	municipality	 location	network	codschool school approval1grade	approval2grade	approval3grade	approval4grade	approval5grade	approval6grade	approval7grade	approval8grade	approval9grade	approvalEF1	approvalEF2	approvalEF	approvalEM1	approvalEM2	approvalEM3	approvalEM4	approvalEMNaoSeriado	approvalEM	repetition1grade	repetition2grade	repetition3grade	repetition4grade	repetition5grade	repetition6grade	repetition7grade	repetition8grade	repetition9grade	repetitionEF1	repetitionEF2	repetitionEF	repetitionEM1	repetitionEM2	repetitionEM3	repetitionEM4	repetitionEMNaoSeriado	repetitionEM	dropout1grade	dropout2grade	dropout3grade	dropout4grade	dropout5grade	dropout6grade	dropout7grade	dropout8grade	dropout9grade	dropoutEF1	dropoutEF2	dropoutEF	dropoutEM1	dropoutEM2	dropoutEM3	dropoutEM4	dropoutEMNaoSeriado	dropoutEM)
 
+						
 			*==============================>>
 			keep 		if uf == "SP"
 			*==============================>>

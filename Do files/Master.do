@@ -416,13 +416,11 @@
 				   ssc install `command'
 			   }
 		   }
-		   ieboilstart, version(15)          	//Set the version number to the oldest version used by anyone in the project team
-		   `r(version)'                         //This line is needed to actually set the version from the command above
-
-		**Stata version
-		ieboilstart, version(15)          	
-		`r(version)' 
-		
+		   *ieboilstart, version(16)          	//Set the version number to the oldest version used by anyone in the project team
+		   *`r(version)'                         //This line is needed to actually set the version from the command above
+			version 16
+			
+			
 		**Figure settings
 		graph set window fontface "Times"
 		set scheme economist
@@ -431,7 +429,7 @@
 		set matsize 11000
         set level 95
 		set seed 108474
-
+		set more off, permanently
 	
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -449,8 +447,8 @@
 	   * Root folder globals
 	   * ---------------------
 	   if $user == 1 {
-		   global projectfolder 	"/Users/vivianamorim/OneDrive/world-bank/Education/h1n1-school-closures-sp-2009"
-		   global dofiles			"/Users/vivianamorim/Documents/GitHub/h1n1-school-closures-sp-2009/Do files"
+		   global projectfolder 	"C:\Users\wb495845\OneDrive - WBG\I. Education\h1n1-school-closures-sp-2009"
+		   global dofiles			"C:\Users\wb495845\OneDrive - WBG\Documents\GitHub\h1n1-school-closures-sp-2009\Do files"
 	   }
 		   
 	   if $user == 2 {

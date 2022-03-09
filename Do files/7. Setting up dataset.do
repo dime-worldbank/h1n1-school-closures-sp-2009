@@ -6,18 +6,17 @@
 	**
 	*________________________________________________________________________________________________________________________________* 
 
-	
-	/*
+	/*	
 	
 	**
 	*Student dataset, Prova Brasil
 	
-		-> Teacher Motivation in Math/Teacher Motivation in Port.  Variable defined based on how frequently the teacher corrects the homework. 
+		-> TEACHER MOTIVATION in math/portuguese.  Variable defined based on how frequently the teacher corrects the homework. 
 				Sempre 				(1 = 1) 
 				De vez em quando 	(2 = 0.5)
 				Nunca				(3 = 0) 
 				
-				The dataset is organized at student level. The teacher motivation at school level would be an average of student's answers. 
+				The dataset is organized at student level. The teacher motivation at school level would be an average of students' answers. 
 				recode 		hw_corrected_port  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 				gen (teacher_motivation_port) 
 				recode 		hw_corrected_math  (1 = 1) (2 = 0.5) (3 = 0) (4 = .), 				gen (teacher_motivation_math) 
 
@@ -25,7 +24,7 @@
 	**
 	*Teacher dataset, Prova Brasil
 	
-		-> Principal Effort. Variable defined based on teacher's anwers of how frequenfly the principal: 
+		-> PRINCIPAL EFFORT. Variable defined based on teacher's anwers of how frequenfly the principal: 
 			
 			Motivates them. 
 			If they fell the principal trust them. 
@@ -53,7 +52,7 @@
 			drop 	II_* temp1
 
 			
-		-> Students' effort. Variable defined based on teacher's anwers of what is associated with student's low performance. 
+		-> STUDENTS' EFFORT Variable defined based on teacher's anwers of what is associated with student's low performance. 
 			**
 			egen 	temp1 = 			    rowmiss(def_student_loweffort def_absenteeism def_bad_behavior)
 			
@@ -67,7 +66,7 @@
 			replace student_effort_teacherpers  = . if temp1 > 1
 
 			
-		-> Parent's effort
+		-> PARENTS' EFFORT
 		
 			1 if the parents support children and 0 otherwise. 
 			
@@ -79,9 +78,9 @@
 	**
 	*Principal's dataset
 	
-		-> Teacher Effort. Based on teacher absenteeism and turnover. teacher_effort_principalpers
+		-> TEACHER EFFORT. Based on teacher absenteeism and turnover. teacher_effort_principalpers
 		
-		-> Student Effort. Based on students absenteeism and bad behavior in class. student_effort_principalpers
+		-> STUDENT EFFORT. Based on students absenteeism and bad behavior in class. student_effort_principalpers
 
 			Not an issue 			(0 = 1)
 			Small issue  			(2 = 0.5)
@@ -255,22 +254,22 @@
 	
 	Some teachers of state-managed schools included in the Management Program also work in a state-school
 	
-	not included in the intervention or in a locally-manged school. We are going to identify the schools that have at least 
+	not included in the intervention or in a locally-managed school. We are going to identify the schools that have at least 
 	
 	one teacher in this situation and also the % of teachers in this situation. 
 	
 	*/
 	*-------------------------------------------------------------------------------------------------------------------------------*
 		use 		"$inter/Código de Identificação dos professores" 				if (network == 2 | network == 3) & (year == 2007 | year == 2009 | year  == 2008) & coduf == 35, clear		//Censo Escolar Data, each row is a teacher and a school where he/she works
-																																												//the same codteacher can be in more than a row if the teacher works in different schools
+																																																//the same codteacher can be in more than a row if the teacher works in different schools
 		**
 		**
-		merge 		m:1 year codschool using "$inter/Managerial Practices Program.dta", nogen keepusing(school_management_program) keep (1 3)										//identifying the schools included in the Management Program. 
+		merge 		m:1 year codschool using "$inter/Managerial Practices Program.dta", nogen keepusing(school_management_program) keep (1 3)													//identifying the schools included in the Management Program. 
 
 		
 		**
 		**
-		bys 		year codteacher : egen teacher_management_program =   max(school_management_program)																		//identifying the teachers that work in state-managed schools included in the Management Program. 
+		bys 		year codteacher : egen teacher_management_program =   max(school_management_program)																						//identifying the teachers that work in state-managed schools included in the Management Program. 
 					
 		replace 						   teacher_management_program = 0 if teacher_management_program == .
 		clonevar 					 share_teacher_management_program = 	 teacher_management_program 
@@ -295,8 +294,8 @@
 		//in T = 1. 4%   of 5th grade teachers of municipal schools also worked on a state managed school that had the managerial practices intervention implemented
 		//in T = 0. 1.5%
 		
-		tab 		year teacher_management_program if network == 2 & Teacher5grade == 1 & G == 0 &  year == 2009   //teachers included in the management program intervention that are also working in locally-managed schools in T == 0
-		tab 		year teacher_management_program if network == 2 & Teacher5grade == 1 & G == 1 &  year == 2009   //teachers included in the management program intervention that are also working in locally-managed schools in T == 1
+		tab 		year teacher_management_program if network == 2 & Teacher5grade == 1 & G == 0 &  year == 2009  
+		tab 		year teacher_management_program if network == 2 & Teacher5grade == 1 & G == 1 &  year == 2009  
 		//in G = 0. 18.5% of teachers work in a state managed school that implemented the program
 		//in G = 1. 13.4% of teachers work in a state managed school that implemented the program.
 		
@@ -1018,28 +1017,31 @@
 		
 		clonevar  	absenteeism_issue5 = absenteeism_teachers3  	
 		
-		rename 		(principal_effort_teacherpers5 formacao_adequada_port5 formacao_adequada_math5 dif_age_5	 absenteeism_issue5 teacher_motivation5 mother_edu_highschool5  teacher_tenure5 ) ///
-					(prin5			  			   adeqport5			   adeqmath5			   dif5		 	 absen5				mot5				medu5					tenure5)
+		rename 		(principal_effort_teacherpers5 formacao_adequada_port5 formacao_adequada_math5 dif_age_5	 absenteeism_issue5 teacher_motivation5 mother_edu_highschool5  teacher_tenure5 prog_reduce_dropout) ///
+					(prin5			  			   adeqport5			   adeqmath5			   dif5		 	 absen5				mot5				medu5					tenure5			reddrop			)
 		
 		rename      (classhour5) (hour5)
 		
 		
-		foreach variable in prin5 adeqport5 adeqmath5 dif5 absen5 mot5 medu5 spt5 tenure5 atraso5 { 		//students per teacher, principal_effort_index teacher_tenure 
+		foreach variable in prin5 adeqport5 adeqmath5 dif5 absen5 mot5 medu5 spt5 tenure5 atraso5 reddrop { 		//students per teacher, principal_effort_index teacher_tenure 
 				gen   T2009_`variable'  		= T2009*`variable'
 		}
 		
 		**
 		**
-		label 		var T2009_atraso5				"ATT verus age-grade distortion" 
-		label 		var T2009_prin5   				"ATT versus principal effort" 
-		label 		var T2009_adeqport5				"ATT versus teacher with the correct degree to teach Portuguese"
-		label 		var T2009_adeqmath5 			"ATT versus teacher with the correct degree to teach math"
-		label 		var T2009_dif5					"ATT versus age difference between youngest and oldest of the class" 
-		label 		var T2009_absen5 				"ATT versus teacher absenteeism" 		
-		label 		var T2009_mot5 					"ATT versus teacher motivation" 		
-		label 		var T2009_medu5 				"ATT versus mother's education" 		
-		label 		var T2009_spt5  			 	"ATT versus students per teacher" 
-		label 		var T2009_tenure5  				"ATT versus % teachers with tenure" 
+		label 		var T2009_atraso5				"H1N1 versus age-grade distortion" 
+		label 		var T2009_prin5   				"H1N1 versus principal effort" 
+		label 		var T2009_adeqport5				"H1N1 versus teacher with the correct degree to teach Portuguese"
+		label 		var T2009_adeqmath5 			"H1N1 versus teacher with the correct degree to teach math"
+		label 		var T2009_dif5					"H1N1 versus age difference between youngest and oldest of the class" 
+		label 		var T2009_absen5 				"H1N1 versus teacher absenteeism" 		
+		label 		var T2009_mot5 					"H1N1 versus teacher motivation" 		
+		label 		var T2009_medu5 				"H1N1 versus mother's education" 		
+		label 		var T2009_spt5  			 	"H1N1 versus students per teacher" 
+		label 		var T2009_tenure5  				"H1N1 versus % teachers with tenure" 
+		label 		var T2009_reddrop  				"H1N1 versus program to reduce dropout" 
+
+
 		**
 		**
 		format 		T2009_* %4.2fc
@@ -1103,7 +1105,7 @@
 																						//we have state and locally-managed schools
 							
 					**
-					di 				as red "Numero de municipios" 
+					*di 				as red "Numero de municipios"  in " G = `G' and in year = `year'"
 					count
 					tempfile 		 A`G'`year'
 					save 	   		`A`G'`year''
@@ -1111,25 +1113,25 @@
 			}
 		
 		**
-		**
+		** in G = 1, selecting municipalities with data available for both 2007 and 2009
 		use 		`A12007', clear
 			
 			merge 		1:1 codmunic  using `A12009', keep(3)
 			
 			tempfile 	A1
 			save 	   `A1'
-			di 				as red "Numero de municipios" 
+			*di 				as red "Numero de municipios" 
 			count
 	
 		**
-		**	
+		**	in G = 0, selecting municipalities with data available for both 2007 and 2009
 		use 		`A02007', clear
 				
 			merge 		1:1 codmunic using `A02009', keep(3)
 			
 			tempfile 	A0
 			save 	   `A0'
-			di 				as red "Numero de municipios" 
+			*di 				as red "Numero de municipios" 
 			count 
 		
 			
@@ -1153,7 +1155,7 @@
 			duplicates 			drop codmunic, force
 					
 			**
-			tempfile 			amostra_triple
+			tempfile 			amostra_triple 					//sample of schools in municipalities with at least one state and one locally managed school with performance data available for 2007 and 2009
 			save			   `amostra_triple'
 
 		**
@@ -1165,7 +1167,7 @@
 			merge 				m:1 codmunic using  `amostra_triple'
 				
 			**
-			gen 				sample_triple_dif = 1 if _merge == 3		//only excluding schools in the management program and schools in which there is any teacher working in a scholl that implemented the intervention
+			gen 				sample_triple_dif = 1 if _merge == 3		//only excluding schools in the management program
 			drop 				_merge
 			
 			**

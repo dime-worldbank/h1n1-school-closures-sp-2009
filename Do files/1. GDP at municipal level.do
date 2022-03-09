@@ -170,7 +170,6 @@
 			replace 			coduf 	= 51 	if uf == "MT"; replace coduf = 52 if uf == "GO"; replace coduf = 53 if uf == "DF";
 			#delimit cr
 			
-			
 			**
 			**
 			*save 			"$inter/GDP per capita at state level.dta", replace
