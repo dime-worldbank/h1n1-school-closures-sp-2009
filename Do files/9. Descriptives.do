@@ -4,7 +4,41 @@
 	**
 	*________________________________________________________________________________________________________________________________* 
 	
+	use 	"$inter/Enrollments.dta" if year == 2009 & (network == 2 | network == 3)  & (enrollmentEF != . | enrollmentEI != . | enrollmentEMtotal != . ), clear
+
+	collapse (sum)enrollmentEI  enrollmentEF1 enrollmentEF2 enrollmentEMtotal , by(network T codmunic)
+	
+	egen enrollment = rsum(enrollment*)
+	
+	keep enrollment codmunic T network
+	
+	reshape wide enrollment*, i(codmunic T) j(network)
+	
+	gen id_est_mun = enrollment2 != . & enrollment3  != . 
+	gen id_soest   = enrollment2 != . & enrollment3  == . 
+	gen id_somun   = enrollment2 == . & enrollment3  != . 
+	gen id_sem     = enrollment2 == . & enrollment3  == . 
+	
+	collapse (sum)id*, by(T)
+	
+	
+	use 	"$inter/Enrollments.dta" if year == 2009 & (network == 2 | network == 3)  & (enrollmentEF1 != .), clear
+
+	collapse (sum)enrollmentEF1 , by(network T codmunic)
+	
+	
+	reshape wide enrollment*, i(codmunic T) j(network)
+	
+	gen id_est_mun = enrollmentEF12 != . & enrollmentEF13  != . 
+	gen id_soest   = enrollmentEF12 != . & enrollmentEF13   == . 
+	gen id_somun   = enrollmentEF12 == . & enrollmentEF13   != . 
+	gen id_sem     = enrollmentEF12 == . & enrollmentEF13   == . 
+	
+	collapse (sum)id*, 
 		
+	
+	
+	
 	**
 	**
 	*Table 1: enrollments and number of schools affected and unaffected by the shutdowns in Sao Paulo
@@ -84,6 +118,82 @@
 	}
 		
 
+		
+		
+	**	
+	*		
+	*Table 2: number of municipalities and schools in our sample, disaggregated by network and G = 1/G = 0
+	**
+	*--------------------------------------------------------------------------------------------------------------------------------*
+	
+		**
+		*--------------------->>
+		*Table 2a
+		**
+		{
+	
+		use "$final/h1n1-school-closures-sp-2009.dta" if network == 3 & year == 2009 & enrollmentEF1 !=., clear
+		
+			expand 2, gen(REP)
+			
+			gen 		amostra = 1 if REP == 1
+			
+			replace 	amostra = 2 if REP == 0 & sample_dif == 1 & math5 != .
+			
+			drop 	if  amostra == . 
+			
+			**
+			egen 	id_mun 			= tag(codmunic amostra)
+			
+			gen 	id_escola	    = 1
+			
+			**
+			collapse (sum) id_mun id_escola enrollment5, by (id_13_mun amostra)											//number of schools offering 1st to 5th grade 
+			
+			**
+			export excel "$tables/Table2a.xlsx", replace
+		}
+	
+		**
+		*--------------------->>
+		*Table 2b
+		
+		{
+			
+				use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & enrollmentEF1 !=., clear 
+					
+					**
+					expand 2, gen(REP)
+				
+					gen 		amostra = 1 if REP == 1
+				
+					replace 	amostra = 2 if REP == 0 & sample_triple_dif == 1 & math5 != .
+				
+					drop 	if  amostra == . 
+					
+					**
+					egen 		id_mun 		= tag(codmunic network amostra)
+					
+					**
+					gen 		id_escola 	= 1
+					
+					**
+					rename 		enrollment5 id_mat
+
+					**
+					collapse 	(sum)id_mun id_escola id_mat, by(G network amostra)
+					
+					sort 		G amostra network
+
+					xpose , clear
+					
+					export excel "$tables/Table2b.xlsx", replace
+		}
+			
+		
+
+		
+	/*
 	**	
 	*		
 	*Table 2: number of municipalities and schools in our sample, disaggregated by network and G = 1/G = 0
@@ -102,6 +212,8 @@
 		**
 		use	"$final/h1n1-school-closures-sp-2009.dta" if year == 2009,  clear
 			duplicates 	drop codmunic, force
+			
+			tab tipo_municipio_ef1
 			
 			gen 			  ind = 1
 			collapse 	(sum) ind 					  , by (id_13_mun tipo_municipio_ef1)						   		//number of municipalities offering 1st to 5th grade
@@ -332,7 +444,7 @@
 					**
 					export excel "$tables/Table2b.xlsx", replace
 		}
-	
+	*/
 	
 	**	
 	*		
@@ -394,7 +506,7 @@
 		
 		rename 	share_teacher_management_program s_tea_manag_program //if the name of the variable is too big the following code does not work
 		
-		/*
+		
 		foreach v of var * 		{
 		local l`v' : variable label `v'
 			if `"`l`v''"' == "" {
@@ -407,7 +519,7 @@
 		foreach v of var * {
 			label var `v' "`l`v''"
 		}
-		*/
+		
 		
 		foreach var of varlist $balance_principals {
 			replace `var' = `var'*100
@@ -625,10 +737,10 @@
 		eststo: reg approval5 	beta1P2 beta3P2 beta5P2 i.codmunic  if tipo_municipio_ef1 == 1 & G == 1 //dif in dif, municipalities with state and locally managed schools offering 1st to 5th grade
 		eststo: reg approval5 	beta1P2-beta7P2			i.codmunic  if tipo_municipio_ef1 == 1			//triple dif-in-dif
 		 
-		eststo: reg repetition5 beta1P2 beta3P2 beta5P2 i.codmunic if tipo_municipio_ef1 == 1 & G == 1
+		eststo: reg repetition5 beta1P2 beta3P2 beta5P2 i.codmunic if tipo_municipio_ef1 == 1  & G == 1
 		eststo: reg repetition5 beta1P2-beta7P2			i.codmunic if tipo_municipio_ef1 == 1
 			
-		eststo: reg dropout5 	beta1P2 beta3P2 beta5P2 i.codmunic if tipo_municipio_ef1 == 1 & G == 1
+		eststo: reg dropout5 	beta1P2 beta3P2 beta5P2 i.codmunic if tipo_municipio_ef1 == 1  & G == 1
 		eststo: reg dropout5 	beta1P2-beta7P2 		i.codmunic if tipo_municipio_ef1 == 1
 			
 		estout * using "$tables/TableA12.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a, fmt(%9.0g %9.3f)) replace
@@ -780,7 +892,7 @@
 			clmethod(custom) clbreaks(-1 1 2)																						///
 			fcolor(emidblue gs14 ) 																									///
 			legorder(lohi) 																											///
-			legend(order(2 "Extended winter break" 3 "Other municipalities") size(medium)) 
+			legend(order(2 "state and locally-managed schools closed" 3 "state-managed closed, locally-managed open") size(medium)) 
 			graph export "$figures/FigureA1.pdf", as(pdf) replace
 			
 			/*

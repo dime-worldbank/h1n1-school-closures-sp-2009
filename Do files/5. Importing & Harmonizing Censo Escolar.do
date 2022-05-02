@@ -792,6 +792,45 @@
 			**
 			sort 	codschool year
 			compress
+			
+						
+			*----------------------------------------------------------------------------------------------------------------------------*
+			**
+			*Type of municipalities
+			**
+			gen 		A = 1 if network == 2 & (enrollmentEF1!=.)
+			bys 		year codmunic: egen mun_escolas_estaduais_ef1  = max(A)			//municipalities with state schools offering 1st to 5th grade
+			drop 		A	
+			
+			gen 		A = 1 if network == 3 & (enrollmentEF1!=. )
+			bys 		year codmunic: egen mun_escolas_municipais_ef1 = max(A)			//municipalities with municipal schools offering 1st to 5th grade
+			drop 		A
+
+			
+			**
+			**
+			gen 		tipo_municipio_ef1 	= 1 if mun_escolas_estaduais_ef1 == 1 & mun_escolas_municipais_ef1 == 1
+			replace 	tipo_municipio_ef1 	= 2 if mun_escolas_estaduais_ef1 == . & mun_escolas_municipais_ef1 == 1
+			replace 	tipo_municipio_ef1 	= 3 if mun_escolas_estaduais_ef1 == 1 & mun_escolas_municipais_ef1 == .
+			replace 	tipo_municipio_ef1 	= 4 if mun_escolas_estaduais_ef1 == . & mun_escolas_municipais_ef1 == .				
+				
+			**
+			**
+			label 		define 	tipo_municipio_ef1 			1 "State and locally-managed schools offering 1st to 5th grade"					 	 	2  "No state-managed schools but locally-managed schools offering 1st to 5th grade" ///
+															3 "State-managed schools but no locally-managed schools offering 1st to 5th grade"  	4  "Without schools offering 1st to 5th grade" 
+			
+			**
+			**
+			label 		val 	tipo_municipio_ef1 			tipo_municipio_ef1
+		
+		
+			**
+			gen 		T = .
+			foreach 	munic in $treated_municipalities {
+				replace T   				= 1 		if codmunic == `munic' 
+			}	
+		
+
 			save 		"$inter/Enrollments", replace
 			erase 		"$inter/CensoEscolar2005.dta"
 			erase		"$inter/Máscara2005.dta"

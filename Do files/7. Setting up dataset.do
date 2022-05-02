@@ -710,9 +710,9 @@
 		merge 		1:1 codschool year using `socio_economic'										, nogen 
 		merge 		1:1 codschool year using `teachers'												, nogen 
 		merge 		1:1 codschool year using `principals'											, nogen 
-		merge 		m:1 codschool 	   using `data'													, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
+		*merge 		m:1 codschool 	   using `data'													, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
 		
-		keep 		if  enrollment5grade  != .
+		*keep 		if  enrollment5grade  != .
 	
 		merge 		1:1 codschool year using "$inter/Managerial Practices Program.dta"				, nogen keep(1 3) keepusing(school_management_program       ) 
 		merge 		1:1 codschool year using "$inter/Teachers Managerial Practices Program.dta"		, nogen keep(1 3) keepusing(teacher_management_program share*) 
@@ -869,11 +869,11 @@
 		**
 		*Type of municipalities
 		**
-		gen 		A = 1 if network == 2 & (enrollment5!=. | !missing(approval5) | math5 != .)
+		gen 		A = 1 if network == 2 & (enrollmentEF1!=.)
 		bys 		year codmunic: egen mun_escolas_estaduais_ef1  = max(A)			//municipalities with state schools offering 1st to 5th grade
 		drop 		A	
 		
-		gen 		A = 1 if network == 3 & (enrollment5!=. | !missing(approval5) | math5 != .)
+		gen 		A = 1 if network == 3 & (enrollmentEF1!=.)
 		bys 		year codmunic: egen mun_escolas_municipais_ef1 = max(A)			//municipalities with municipal schools offering 1st to 5th grade
 		drop 		A
 
@@ -887,7 +887,7 @@
 			
 		**
 		**
-		gen 		offers_ef1 			= !missing(math5) | approval5 != .
+		gen 		offers_ef1 			= !missing(math5)
 		
 		**
 		**
