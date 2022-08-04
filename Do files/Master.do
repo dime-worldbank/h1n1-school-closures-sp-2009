@@ -423,7 +423,7 @@
 			
 		**Figure settings
 		graph set window fontface "Times"
-		set scheme economist
+		set scheme s2color
 		
 		**Others
 		set matsize 11000
