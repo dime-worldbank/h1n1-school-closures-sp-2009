@@ -440,7 +440,7 @@
 		**
 		**
 		**Outcomes
-		foreach subject in sp5  { //regression for each of our dependent variables  //approval5 repetition5 dropout5  math_insuf5 port_insuf5
+		foreach subject in math5 port5  { //regression for each of our dependent variables  //approval5 repetition5 dropout5  math_insuf5 port_insuf5
 			  
 			*............................................................................................................................................................................*
 			**
@@ -1523,14 +1523,14 @@
 		//grade 5
 			estout model325 model425 model625 model2025 model2125 model2225 model2325 model2425 ///
 				   model335 model435 model635 model2035 model2135 model2235 model2325 model2435 ///
-			using "$tables/Table3.xls", keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2)) ci(par fmt(1))) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space mediaT sdT att_sdT space  space esp0 esp1 esp2 esp3 esp4, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " "Treatment Group, 2007" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Specifications" "Municipal FE" "Controls" "Both networks" "% management program" "School FE" )) replace
+			using "$tables/Table3.xls", keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) se(fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2)) ci(par fmt(1))) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space mediaT sdT att_sdT space  space esp0 esp1 esp2 esp3 esp4, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " "Treatment Group, 2007" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Specifications" "Municipal FE" "Controls" "Both networks" "% management program" "School FE" )) replace
 		
 		//++ appending the estimate increase in the percentage of students with insufficient performance
 		//subs 4 and 5
 		//grade 5 
 			estout model345 model445 model645 model2045 model2145 model2245 model2345 model2445 ///
 				   model355 model455 model655 model2055 model2155 model2255 model2355 model2455 ///
-			using "$tables/Table3.xls", keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2))) 				starlevels(* 0.10 ** 0.05 *** 0.01) stats(mediaT att_pcT, fmt(%9.2f)) append
+			using "$tables/Table3.xls", keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) se(fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2))) 				starlevels(* 0.10 ** 0.05 *** 0.01) stats(mediaT att_pcT, fmt(%9.2f)) append
 		}
 		
 		
@@ -1539,11 +1539,11 @@
 		{
 			estout model625 model925 model1425   ///
 				   model635 model935 model1435   ///
-			using "$tables/Table4.xls",keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2))) 				starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " )) replace
+			using "$tables/Table4.xls",keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) se(fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2))) 				starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " )) replace
 		
 			estout model2425 model2725 model3225  ///
 				   model2435 model2735 model3235 ///
-			using "$tables/Table4.xls",keep(T2009*) 		label cells(b(star  fmt(2)) p(par(`"="("' `")""')  fmt(2))) 											starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " )) append 
+			using "$tables/Table4.xls",keep(T2009*) 		label cells(b(star  fmt(2)) se(fmt(2)) p(par(`"="("' `")""')  fmt(2)) ) 											starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " )) append 
 		}	
 		
 		
@@ -1552,11 +1552,11 @@
 		{
 			estout model625 model825 model1025 model1325     ///
 				   model635 model835 model1035 model1335     ///
-			using "$tables/Table5.xls",keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2))) 				starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " )) replace
+			using "$tables/Table5.xls",keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) se(fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2))) 				starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " )) replace
 			
 			estout  model2425 model2625 model2825  model3125 ///
 					model2435 model2635 model2835  model3135 ///
-			using "$tables/Table5.xls",keep(T2009*) 		label cells(b(star  fmt(2)) p(par(`"="("' `")""')  fmt(2))) 											starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " )) append 
+			using "$tables/Table5.xls",keep(T2009*) 		label cells(b(star  fmt(2)) se(fmt(2)) p(par(`"="("' `")""')  fmt(2))) 											starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " )) append 
 		 }
 		 
 		 
@@ -1565,7 +1565,7 @@
 		{		
 			estout model125 model325 model625 model2025 model2425 ///
 				   model135 model335 model635 model2035 model2425 ///
-			using "$tables/TableA13.xls",keep(T2007 T2009*)  label cells(b(star pvalue(pvalueboots) fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2))) 				starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space esp0 esp1 esp2 esp3 esp4, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " "Specifications" "Municipal FE" "Controls" "Both networks" "% management program" "School FE" )) replace
+			using "$tables/TableA13.xls",keep(T2007 T2009*)  label cells(b(star pvalue(pvalueboots) fmt(2)) se(fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2))) 				starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space esp0 esp1 esp2 esp3 esp4, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " "Specifications" "Municipal FE" "Controls" "Both networks" "% management program" "School FE" )) replace
 		}
 		
 		
@@ -1575,7 +1575,7 @@
 			estout model3365 model665 model2065 model2465 ///
 				   model3375 model675 model2075 model2475 ///
 				   model3385 model685 model2085 model2485 ///
-		    using "$tables/TableA14.xls",keep(T2008  T2009*) label cells(b(star   fmt(3)) p) 																		starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space mediaT sdT att_sdT space  space esp0 esp1 esp2 esp3 esp4, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " "Treatment Group, 2007" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Specifications" "Municipal FE" "Controls" "Both networks" "% management program" "School FE" )) replace
+		    using "$tables/TableA14.xls",keep(T2008  T2009*) label cells(b(star   fmt(3)) se(fmt(2)) p) 																		starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space mediaT sdT att_sdT space  space esp0 esp1 esp2 esp3 esp4, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " "Treatment Group, 2007" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Specifications" "Municipal FE" "Controls" "Both networks" "% management program" "School FE" )) replace
 		}
 		
 		
@@ -1583,7 +1583,7 @@
 		*Table A.15 -> Effect on standardized performance - we just need this when we calculate the potential impacts of the shutdowns on IDEB
 		{
 			estout  model315 model415 model615 model2015 model2115 model2215 model2315 model2415 ///  ///
-			using "$tables/TableA15.xls", keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2)) ci(par fmt(1))) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space mediaT sdT att_sdT space  space esp0 esp1 esp2 esp3 esp4, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " "Treatment Group, 2007" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Specifications" "Municipal FE" "Controls" "Both networks" "% management program" "School FE" )) replace
+			using "$tables/TableA15.xls", keep(T2009*) 		label cells(b(star pvalue(pvalueboots) fmt(2)) se(fmt(2)) pvalueboots(par(`"="("' `")""')  fmt(2)) ci(par fmt(1))) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2 space space mediaT sdT att_sdT space  space esp0 esp1 esp2 esp3 esp4, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" " " "Treatment Group, 2007" "Mean" "Standard Deviation" "Estimate of ATT (in sd)" " " "Specifications" "Municipal FE" "Controls" "Both networks" "% management program" "School FE" )) replace
 		}
 		
 
