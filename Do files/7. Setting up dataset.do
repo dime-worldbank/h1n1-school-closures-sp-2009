@@ -104,7 +104,7 @@
 	in the bottom 5%.
 	
 	*/
-	
+	{
 
 		*----------------------------------------------------------------------------------------------------------------------------*
 		
@@ -156,6 +156,8 @@
 		**
 		compress
 		save 			"$inter/IDESP.dta", replace
+	}
+
 	
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -163,7 +165,7 @@
 	*Bottom 5% schools are the ones included in the program																									
 	*________________________________________________________________________________________________________________________________* 
 	**	
-	
+	{
 	
 		*----------------------------------------------------------------------------------------------------------------------------*
 		**
@@ -242,7 +244,9 @@
 			sort 			 codschool
 			compress
 			save 		"$inter/Managerial Practices Program.dta", replace		//list of state schools included in this intervention
-			
+	}		
+		
+		
 		
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -260,7 +264,8 @@
 	
 	*/
 	*-------------------------------------------------------------------------------------------------------------------------------*
-		use 		"$inter/Código de Identificação dos professores" 				if (network == 2 | network == 3) & (year == 2007 | year == 2009 | year  == 2008) & coduf == 35, clear		//Censo Escolar Data, each row is a teacher and a school where he/she works
+	{
+	use 		"$inter/Código de Identificação dos professores" 				if (network == 2 | network == 3) & (year == 2007 | year == 2009 | year  == 2008) & coduf == 35, clear		//Censo Escolar Data, each row is a teacher and a school where he/she works
 																																																//the same codteacher can be in more than a row if the teacher works in different schools
 		**
 		**
@@ -313,14 +318,17 @@
 		format   	share_teacher_management_program %4.2fc
 		
 		save 		"$inter/Teachers Managerial Practices Program.dta", replace			//share of teachers per school participating in the Management Program
+	}
 		
-		
+	
+	
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**
 	*Share of teachers working in state and locally-managed schools																						
 	*________________________________________________________________________________________________________________________________* 
 	*																								
+	{	
 		use 		"$inter/Código de Identificação dos professores" if (network == 2 | network == 3) & coduf == 35, clear
 		
 		**
@@ -364,7 +372,8 @@
 		replace  	share_teacher_both_networks = share_teacher_both_networks*100
 		format   	share_teacher_both_networks %4.2fc
 		save 	 	"$inter/Teachers in state and municipal networks.dta", replace				//share of teachers per school that work in a state and in a locally-managed school
-
+	}
+	
 	
 	
 	*________________________________________________________________________________________________________________________________* 
@@ -373,7 +382,7 @@
 	*Socioeconomic characteristics of the students at school level																										
 	*________________________________________________________________________________________________________________________________* 
 	**	
-	
+	{
 		use 	   "$inter/Students - Prova Brasil.dta" if (network == 2 | network == 3) & (year == 2007 | year == 2009) & coduf == 35, clear
 		
 		**
@@ -458,8 +467,9 @@
 		drop			*9 
 		tempfile    	socio_economic
 		save           `socio_economic'
-		
+	}
 
+	
 	
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -467,26 +477,32 @@
 	*Flow Indicators																									
 	*________________________________________________________________________________________________________________________________* 
 	**	
+	{	
 		use 	   "$inter/Flow Indicators.dta", clear
 		keep 		*5grade* approval9* codschool year			//nao tirar o approval9
 		
 		**
 		tempfile    	flow_index
 		save       	   `flow_index'
-	
+	}
 
+	
+	
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**
 	*School Infrastructure																									
 	*________________________________________________________________________________________________________________________________* 
 	**	
+	{
 		use 	   	$matching_schools year codschool coduf uf codmunic codmunic2 operation network cfim_letivo cinicio_letivo  location ///
 		mes_fim_letivo dia_fim_letivo CICLOS using "$inter/School Infrastructure.dta"  if (network == 3 | network == 2) & codschool!= . & coduf == 35, clear
 		
 		**
 		tempfile    	school_infra
 		save      	   `school_infra'
+	}
+	
 	
 	
 	*________________________________________________________________________________________________________________________________* 
@@ -495,7 +511,7 @@
 	*Enrollments																									
 	*________________________________________________________________________________________________________________________________* 
 	**	
-
+	{
 		use 		year codschool dif_age_5grade atraso5 enrollmentEMtotal enrollmentEF enrollment5grade network enrollment9grade enrollmentEF1 enrollmentEF2 enrollmentEI coduf  ///
 		using "$inter/Enrollments"  if (network == 3 | network == 2)  & !missing(codschool) & coduf == 35, clear
 		
@@ -510,6 +526,8 @@
 		**
 		tempfile    	enrollments
 		save       	   `enrollments'	
+	}
+	
 	
 	
 	*________________________________________________________________________________________________________________________________* 
@@ -518,11 +536,14 @@
 	*Class hours																								
 	*________________________________________________________________________________________________________________________________* 
 	**	
+	{
 		use 		classhour5grade  year codschool network coduf using "$inter/Class-Hours.dta" 			if (network == 2 | network == 3) & codschool !=. & coduf == 35, clear
 		
 		**
 		tempfile    	class_hours
 		save       	   `class_hours'	
+	}
+	
 	
 	
 	*________________________________________________________________________________________________________________________________* 
@@ -530,33 +551,40 @@
 	**
 	*Students per class																								
 	*________________________________________________________________________________________________________________________________* 
-	**	
+	**
+	{
 		use 	    tclass5grade 	 year codschool network coduf using "$inter/Class-Size.dta" 			if (network == 2 | network == 3) & codschool !=. & coduf == 35, clear
 		
 		**
 		tempfile    	class_size
 		save       	   `class_size'	
+	}
 	
-		
+	
+	
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**
 	*Students per teacher																						
 	*________________________________________________________________________________________________________________________________* 
 	**	
+	{	
 		use 	    spt5grade   		 year codschool network	uf    using "$inter/Students per teacher.dta"   if (network == 2 | network == 3) & codschool !=. & uf == "SP", clear
 		
 		**
 		tempfile    	students_teacher
 		save       	   `students_teacher'	
-		
+	}	
+	
+	
 	
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**
 	*IDEB																							
 	*________________________________________________________________________________________________________________________________* 
-	**	
+	**
+	{
 		use 		"$inter/IDEB by school.dta" if (year == 2005 | year == 2007 | year == 2009) & (network == 2 | network == 3) & codschool !=. & coduf == 35, clear
 		rename 		(spEF1 spEF2) (sp5 sp9)
 		drop 		flowindexEF* target* approval*
@@ -564,20 +592,25 @@
 		**
 		tempfile    	ideb
 		save       	   `ideb'
-		
-		
+	}	
+	
+	
+	
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**
 	*List of schools included in Prova Brasil																							
 	*________________________________________________________________________________________________________________________________* 
 	**	
+	{
 		duplicates drop codschool, force
 		keep 	 		codschool
 		
 		**
 		tempfile 		data
 		save 		   `data'
+	}
+	
 	
 	
 	*________________________________________________________________________________________________________________________________* 
@@ -586,6 +619,7 @@
 	*Teachers																							
 	*________________________________________________________________________________________________________________________________* 
 	**	
+	{
 		use  "$inter/Teachers - Prova Brasil.dta" 	if 			(year == 2007 | year == 2009) & (network == 2 | network == 3) & codschool !=. & coduf == 35 & grade != ., clear
 		
 		**
@@ -663,7 +697,9 @@
 		**
 		tempfile 	teachers
 		save	   `teachers'
-
+	}
+		
+		
 		
 	*________________________________________________________________________________________________________________________________* 
 	**
@@ -671,30 +707,36 @@
 	*Principals																						
 	*________________________________________________________________________________________________________________________________* 
 	**	
+	{	
 		use  		"$inter/Principals - Prova Brasil.dta"		 if (network == 2 | network == 3) & (year == 2007 | year == 2009) & codschool !=. & coduf == 35 , clear
 		keep 		codschool year $principals
 		
 		**
 		tempfile 	principals
 		save	   `principals'
-
+	}
+		
+		
 		
 	*________________________________________________________________________________________________________________________________* 
 	**
 	**
 	*Formação adequada dos professores																				
 	*________________________________________________________________________________________________________________________________* 
-	**	
+	**
+	{
 		use  		"$inter/Formação Adequada dos Docentes.dta" if (network == 2 | network == 3) & (year == 2007 | year == 2009) & codschool !=. & coduf == 35 , clear
 		
 		**
 		tempfile 	formacao
 		save	   `formacao'
-		
+	}
+	
+	
 		
 	*________________________________________________________________________________________________________________________________* 
 	**
-	**88
+	**
 	
 	*Merging all data
 	*________________________________________________________________________________________________________________________________* 
@@ -710,10 +752,7 @@
 		merge 		1:1 codschool year using `socio_economic'										, nogen 
 		merge 		1:1 codschool year using `teachers'												, nogen 
 		merge 		1:1 codschool year using `principals'											, nogen 
-		*merge 		m:1 codschool 	   using `data'													, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil
-		
-		*keep 		if  enrollment5grade  != .
-	
+		*merge 		m:1 codschool 	   using `data'													, nogen keep(3) //para manter somente as escolas que estao na base da Prova Brasil	
 		merge 		1:1 codschool year using "$inter/Managerial Practices Program.dta"				, nogen keep(1 3) keepusing(school_management_program       ) 
 		merge 		1:1 codschool year using "$inter/Teachers Managerial Practices Program.dta"		, nogen keep(1 3) keepusing(teacher_management_program share*) 
 		merge 		1:1 codschool year using "$inter/Teachers in state and municipal networks.dta"	, nogen keep(1 3) 
@@ -1076,7 +1115,7 @@
 		**
 		*Triple Dif-in-dif sample
 		**
-		
+		{
 		**
 			
 			**
@@ -1172,11 +1211,15 @@
 			
 			**
 			save  			 	"$inter/data_h1n1.dta", replace
-	
+		}
+		
+		
+		
 		*............................................................................................................................*
 		**
 		*Dif-in-dif sample
 		**
+		{
 			use 		"$inter/IDEB by school.dta" if year == 2005 & network == 3 & codschool !=. & coduf == 35 & math5 != ., clear
 			
 			**
@@ -1220,7 +1263,10 @@
 			**
 			tempfile 	 	sample_dif
 			save  		   `sample_dif'
+		}
 
+	
+		
 		*............................................................................................................................*
 		**
 		*Final
@@ -1233,8 +1279,48 @@
 			gen 		sample_dif = 1 if _merge == 3 & network == 3
 			drop 		_merge
 			
+			
+			*Prova Brasil sample
+			
+			gen escola_ef1 = 1 if !missing(enrollment5) 
+			
+			gen 	pb_prob 		= 1 if escola_ef1 == 1 & (!missing(math5) | !missing(port5))
+			replace pb_prob			= 0 if escola_ef1 == 1 &   missing(math5) &  missing(port5)
+			
+
+			
+			
+			
 			**
 			save 		"$final/h1n1-school-closures-sp-2009.dta", replace
 		/**
 		br 			codschool year T2009 enrollment5 math5 spt5 principal_effort5 teacher_tenure5 formacao_adequada_port5 formacao_adequada_math5 absenteeism_teachers absenteeism_teachers3   dif_age_5 T2009*
+*/
 
+
+
+
+
+
+estimates clear
+	global controls2008 c.ComputerLab##c.ComputerLab c.ScienceLab##c.ScienceLab c.SportCourt##c.SportCourt c.pib_pcap##c.pib_pcap 		   	  			///
+					    c.Library##c.Library c.InternetAccess##c.InternetAccess c.tclass5##c.tclass5 c.hour5##c.hour5 
+
+
+	use "$final/h1n1-school-closures-sp-2009.dta" if network == 3  & (year == 2007 | year == 2009), clear
+	
+	eststo:	reg  pb_prob   i.T i.codmunic i.year  			 T2009		, cluster(codmunic)
+	eststo:	reg  pb_prob   i.T i.codmunic i.year $controls2008 T2009		, cluster(codmunic)
+	
+	
+	
+	use "$final/h1n1-school-closures-sp-2009.dta" if 				 (year == 2007 | year == 2009), clear
+	xtset codschool year
+	eststo: xtreg pb_prob T2009 								 beta1-beta6 i.codmunic,  fe 	cluster(codmunic)
+	eststo: xtreg pb_prob T2009 				$controls2008	 beta1-beta6 i.codmunic,  fe 	cluster(codmunic)
+		
+	estout using "$tables/Table3i.xls", keep(T2009*) 		label cells(b(star fmt(3)) se(par(`"="("' `")""') fmt(2)) ) starlevels(* 0.10 ** 0.05 *** 0.01) stats(N r2, fmt(%9.0g %9.1f %9.2f) labels("N. schools" "R2" )) replace
+	
+		
+		
+		

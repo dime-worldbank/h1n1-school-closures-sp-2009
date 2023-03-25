@@ -1,4 +1,5 @@
 
+
 	**
 	**Descriptives
 	**
@@ -35,8 +36,6 @@
 	gen id_sem     = enrollmentEF12 == . & enrollmentEF13   == . 
 	
 	collapse (sum)id*, 
-		
-	
 	
 	
 	**
@@ -746,6 +745,35 @@
 		estout * using "$tables/TableA12.csv", keep(beta*) delimiter(";") label cells(b(star fmt(3))  se(fmt(2))) stats(N r2_a, fmt(%9.0g %9.3f)) replace
 	}	
 			
+	**
+	**
+	*Table A16 
+	*--------------------------------------------------------------------------------------------------------------------------------*
+	use "$final/h1n1-school-closures-sp-2009.dta" if year == 2009 & enrollmentEF1 !=., clear 
+	keep if sample_triple_dif == 1
+	gen id = 1
+	collapse (sum) id, by(G codmunic network)
+	reshape wide id, i(codmunic G) j(network)
+	estimates clear
+	bys G: eststo:  estpost sum id3 id2
+	esttab using "$output/tables/TableA16.csv", replace  cells("mean sd min max") nodepvar    
+
+	/*
+	gen dif = id3 - id2
+	replace dif = - dif if dif < 0
+	
+			tw (histogram id2 if id2 < 100,  percent color(emidblue) fintensity(50))  (histogram id3 if id2 <100,  percent fcolor(none) lcolor(black)),   ///
+			legend(order(1 "Tax Registry" 2 "KCGF Dataset") pos(12) size(medium) cols(2) region(lwidth(white) lcolor(white) color(white) fcolor(white))) 		 ///
+			ytitle("% firms", size(large)) ylabel(, nogrid labsize(large) format(%12.0fc)) 						 ///
+			xtitle("", size(medium)) xlabel(,labsize(small) format(%12.0fc)) 				 	 				 ///
+			title("", pos(12) size(medsmall) color(black)) 														 ///
+			subtitle("", pos(12) size(medsmall) color(black)) 													 ///
+			graphregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 	 ///
+			plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white))	 ///
+			ysize(5) xsize(6) 																					 ///
+			note("", color(black) fcolor(background) pos(7) size(small)) 
+		*/
+			
 			
 	**
 	**
@@ -996,7 +1024,7 @@
 				plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
 				legend(order(1 "Extended winter break"  2 "Other municipalities" ) cols(1) pos(12) size(medlarge) region(lwidth(none) color(white) fcolor(none))) 			///
 				ysize(5) xsize(5) 																																			///
-				note("Source: Prova Brasil.", span color(black) fcolor(background) pos(7) size(small)))  
+				note("", span color(black) fcolor(background) pos(7) size(small)))  
 				graph export "$figures/FigureA3a.pdf", as(pdf) replace
 				
 			**
@@ -1021,7 +1049,7 @@
 				plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
 				legend(order(1 "Extended winter break"  2 "Other municipalities" ) cols(1) pos(12) size(medlarge) region(lwidth(none) color(white) fcolor(none))) 			///
 				ysize(5) xsize(5) 																																			///
-				note("Source: Prova Brasil.", span color(black) fcolor(background) pos(7) size(small)))  
+				note("", span color(black) fcolor(background) pos(7) size(small)))  
 				graph export "$figures/FigureA3b.pdf", as(pdf) replace
 
 			**
@@ -1046,7 +1074,7 @@
 				plotregion(color(white) fcolor(white) lcolor(white) icolor(white) ifcolor(white) ilcolor(white)) 															///						
 				legend(order(1 "Extended winter break"  2 "Other municipalities" ) cols(1) pos(12) size(medlarge) region(lwidth(none) color(white) fcolor(none))) 			///
 				ysize(5) xsize(5) 																																			///
-				note("Source: Prova Brasil.", span color(black) fcolor(background) pos(7) size(small)))  
+				note("", span color(black) fcolor(background) pos(7) size(small)))  
 				graph export "$figures/FigureA3c.pdf", as(pdf) replace
 	}		
 		
